@@ -7,55 +7,114 @@
 constexpr int PALETTE_SIZE = 256;
 
 // Function to initialize the palette with grayscale values
-void InitializePalette(std::array<sf::Color, PALETTE_SIZE>& palette) {
-    for (int i = 0; i < PALETTE_SIZE; ++i) {
+void InitializePalette(std::array<sf::Color, PALETTE_SIZE> &palette)
+{
+    for (int i = 0; i < PALETTE_SIZE; ++i)
+    {
         palette[i] = sf::Color(i, i, i); // Grayscale values
     }
 }
-// Bresenham line drawing algorithm
-void DrawLine(std::vector<uint8_t>& buffer, int width, int height, int x0, int y0, int x1, int y1, uint8_t color) {
-    int dx = std::abs(x1 - x0);
-    int dy = -std::abs(y1 - y0);
-    int sx = x0 < x1 ? 1 : -1;
-    int sy = y0 < y1 ? 1 : -1;
-    int err = dx + dy;
 
-    while (true) {
-        if (x0 >= 0 && x0 < width && y0 >= 0 && y0 < height) {
-            buffer[y0 * width + x0] = color;
-        }
-        if (x0 == x1 && y0 == y1) break;
-        int e2 = 2 * err;
-        if (e2 >= dy) {
-            err += dy;
-            x0 += sx;
-        }
-        if (e2 <= dx) {
-            err += dx;
-            y0 += sy;
+class Buffer
+{
+public:
+    Buffer(int width, int height)
+        : width(width), height(height), data(width * height, 0)
+    {
+        InitializePalette(palette);
+    }
+
+    void clear()
+    {
+        std::fill(data.begin(), data.end(), 0);
+    }
+
+    void setPixel(int x, int y, uint8_t color)
+    {
+        if (x >= 0 && x < width && y >= 0 && y < height)
+        {
+            data[y * width + x] = color;
         }
     }
-}
 
-int main(int ac, char** av)
+    uint8_t getPixel(int x, int y) const
+    {
+        if (x >= 0 && x < width && y >= 0 && y < height)
+        {
+            return data[y * width + x];
+        }
+        return 0;
+    }
+
+    // Bresenham line drawing algorithm
+    void DrawLine(int x0, int y0, int x1, int y1, uint8_t color)
+    {
+        int dx = std::abs(x1 - x0);
+        int dy = -std::abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy;
+
+        while (true)
+        {
+            this->setPixel(x0, y0, color);
+            if (x0 == x1 && y0 == y1)
+                break;
+            int e2 = 2 * err;
+            if (e2 >= dy)
+            {
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    const std::vector<uint8_t> &getData() const
+    {
+        return data;
+    }
+
+    const std::array<sf::Color, PALETTE_SIZE> &getPalette() const
+    {
+        return palette;
+    }
+
+    int getWidth() const
+    {
+        return width;
+    }
+
+    int getHeight() const
+    {
+        return height;
+    }
+
+private:
+    int width;
+    int height;
+    std::vector<uint8_t> data;
+    std::array<sf::Color, PALETTE_SIZE> palette;
+};
+
+int main(int ac, char **av)
 {
-    sf::RenderWindow window(sf::VideoMode({800, 600}), "My window");
-
     // Define the buffer size
     constexpr int WIDTH = 320;
     constexpr int HEIGHT = 240;
 
-    // Create the buffer and palette
-    std::vector<uint8_t> buffer(WIDTH * HEIGHT);
-    for (int i = 0; i < WIDTH * HEIGHT; ++i) {
-        buffer[i] = i % 256;
-    }
-    std::array<sf::Color, PALETTE_SIZE> palette;
-    InitializePalette(palette);
+    sf::RenderWindow window(sf::VideoMode({WIDTH * 4, HEIGHT * 4}), "My window");
+
+    // Create the buffer
+    Buffer buffer(WIDTH, HEIGHT);
 
     // Create an image to render the buffer
     sf::Image image({WIDTH, HEIGHT}, sf::Color::Red); // Create an empty
-    
+
     // Main loop
     while (window.isOpen())
     {
@@ -71,22 +130,23 @@ int main(int ac, char** av)
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
         // Clear the buffer
-        std::fill(buffer.begin(), buffer.end(), 0);
+        buffer.clear();
 
         // Draw a line from the center of the buffer to the mouse position
-        DrawLine(buffer, WIDTH, HEIGHT, WIDTH / 2, HEIGHT / 2, mousePos.x * WIDTH / window.getSize().x, mousePos.y * HEIGHT / window.getSize().y, 255);
+        buffer.DrawLine(WIDTH / 2, HEIGHT / 2, mousePos.x * WIDTH / window.getSize().x, mousePos.y * HEIGHT / window.getSize().y, 255);
 
         // Update the image with the buffer data
         for (uint32_t y = 0; y < HEIGHT; ++y) {
             for (uint32_t x = 0; x < WIDTH; ++x) {
-                uint8_t pixelValue = buffer[y * WIDTH + x];
-                image.setPixel({x, y}, palette[pixelValue]);
+                uint8_t pixelValue = buffer.getPixel(x, y);
+                image.setPixel({x, y}, buffer.getPalette()[pixelValue]);
             }
         }
 
         // Create a texture and sprite to display the image
         sf::Texture texture;
-        if (!texture.loadFromImage(image)) {
+        if (!texture.loadFromImage(image))
+        {
             std::cout << "ERROR: Failed to load texture from image." << std::endl;
             return 0;
         }
@@ -95,8 +155,7 @@ int main(int ac, char** av)
         sf::Vector2u windowSize = window.getSize();
         sprite.setScale(
             {static_cast<float>(windowSize.x) / WIDTH,
-            static_cast<float>(windowSize.y) / HEIGHT}
-        );
+             static_cast<float>(windowSize.y) / HEIGHT});
 
         // Clear the window and draw the sprite
         window.clear();
