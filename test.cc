@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <array>
 #include <iostream>
 #include <vector>
@@ -114,6 +115,35 @@ int main(int ac, char **av)
 
     // Create an image to render the buffer
     sf::Image image({WIDTH, HEIGHT}, sf::Color::Red); // Create an empty
+
+
+    // Sound buffer parameters
+    const unsigned SAMPLE_RATE = 44100;
+    const unsigned AMPLITUDE = 30000;
+    const double TWO_PI = 6.28318;
+    const double FREQUENCY = 440.0;
+
+    // Create a sound buffer
+    sf::SoundBuffer soundBuffer;
+    std::vector<int16_t> samples(SAMPLE_RATE);
+
+    // Generate a sine wave
+    for (unsigned i = 0; i < SAMPLE_RATE; ++i)
+    {
+        samples[i] = AMPLITUDE * std::sin((TWO_PI * FREQUENCY * i) / SAMPLE_RATE);
+    }
+
+    // Load samples into the sound buffer
+    if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, SAMPLE_RATE, {sf::SoundChannel::Mono}))
+    {
+        std::cerr << "Failed to load sound buffer." << std::endl;
+        return -1;
+    }
+
+    // Create a sound and play it
+    sf::Sound sound(soundBuffer);
+    sound.play();
+
 
     // Main loop
     while (window.isOpen())
