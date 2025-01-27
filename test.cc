@@ -120,40 +120,63 @@ std::vector<int16_t> generateSineWave(unsigned sampleRate, unsigned amplitude, d
     return samples;
 }
 
-class SoundSystem
+class Note
 {
 public:
-    SoundSystem()
+    Note(unsigned sampleRate, unsigned amplitude, int midiNote) : sound(soundBuffer)
     {
-        // Sound buffer parameters
-        const unsigned SAMPLE_RATE = 44100;
-        const unsigned AMPLITUDE = 30000;
-        const double FREQUENCY = 440.0;
+        double frequency = computeFrequency(midiNote);
 
         // Generate a sine wave
-        std::vector<int16_t> samples = generateSineWave(SAMPLE_RATE, AMPLITUDE, FREQUENCY);
+        std::vector<int16_t> samples = generateSineWave(sampleRate, amplitude, frequency);
 
         // Load samples into the sound buffer
-        if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, SAMPLE_RATE, {sf::SoundChannel::Mono}))
+        if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate, {sf::SoundChannel::Mono}))
         {
             std::cerr << "Failed to load sound buffer." << std::endl;
             throw std::runtime_error("Failed to load sound buffer.");
         }
 
         // Set the buffer to the sound
-        sound = std::make_unique<sf::Sound>(soundBuffer);
+        sound.setBuffer(soundBuffer);
     }
 
     void play()
     {
-        sound->play();
+        sound.play();
     }
 
 private:
     sf::SoundBuffer soundBuffer;
-    std::unique_ptr<sf::Sound> sound;
+    sf::Sound sound;
 };
 
+class SoundSystem
+{
+public:
+    SoundSystem()
+    {
+        const unsigned SAMPLE_RATE = 44100;
+        const unsigned AMPLITUDE = 30000;
+
+        // Add MIDI notes 60 to 71
+        for (int midiNote = 60; midiNote <= 71; ++midiNote)
+        {
+            notes.emplace_back(SAMPLE_RATE, AMPLITUDE, midiNote);
+        }
+    }
+
+    void play(int midiNote)
+    {
+        if (midiNote >= 60 && midiNote <= 71)
+        {
+            notes[midiNote - 60].play();
+        }
+    }
+
+private:
+    std::vector<Note> notes;
+};
 
 int main(int ac, char **av)
 {
@@ -170,12 +193,15 @@ int main(int ac, char **av)
     sf::Image image({WIDTH, HEIGHT}, sf::Color::Red); // Create an empty
 
     int midiNote = 69; // Example MIDI note
-    double frequency = computeFrequency(midiNote);
-    std::cout << "Frequency for MIDI note " << midiNote << " is " << frequency << " Hz" << std::endl;
+    std::cout << "Frequency for MIDI note " << midiNote << " is " << computeFrequency(midiNote) << " Hz" << std::endl;
 
-    SoundSystem sound_system;
-    sound_system.play();
+    Note note(44100, 30000, midiNote);
+    note.play();
 
+    SoundSystem soundSystem;
+    soundSystem.play(60); // Example MIDI note
+    soundSystem.play(64); // Example MIDI note
+    soundSystem.play(68); // Example MIDI note
 
     // Main loop
     while (window.isOpen())
@@ -198,8 +224,10 @@ int main(int ac, char **av)
         buffer.DrawLine(WIDTH / 2, HEIGHT / 2, mousePos.x * WIDTH / window.getSize().x, mousePos.y * HEIGHT / window.getSize().y, 255);
 
         // Update the image with the buffer data
-        for (uint32_t y = 0; y < HEIGHT; ++y) {
-            for (uint32_t x = 0; x < WIDTH; ++x) {
+        for (uint32_t y = 0; y < HEIGHT; ++y)
+        {
+            for (uint32_t x = 0; x < WIDTH; ++x)
+            {
                 uint8_t pixelValue = buffer.getPixel(x, y);
                 image.setPixel({x, y}, buffer.getPalette()[pixelValue]);
             }
