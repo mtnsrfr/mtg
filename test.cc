@@ -102,6 +102,46 @@ private:
     std::array<sf::Color, PALETTE_SIZE> palette;
 };
 
+class SoundSystem
+{
+public:
+    SoundSystem()
+    {
+        // Sound buffer parameters
+        const unsigned SAMPLE_RATE = 44100;
+        const unsigned AMPLITUDE = 30000;
+        const double TWO_PI = 6.28318;
+        const double FREQUENCY = 440.0;
+
+        // Generate a sine wave
+        std::vector<int16_t> samples(SAMPLE_RATE);
+        for (unsigned i = 0; i < SAMPLE_RATE; ++i)
+        {
+            samples[i] = AMPLITUDE * std::sin((TWO_PI * FREQUENCY * i) / SAMPLE_RATE);
+        }
+
+        // Load samples into the sound buffer
+        if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, SAMPLE_RATE, {sf::SoundChannel::Mono}))
+        {
+            std::cerr << "Failed to load sound buffer." << std::endl;
+            throw std::runtime_error("Failed to load sound buffer.");
+        }
+
+        // Set the buffer to the sound
+        sound = std::make_unique<sf::Sound>(soundBuffer);
+    }
+
+    void play()
+    {
+        sound->play();
+    }
+
+private:
+    sf::SoundBuffer soundBuffer;
+    std::unique_ptr<sf::Sound> sound;
+};
+
+
 int main(int ac, char **av)
 {
     // Define the buffer size
@@ -117,32 +157,8 @@ int main(int ac, char **av)
     sf::Image image({WIDTH, HEIGHT}, sf::Color::Red); // Create an empty
 
 
-    // Sound buffer parameters
-    const unsigned SAMPLE_RATE = 44100;
-    const unsigned AMPLITUDE = 30000;
-    const double TWO_PI = 6.28318;
-    const double FREQUENCY = 440.0;
-
-    // Create a sound buffer
-    sf::SoundBuffer soundBuffer;
-    std::vector<int16_t> samples(SAMPLE_RATE);
-
-    // Generate a sine wave
-    for (unsigned i = 0; i < SAMPLE_RATE; ++i)
-    {
-        samples[i] = AMPLITUDE * std::sin((TWO_PI * FREQUENCY * i) / SAMPLE_RATE);
-    }
-
-    // Load samples into the sound buffer
-    if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, SAMPLE_RATE, {sf::SoundChannel::Mono}))
-    {
-        std::cerr << "Failed to load sound buffer." << std::endl;
-        return -1;
-    }
-
-    // Create a sound and play it
-    sf::Sound sound(soundBuffer);
-    sound.play();
+    SoundSystem sound_system;
+    sound_system.play();
 
 
     // Main loop
