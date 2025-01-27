@@ -3,6 +3,7 @@
 #include <array>
 #include <iostream>
 #include <vector>
+#include <cmath> // Include cmath for M_PI
 
 // Define the palette size
 constexpr int PALETTE_SIZE = 256;
@@ -14,6 +15,12 @@ void InitializePalette(std::array<sf::Color, PALETTE_SIZE> &palette)
     {
         palette[i] = sf::Color(i, i, i); // Grayscale values
     }
+}
+
+// Function to compute the target frequency for a MIDI note
+double computeFrequency(int midiNote)
+{
+    return 440.0 * std::pow(2.0, (midiNote - 69) / 12.0);
 }
 
 class Buffer
@@ -102,6 +109,17 @@ private:
     std::array<sf::Color, PALETTE_SIZE> palette;
 };
 
+std::vector<int16_t> generateSineWave(unsigned sampleRate, unsigned amplitude, double frequency)
+{
+    const double TWO_PI = 2 * M_PI;
+    std::vector<int16_t> samples(sampleRate);
+    for (unsigned i = 0; i < sampleRate; ++i)
+    {
+        samples[i] = amplitude * std::sin((TWO_PI * frequency * i) / sampleRate);
+    }
+    return samples;
+}
+
 class SoundSystem
 {
 public:
@@ -110,15 +128,10 @@ public:
         // Sound buffer parameters
         const unsigned SAMPLE_RATE = 44100;
         const unsigned AMPLITUDE = 30000;
-        const double TWO_PI = 6.28318;
         const double FREQUENCY = 440.0;
 
         // Generate a sine wave
-        std::vector<int16_t> samples(SAMPLE_RATE);
-        for (unsigned i = 0; i < SAMPLE_RATE; ++i)
-        {
-            samples[i] = AMPLITUDE * std::sin((TWO_PI * FREQUENCY * i) / SAMPLE_RATE);
-        }
+        std::vector<int16_t> samples = generateSineWave(SAMPLE_RATE, AMPLITUDE, FREQUENCY);
 
         // Load samples into the sound buffer
         if (!soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, SAMPLE_RATE, {sf::SoundChannel::Mono}))
@@ -156,6 +169,9 @@ int main(int ac, char **av)
     // Create an image to render the buffer
     sf::Image image({WIDTH, HEIGHT}, sf::Color::Red); // Create an empty
 
+    int midiNote = 69; // Example MIDI note
+    double frequency = computeFrequency(midiNote);
+    std::cout << "Frequency for MIDI note " << midiNote << " is " << frequency << " Hz" << std::endl;
 
     SoundSystem sound_system;
     sound_system.play();
