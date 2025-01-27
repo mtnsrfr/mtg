@@ -123,7 +123,7 @@ std::vector<int16_t> generateSineWave(unsigned sampleRate, unsigned amplitude, d
 class Note
 {
 public:
-    Note(unsigned sampleRate, unsigned amplitude, int midiNote) : sound(soundBuffer)
+    Note(unsigned sampleRate, unsigned amplitude, int midiNote)
     {
         double frequency = computeFrequency(midiNote);
 
@@ -136,19 +136,15 @@ public:
             std::cerr << "Failed to load sound buffer." << std::endl;
             throw std::runtime_error("Failed to load sound buffer.");
         }
-
-        // Set the buffer to the sound
-        sound.setBuffer(soundBuffer);
     }
 
-    void play()
+    const sf::SoundBuffer &getBuffer() const
     {
-        sound.play();
+        return soundBuffer;
     }
 
 private:
     sf::SoundBuffer soundBuffer;
-    sf::Sound sound;
 };
 
 class SoundSystem
@@ -159,23 +155,30 @@ public:
         const unsigned SAMPLE_RATE = 44100;
         const unsigned AMPLITUDE = 30000;
 
-        // Add MIDI notes 60 to 71
-        for (int midiNote = 60; midiNote <= 71; ++midiNote)
+        // Add MIDI notes 12 to 131
+        for (int midiNote = 12; midiNote <= 131; ++midiNote)
         {
             notes.emplace_back(SAMPLE_RATE, AMPLITUDE, midiNote);
         }
+
+        // Allocate sound after initializing notes
+        sound = std::make_unique<sf::Sound>(notes[0].getBuffer());
     }
+
+    
 
     void play(int midiNote)
     {
-        if (midiNote >= 60 && midiNote <= 71)
+        if (midiNote >= 12 && midiNote <= 131)
         {
-            notes[midiNote - 60].play();
+            sound->setBuffer(notes[midiNote - 12].getBuffer());
+            sound->play();
         }
     }
 
 private:
     std::vector<Note> notes;
+    std::unique_ptr<sf::Sound> sound;
 };
 
 int main(int ac, char **av)
@@ -195,12 +198,9 @@ int main(int ac, char **av)
     int midiNote = 69; // Example MIDI note
     std::cout << "Frequency for MIDI note " << midiNote << " is " << computeFrequency(midiNote) << " Hz" << std::endl;
 
-    Note note(44100, 30000, midiNote);
-    note.play();
-
     SoundSystem soundSystem;
-    soundSystem.play(60); // Example MIDI note
-    soundSystem.play(64); // Example MIDI note
+    //soundSystem.play(12); // Example MIDI note
+    //soundSystem.play(64); // Example MIDI note
     soundSystem.play(68); // Example MIDI note
 
     // Main loop
