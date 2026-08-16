@@ -193,7 +193,7 @@ Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** und **[Sna
 
 ## 💡 Level 7: Die Spiele-Bibliothek
 
-In deinem Projekt findest du bereits zwei fertige Spiele, die du verändern und erweitern kannst:
+In deinem Projekt findest du bereits drei fertige Spiele, die du spielen, verändern und erweitern kannst:
 
 ### 1. 🏓 [PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp) (2-Spieler Retro Pong)
 * Spieler 1 (Rot) mit `W`/`S`, Spieler 2 (Blau) mit `Pfeiltasten`.
@@ -204,19 +204,33 @@ In deinem Projekt findest du bereits zwei fertige Spiele, die du verändern und 
 * **Der Apfel-Klau-Trick**: Wenn eine Schlange anstößt, zerplatzt ihr Körper in Äpfel, die der Gegner fressen kann!
 * Wer zuerst 12 Punkte hat, gewinnt!
 
-### 3. 🕹️ [MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp) (Die Spiele-Auswahl)
-* Taste `1` startet Pong, Taste `2` startet Snake.
+### 3. 🚀 [StarfighterGame.hpp](file:///Users/mtn/code/mtg/StarfighterGame.hpp) (Weltraum-Schlacht)
+* **Partikel-Sternenfeld**: 70 funkelnde Sterne fliegen mit 3 verschiedenen Geschwindigkeiten an dir vorbei.
+* **16x16 Pixel-Art Raumschiffe**: Dein eigener Delta-Wing Jäger mit Doppellaser gegen feindliche TIE-Attacker.
+* **Explosionen**: Treffer lassen bunte Trümmerteilchen (Partikel) in alle Richtungen sprühen!
+* Wer die meisten Angreifer abschießt, stellt den neuen Highscore auf!
+
+### 4. 🕹️ [MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp) (Die Spiele-Auswahl)
+* Taste `1` startet Pong, Taste `2` startet Snake, Taste `3` startet Starfighter.
 * Mit `Escape` kommst du jederzeit zurück ins Menü!
 
-### 2. 🧱 Breakout / Arkanoid (Ziegelsteine zerschlagen)
-* Unten steuerst du einen Schläger nach links und rechts.
-* Oben ist eine Wand aus bunten Rechtecken.
-* Jeder Ziegelstein, den der Ball trifft, verschwindet und gibt Punkte!
+---
 
-### 3. 🚀 Space Dodger (Weltraum-Flitzer)
-* Du steuerst ein kleines Raumschiff am unteren Bildschirmrand.
-* Von oben fallen immer schneller rote Asteroiden herab.
-* Weiche ihnen so lange wie möglich aus und stelle einen Highscore auf!
+## ✨ Level 8: Das Geheimnis der Partikel (Sterne & Explosionen)
+
+Ein **Partikel** ist einfach ein kleiner bunter Punkt, der eine Position $(X, Y)$ und eine Geschwindigkeit hat:
+
+```cpp
+struct Stern {
+    float x;
+    float y;
+    float geschwindigkeit; // z.B. 30 (langsam/dunkel) oder 120 (schnell/hell)
+};
+
+// In jedem Frame wandert der Stern nach unten:
+stern.y += stern.geschwindigkeit * e.dt();
+```
+Wenn du viele davon auf den Bildschirm zauberst, entsteht ein wunderschöner, lebendiger 3D-Weltraum!
 
 ---
 
