@@ -1,0 +1,14 @@
+# Build Artifacts & Executables
+test
+test_static
+*.dSYM/
+MTG.app/
+
+# Clangd & IDE Caches
+.cache/
+
+# Local static SFML dependencies
+deps/
+
+# macOS system files
+.DS_Store
