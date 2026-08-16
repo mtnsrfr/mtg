@@ -1,7 +1,7 @@
 [
   {
     "directory": "/Users/mtn/code/mtg",
-    "command": "/usr/bin/clang++ -std=c++17 -I/opt/homebrew/include -c /Users/mtn/code/mtg/test.cc -o /Users/mtn/code/mtg/test.o",
-    "file": "/Users/mtn/code/mtg/test.cc"
+    "command": "/usr/bin/clang++ -std=c++17 -I/opt/homebrew/include -c /Users/mtn/code/mtg/main.cc -o /Users/mtn/code/mtg/main.o",
+    "file": "/Users/mtn/code/mtg/main.cc"
   }
 ]

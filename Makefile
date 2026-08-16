@@ -15,7 +15,7 @@ STATIC_LDFLAGS = -Wl,-force_load,$(STATIC_DEPS)/lib/libsfml-window-s.a \
 TARGET = test
 STATIC_TARGET = test_static
 APP_BUNDLE = MTG.app
-SRC = test.cc
+SRC = main.cc
 
 .PHONY: all static bundle run run-static run-bundle clean
 
