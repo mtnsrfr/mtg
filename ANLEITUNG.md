@@ -171,7 +171,7 @@ e.play_melody({
 
 ## 🏆 Level 6: Wie man ein komplettes Spiel baut
 
-Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** an. Ein gutes Spiel hat meistens 3 Phasen:
+Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** und **[SnakeGame.hpp](file:///Users/mtn/code/mtg/SnakeGame.hpp)** an. Ein gutes Spiel hat meistens 3 Phasen:
 
 ```
 +-------------------------------------------------------+
@@ -182,7 +182,7 @@ Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** an. Ein gu
 +-------------------------------------------------------+
 |  2. Das Spiel läuft: Punkte sammeln, Bälle schlagen   |
 +---------------------------+---------------------------+
-                            | (Jemand hat 5 Punkte)
+                            | (Jemand hat das Ziel erreicht)
                             v
 +-------------------------------------------------------+
 |  3. Sieger-Bildschirm: "ROT GEWINNT! NEUES SPIEL?"    |
@@ -191,14 +191,22 @@ Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** an. Ein gu
 
 ---
 
-## 💡 Level 7: Rezeptideen für deine nächsten Spiele!
+## 💡 Level 7: Die Spiele-Bibliothek
 
-Hier sind 3 tolle Spiel-Ideen, die du als Nächstes bauen kannst:
+In deinem Projekt findest du bereits zwei fertige Spiele, die du verändern und erweitern kannst:
 
-### 1. 🐍 Snake (Die Nimmersatt-Schlange)
-* Die Schlange besteht aus einer Liste von Rechtecken.
-* Sie kriecht mit W/A/S/D über den Bildschirm.
-* Wenn sie einen gelben Punkt (Apfel) berührt: `score++`, die Schlange wird länger und ein Ton erklingt!
+### 1. 🏓 [PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp) (2-Spieler Retro Pong)
+* Spieler 1 (Rot) mit `W`/`S`, Spieler 2 (Blau) mit `Pfeiltasten`.
+* Physik mit dynamischen Abprallwinkeln und Treffer-Tönen!
+
+### 2. 🐍 [SnakeGame.hpp](file:///Users/mtn/code/mtg/SnakeGame.hpp) (2-Spieler Schlangen-Duell - Modell B)
+* Beide Schlangen jagen nach roten Äpfeln.
+* **Der Apfel-Klau-Trick**: Wenn eine Schlange anstößt, zerplatzt ihr Körper in Äpfel, die der Gegner fressen kann!
+* Wer zuerst 12 Punkte hat, gewinnt!
+
+### 3. 🕹️ [MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp) (Die Spiele-Auswahl)
+* Taste `1` startet Pong, Taste `2` startet Snake.
+* Mit `Escape` kommst du jederzeit zurück ins Menü!
 
 ### 2. 🧱 Breakout / Arkanoid (Ziegelsteine zerschlagen)
 * Unten steuerst du einen Schläger nach links und rechts.
