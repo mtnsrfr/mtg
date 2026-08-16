@@ -203,23 +203,23 @@ private:
 
   // ===========================================================================
   // ===========================================================================
-  // Explosions-Effekt (Radiale Partikel mit Farbverlauf: Weiß -> Gelb -> Orange -> Rot)
+  // Explosions-Effekt (Trägheits-Vektor des Schiffs + radiale Streuung + Farbverlauf)
   // ===========================================================================
-  void spawnExplosion(float x, float y, float shipVx = 0.0f, float shipVy = 0.0f, int count = 45) {
+  void spawnExplosion(float x, float y, float shipVx = 0.0f, float shipVy = 0.0f, int count = 50) {
     for (int i = 0; i < count; ++i) {
       Particle p;
       p.x = x;
       p.y = y;
 
-      // Radiale Ausbreitung in alle Richtungen (0 bis 360 Grad)
+      // 1. Grundimpuls: Voller Geschwindigkeitsvektor des Schiffs (starke Richtungsdynamik!)
+      // 2. Überlagerte radiale Explosions-Sprengung in alle Richtungen
       float angle = (rand() % 360) * (M_PI / 180.0f);
-      float speed = 25.0f + (rand() % 130);
+      float burstSpeed = 15.0f + (rand() % 85);
 
-      // Radiale Geschwindigkeit + Impuls in Flugrichtung des getroffenen Schiffes
-      p.vx = speed * std::cos(angle) + (shipVx * 0.35f);
-      p.vy = speed * std::sin(angle) + (shipVy * 0.35f);
+      p.vx = shipVx + burstSpeed * std::cos(angle);
+      p.vy = shipVy + burstSpeed * std::sin(angle);
 
-      p.maxLife = 0.40f + (rand() % 35) / 100.0f; // 0.40s bis 0.75s Lebensdauer
+      p.maxLife = 0.45f + (rand() % 35) / 100.0f; // 0.45s bis 0.80s Lebensdauer
       p.life = p.maxLife;
 
       particles.push_back(p);
@@ -240,8 +240,8 @@ private:
         p.y += p.vy * dt;
 
         // Leichte Trägheits-Verlangsamung
-        p.vx *= 0.97f;
-        p.vy *= 0.97f;
+        p.vx *= 0.975f;
+        p.vy *= 0.975f;
 
         // Dynamischer Farbverlauf über die Lebensdauer:
         // Frisch (100% - 75%): Weiß (Glühend heißer Blitz)
@@ -349,9 +349,11 @@ private:
     }
 
     // 3. Gegner-KI & Bewegung (Attacker fliegt sanfte Kurven & taucht ab)
+    float curEnemyVy = 0.0f;
     if (enemyAlive) {
       enemyMovePhase += dt * 2.5f;
       enemyX += enemyVx * dt;
+      curEnemyVy = std::cos(enemyMovePhase) * 18.0f * 2.5f + 10.0f;
       enemyY = 35.0f + std::sin(enemyMovePhase) * 18.0f;
 
       // Wand-Umkehr für den Gegner
@@ -403,7 +405,7 @@ private:
           if (score > highscore)
             highscore = score;
           playExplosion(e);
-          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, 30.0f, 45);
+          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, curEnemyVy, 50);
         }
       }
 
@@ -415,7 +417,8 @@ private:
           playerAlive = false;
           playExplosion(e);
           playGameOverSound(e);
-          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, curPlayerVy, 50);
+          float effPlayerVy = (curPlayerVy != 0.0f) ? curPlayerVy : -70.0f;
+          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, effPlayerVy, 55);
           state = State::GameOver;
         }
       }
@@ -427,8 +430,9 @@ private:
           enemyAlive = false;
           playExplosion(e);
           playGameOverSound(e);
-          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, curPlayerVy, 45);
-          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, 50.0f, 45);
+          float effPlayerVy = (curPlayerVy != 0.0f) ? curPlayerVy : -70.0f;
+          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, effPlayerVy, 50);
+          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, curEnemyVy, 50);
           state = State::GameOver;
         }
       }
