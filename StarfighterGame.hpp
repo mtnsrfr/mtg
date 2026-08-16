@@ -202,27 +202,25 @@ private:
   }
 
   // ===========================================================================
-  // Explosions-Effekt (Partikel)
   // ===========================================================================
-  void spawnExplosion(float x, float y, int count = 25) {
+  // Explosions-Effekt (Radiale Partikel mit Farbverlauf: Weiß -> Gelb -> Orange -> Rot)
+  // ===========================================================================
+  void spawnExplosion(float x, float y, float shipVx = 0.0f, float shipVy = 0.0f, int count = 45) {
     for (int i = 0; i < count; ++i) {
       Particle p;
       p.x = x;
       p.y = y;
-      float angle = (rand() % 360) * (M_PI / 180.0f);
-      float speed = 30.0f + (rand() % 100);
-      p.vx = speed * std::cos(angle);
-      p.vy = speed * std::sin(angle);
-      p.maxLife = 0.35f + (rand() % 25) / 100.0f;
-      p.life = p.maxLife;
 
-      int colChoice = rand() % 3;
-      if (colChoice == 0)
-        p.color = Colors::Yellow;
-      else if (colChoice == 1)
-        p.color = Colors::Orange;
-      else
-        p.color = Colors::Red;
+      // Radiale Ausbreitung in alle Richtungen (0 bis 360 Grad)
+      float angle = (rand() % 360) * (M_PI / 180.0f);
+      float speed = 25.0f + (rand() % 130);
+
+      // Radiale Geschwindigkeit + Impuls in Flugrichtung des getroffenen Schiffes
+      p.vx = speed * std::cos(angle) + (shipVx * 0.35f);
+      p.vy = speed * std::sin(angle) + (shipVy * 0.35f);
+
+      p.maxLife = 0.40f + (rand() % 35) / 100.0f; // 0.40s bis 0.75s Lebensdauer
+      p.life = p.maxLife;
 
       particles.push_back(p);
     }
@@ -240,14 +238,31 @@ private:
       } else {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        // Farbe wechselt mit der Lebensdauer: Gelb -> Orange -> Rot
-        uint8_t c = p.color;
-        if (p.life < p.maxLife * 0.3f)
-          c = Colors::DarkGray;
-        else if (p.life < p.maxLife * 0.6f)
-          c = Colors::Red;
 
-        e.pset(p.x, p.y, c);
+        // Leichte Trägheits-Verlangsamung
+        p.vx *= 0.97f;
+        p.vy *= 0.97f;
+
+        // Dynamischer Farbverlauf über die Lebensdauer:
+        // Frisch (100% - 75%): Weiß (Glühend heißer Blitz)
+        // Heiß   (75% - 50%): Gelb
+        // Warm   (50% - 25%): Orange
+        // Kalt   (25% - 10%): Rot
+        // Rauch  (10% - 0%):  Dunkelgrau
+        float progress = p.life / p.maxLife; // 1.0 (frisch) bis 0.0 (erloschen)
+        uint8_t color = Colors::DarkGray;
+
+        if (progress > 0.75f) {
+          color = Colors::White;
+        } else if (progress > 0.50f) {
+          color = Colors::Yellow;
+        } else if (progress > 0.25f) {
+          color = Colors::Orange;
+        } else if (progress > 0.10f) {
+          color = Colors::Red;
+        }
+
+        e.pset(p.x, p.y, color);
         ++i;
       }
     }
@@ -299,14 +314,25 @@ private:
     float dt = e.dt();
 
     // 1. Spieler-Bewegung (W/A/S/D oder Pfeiltasten)
-    if (e.key(Key::A) || e.key(Key::Left))
+    float curPlayerVx = 0.0f;
+    float curPlayerVy = 0.0f;
+
+    if (e.key(Key::A) || e.key(Key::Left)) {
       playerX -= playerSpeed * dt;
-    if (e.key(Key::D) || e.key(Key::Right))
+      curPlayerVx = -playerSpeed;
+    }
+    if (e.key(Key::D) || e.key(Key::Right)) {
       playerX += playerSpeed * dt;
-    if (e.key(Key::W) || e.key(Key::Up))
+      curPlayerVx = playerSpeed;
+    }
+    if (e.key(Key::W) || e.key(Key::Up)) {
       playerY -= playerSpeed * dt;
-    if (e.key(Key::S) || e.key(Key::Down))
+      curPlayerVy = -playerSpeed;
+    }
+    if (e.key(Key::S) || e.key(Key::Down)) {
       playerY += playerSpeed * dt;
+      curPlayerVy = playerSpeed;
+    }
 
     // Spieler im Bildschirm halten (16x16 Raumschiff)
     playerX = std::clamp(playerX, 8.0f, 320.0f - 24.0f);
@@ -377,7 +403,7 @@ private:
           if (score > highscore)
             highscore = score;
           playExplosion(e);
-          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, 30);
+          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, 30.0f, 45);
         }
       }
 
@@ -389,7 +415,7 @@ private:
           playerAlive = false;
           playExplosion(e);
           playGameOverSound(e);
-          spawnExplosion(playerX + 8.0f, playerY + 8.0f, 40);
+          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, curPlayerVy, 50);
           state = State::GameOver;
         }
       }
@@ -401,8 +427,8 @@ private:
           enemyAlive = false;
           playExplosion(e);
           playGameOverSound(e);
-          spawnExplosion(playerX + 8.0f, playerY + 8.0f, 40);
-          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, 40);
+          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, curPlayerVy, 45);
+          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, 50.0f, 45);
           state = State::GameOver;
         }
       }
