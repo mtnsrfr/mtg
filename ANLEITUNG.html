@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Die Spiele-Schmiede: Zero to Hero</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+  }
+
+  body {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1e293b;
+    background: #ffffff;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 12px;
+    margin-top: 10px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-top: 35px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    margin-top: 20px;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    font-size: 1.05rem;
+    color: #334155;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+    background: #f1f5f9;
+    color: #0369a1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+  }
+
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 16px 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    page-break-inside: avoid;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  blockquote {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+    padding: 12px 18px;
+    margin: 18px 0;
+    border-radius: 0 8px 8px 0;
+    color: #92400e;
+    font-weight: 600;
+  }
+
+  hr {
+    border: none;
+    border-top: 2px dashed #cbd5e1;
+    margin: 30px 0;
+  }
+
+  .print-bar {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .print-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .print-btn:hover {
+    background: #1d4ed8;
+  }
+
+  @media print {
+    .print-bar {
+      display: none;
+    }
+    body {
+      padding: 0;
+    }
+    pre {
+      background: #1e293b !important;
+      color: #f8fafc !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>💡 <strong>Tipp für PDF-Druck:</strong> Klicke auf den Button rechts oder drücke <kbd>⌘</kbd> + <kbd>P</kbd> und wähle <em>"Als PDF sichern"</em>.</span>
+  <button class="print-btn" onclick="window.print()">📄 Als PDF drucken / speichern</button>
+</div>
+
+<h1>🎮 Die Spiele-Schmiede: Vom Anfänger zum Spiele-Programmierer (Zero to Hero)</h1>
+<p>Herzlich willkommen in deiner eigenen Spiele-Werkstatt! In diesem Handbuch lernst du Schritt für Schritt, wie du mit echtem C++ eigene Retro-Spiele (wie Pong, Snake, Breakout oder Space-Shooter) programmierst.</p>
+<hr>
+<h2>🚀 Kapitel 0: Das große Geheimnis der Videospiele</h2>
+<p>Hast du schon mal ein <strong>Daumenkino</strong> gebastelt? Wenn man schnell durch die Seiten blättert, erwachen die gezeichneten Figuren zum Leben!</p>
+<p>Genauso funktioniert dein Computer:</p>
+<ul>
+<li>Unser Spiel malt <strong>60-mal in jeder einzelnen Sekunde</strong> ein neues Bild auf den Bildschirm.</li>
+<li>Das Herzstück jedes Spiels ist diese eine Funktion:</li>
+<p>  <code>`</code>cpp</p>
+<p>  void update(Engine& e) {</p>
+<p>      // Alles hier drin wird 60-mal pro Sekunde ausgeführt!</p>
+<p>  }</p>
+<p>  <code>`</code></p>
+</ol>
+<hr>
+<h2>🎨 Level 1: Die Malerwerkstatt (Farben & Formen)</h2>
+<h3>1. Die Zauberleinwand & Koordinaten</h3>
+<p>Unser Bildschirm ist <strong>320 Pixel breit</strong> und <strong>240 Pixel hoch</strong>.</p>
+<ul>
+<li><strong>$X$ (nach rechts)</strong>: Geht von $0$ (ganz links) bis $320$ (ganz rechts).</li>
+<li><strong>$Y$ (nach unten)</strong>: Geht von $0$ (ganz oben) bis $240$ (ganz unten).</li>
+<li>Die Ecke oben links ist <strong>$(0, 0)$</strong>!</li>
+</ul>
+<h3>2. Der Farbkasten</h3>
+<p>Du kannst diese Farben überall verwenden:</p>
+<ul>
+<li><code>Colors::DarkGreen</code> (Dunkelgrüner Rasen)</li>
+<li><code>Colors::Red</code> (Leuchtendes Rot)</li>
+<li><code>Colors::Blue</code> (Helles Blau)</li>
+<li><code>Colors::Yellow</code> (Sonnengelb)</li>
+<li><code>Colors::White</code> (Schneeweiß)</li>
+<li><code>Colors::Black</code> (Tiefschwarz)</li>
+<li><code>Colors::Orange</code>, <code>Colors::LightGreen</code>, <code>Colors::DarkGray</code>, <code>Colors::LightGray</code></li>
+</ol>
+<h3>3. Deine Mal-Werkzeuge</h3>
+<table><thead><tr>
+<th>Befehl</th>
+<th>Was er macht</th>
+<th>Beispiel</th>
+</tr></thead><tbody>
+<tr>
+<td><code>e.cls(Farbe)</code></td>
+<td><strong>Tafel putzen</strong>: Malt den ganzen Bildschirm mit einer Farbe an.</td>
+<td><code>e.cls(Colors::DarkGreen);</code></td>
+</tr>
+<tr>
+<td><code>e.pset(x, y, Farbe)</code></td>
+<td><strong>Punkt malen</strong>: Setzt einen einzelnen Pixel.</td>
+<td><code>e.pset(160, 120, Colors::Yellow);</code></td>
+</tr>
+<tr>
+<td><code>e.line(x1, y1, x2, y2, Farbe)</code></td>
+<td><strong>Linie ziehen</strong>: Verbindet zwei Punkte mit einem Strich.</td>
+<td><code>e.line(0, 0, 320, 240, Colors::White);</code></td>
+</tr>
+<tr>
+<td><code>e.rect(x, y, b, h, Farbe)</code></td>
+<td><strong>Rechteck-Rahmen</strong>: Zeichnet den Umriss eines Kastens.</td>
+<td><code>e.rect(10, 10, 50, 30, Colors::Red);</code></td>
+</tr>
+<tr>
+<td><code>e.rectfill(x, y, b, h, Farbe)</code></td>
+<td><strong>Rechteck füllen</strong>: Zeichnet einen ausgefüllten Kasten.</td>
+<td><code>e.rectfill(10, 10, 50, 30, Colors::Red);</code></td>
+</tr>
+<tr>
+<td><code>e.circle(x, y, r, Farbe)</code></td>
+<td><strong>Kreis-Rahmen</strong>: Zeichnet den Umriss eines Kreises.</td>
+<td><code>e.circle(160, 120, 20, Colors::White);</code></td>
+</tr>
+<tr>
+<td><code>e.circlefill(x, y, r, Farbe)</code></td>
+<td><strong>Ball malen</strong>: Zeichnet einen ausgefüllten Kreis.</td>
+<td><code>e.circlefill(160, 120, 8, Colors::Yellow);</code></td>
+</tr>
+<tr>
+<td><code>e.draw_text(x, y, "TEXT", Farbe)</code></td>
+<td><strong>Schrift schreiben</strong>: Schreibt Text auf den Bildschirm.</td>
+<td><code>e.draw_text(100, 50, "HALLO WELT", Colors::White);</code></td>
+</tr>
+<tr>
+<td><code>e.draw_digit(x, y, zahl, Farbe)</code></td>
+<td><strong>Große Zahl</strong>: Schreibt Punktestände.</td>
+<td><code>e.draw_digit(100, 20, 5, Colors::Yellow, 3);</code></td>
+</tr>
+</tbody></table>
+<blockquote>🎯 <strong>Mini-Quest 1</strong>: Male ein Haus mit einem dreieckigen Dach (aus Linien) und einer bunten Tür!</blockquote>
+<hr>
+<h2>🏃 Level 2: Leben einhauchen! (Variablen & Bewegung)</h2>
+<h3>Was ist eine Variable?</h3>
+<p>Eine Variable ist wie eine <strong>beschriftete Schachtel</strong>, in der sich eine Zahl merkt:</p>
+<pre><code class="language-cpp">
+float ballX = 100.0f; // Eine Schachtel namens ballX mit dem Wert 100
+</code></pre>
+<h3>Die Zauberformel für Bewegung</h3>
+<p>Wenn wir in jedem Bild (<code>update</code>) die Zahl ein kleines Stückchen verändern, bewegt sich das Objekt:</p>
+<pre><code class="language-cpp">
+class MeinSpiel : public Game {
+    float ballX = 0.0f;
+
+    void update(Engine&amp; e) override {
+        e.cls(Colors::DarkGreen);
+
+        // Den Ball ein Stück nach rechts schieben:
+        ballX = ballX + 2.0f;
+
+        // Ball an der neuen Position malen:
+        e.circlefill(ballX, 120, 8, Colors::Yellow);
+    }
+};
+</code></pre>
+<hr>
+<h2>🕹️ Level 3: Die Fernbedienung (Tastatur & Maus)</h2>
+<p>Jetzt machen wir das Spiel interaktiv!</p>
+<h3>Tasten abfragen:</h3>
+<ul>
+<li><code>e.key(Key::...)</code> $\rightarrow$ Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (perfekt für Schläger / Raumschiffe):</li>
+<p>  <code>`</code>cpp</p>
+<p>  if (e.key(Key::W)) {</p>
+<p>      spielerY = spielerY - 4.0f; // Nach oben fliegen</p>
+<p>  }</p>
+<p>  if (e.key(Key::S)) {</p>
+<p>      spielerY = spielerY + 4.0f; // Nach unten fliegen</p>
+<p>  }</p>
+<p>  <code>`</code></p>
+<li><code>e.pressed(Key::...)</code> $\rightarrow$ Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (perfekt für Schießen oder Springen):</li>
+<p>  <code>`</code>cpp</p>
+<p>  if (e.pressed(Key::Space)) {</p>
+<p>      e.play_tone(880, 0.1f); // Schuss-Ton abspielen!</p>
+<p>  }</p>
+<p>  <code>`</code></p>
+</ol>
+<h3>Verfügbare Tasten:</h3>
+<ul>
+<li><code>Key::W</code>, <code>Key::S</code>, <code>Key::A</code>, <code>Key::D</code></li>
+<li><code>Key::Up</code>, <code>Key::Down</code>, <code>Key::Left</code>, <code>Key::Right</code></li>
+<li><code>Key::Space</code>, <code>Key::Enter</code>, <code>Key::Escape</code></li>
+<li><code>Key::Num1</code>, <code>Key::Num2</code>, <code>Key::Num3</code></li>
+</ul>
+<h3>Mit der Maus malen:</h3>
+<ul>
+<li><code>e.mouse_x()</code> und <code>e.mouse_y()</code> verraten dir die Position des Mauszeigers.</li>
+<li><code>e.mouse_down()</code> prüft, ob die Maustaste gedrückt ist:</li>
+<p>  <code>`</code>cpp</p>
+<p>  if (e.mouse_down()) {</p>
+<p>      e.circlefill(e.mouse_x(), e.mouse_y(), 5, Colors::Yellow);</p>
+<p>  }</p>
+<p>  <code>`</code></p>
+</ol>
+<hr>
+<h2>💥 Level 4: Kollisionen & Spielphysik</h2>
+<h3>1. Wand-Abprall (Der Flummi-Trick)</h3>
+<p>Wenn der Ball oben oder unten anstößt, kehren wir einfach seine vertikale Geschwindigkeit (<code>ballVy</code>) um:</p>
+<pre><code class="language-cpp">
+ballY = ballY + ballVy;
+
+if (ballY &lt;= 10 || ballY &gt;= 230) {
+    ballVy = -ballVy;        // Richtung umdrehen: Aus + wird - und aus - wird +!
+    e.play_tone(400, 0.05f); // Abprall-Ton!
+}
+</code></pre>
+<h3>2. Schläger trifft Ball (Kollisionsprüfung)</h3>
+<p>Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:</p>
+<pre><code class="language-cpp">
+if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
+    ballY &gt;= schlaegerY &amp;&amp; ballY &lt;= schlaegerY + schlaegerHoehe) {
+    ballVx = -ballVx;        // Ball fliegt wieder nach rechts zurück!
+    e.play_tone(800, 0.08f); // Treffer-Ton!
+}
+</code></pre>
+<hr>
+<h2>🎵 Level 5: Töne & Musik (Der Sound-Baukasten)</h2>
+<p>Töne machen ein Spiel erst richtig lebendig!</p>
+<h3>1. Einzelne Töne abspielen:</h3>
+<p><code>e.play_tone(FrequenzInHertz, DauerInSekunden)</code>:</p>
+<ul>
+<li><strong>Heller Piep-Ton (z. B. Sprung / Treffer)</strong>:</li>
+<p>  <code>e.play_tone(784.0, 0.08f);</code> (Ton G5)</p>
+<li><strong>Tiefer Wumm (z. B. Wandstoß / Explosion)</strong>:</li>
+<p>  <code>e.play_tone(140.0, 0.20f);</code> (Tiefer Bass)</p>
+<li><strong>Sehr hoher Münzen-Sound</strong>:</li>
+<p>  <code>e.play_tone(1200.0, 0.05f);</code></p>
+</ol>
+<h3>2. Eigene Melodien komponieren:</h3>
+<p>Mit <code>e.play_melody</code> kannst du mehrere Töne nacheinander abspielen:</p>
+<pre><code class="language-cpp">
+// Eine fröhliche 3-Ton-Fanfare:
+e.play_melody({
+    {523.25, 0.10f}, // C5
+    {659.25, 0.10f}, // E5
+    {783.99, 0.25f}  // G5 (länger)
+});
+</code></pre>
+<hr>
+<h2>🏓 Level 6: Spiel 1 – Das Retro-Pong Match (<a href="file:///Users/mtn/code/mtg/PongGame.hpp">PongGame.hpp</a>)</h2>
+<p>In <strong>Pong</strong> lernen wir, wie zwei Spieler gegeneinander antreten:</p>
+<ol>
+<li><strong>Zwei Schläger</strong>: Spieler 1 (Rot mit <code>W</code>/<code>S</code>), Spieler 2 (Blau mit Pfeiltasten).</li>
+<li><strong>Dynamischer Abprallwinkel</strong>: Trifft der Ball die Schlägermitte, fliegt er geradeaus. Trifft er den Rand, prallt er im steilen Winkel ab!</li>
+<li><strong>Tempo-Steigerung</strong>: Bei jedem Schlag wird der Ball 5% schneller (<code>speed *= 1.05f</code>).</li>
+</ol>
+<hr>
+<h2>🐍 Level 7: Spiel 2 – Das Schlangen-Duell (<a href="file:///Users/mtn/code/mtg/SnakeGame.hpp">SnakeGame.hpp</a>)</h2>
+<p>In <strong>Snake</strong> lernen wir zwei mächtige neue Programmier-Tricks kennen:</p>
+<h3>1. Das Kachel-Gitter (Grid)</h3>
+<p>Statt in einzelnen Pixeln rechnen wir hier in Kacheln (jede Kachel ist 8x8 Pixel groß):</p>
+<ul>
+<li>Unser Spielfeld hat <strong>40 Kacheln Breite</strong> und <strong>30 Kacheln Höhe</strong>.</li>
+<li>Eine Kachel-Position ist einfach:</li>
+<p>  <code>`</code>cpp</p>
+<p>  struct Cell { int x, y; };</p>
+<p>  <code>`</code></p>
+</ol>
+<h3>2. Wie bewegt sich eine Schlange?</h3>
+<p>Die Schlange ist eine Kette von Kacheln (<code>std::deque<Cell></code>). In jedem Schritt passiert Magie:</p>
+<pre><code class="language-cpp">
+// 1. Vorne einen neuen Kopf in Gehrichtung anfügen:
+body.push_front(neuerKopf);
+
+// 2. Hat die Schlange einen Apfel gefressen?
+if (apfelGefressen) {
+    score++; // Schlange wächst automatisch, weil wir den Schwanz NICHT löschen!
+} else {
+    body.pop_back(); // Schwanz nachziehen: Letztes Glied hinten abschneiden
+}
+</code></pre>
+<h3>3. Der „Apfel-Klau“-Mechanismus (Modell B)</h3>
+<p>Wenn eine Schlange an die Wand oder in den Gegner fährt:</p>
+<pre><code class="language-cpp">
+// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
+for (size_t i = 1; i &lt; body.size(); ++i) {
+    apples.push_back(body[i]);
+}
+// Schlange startet sofort wieder klein in ihrer Ecke neu!
+respawnSnake();
+</code></pre>
+<p>Der überlebende Spieler kann die Trümmer-Äpfel blitzschnell fressen und riesig werden!</p>
+<hr>
+<h2>🚀 Level 8: Spiel 3 – Die Weltraum-Schlacht (<a href="file:///Users/mtn/code/mtg/StarfighterGame.hpp">StarfighterGame.hpp</a>)</h2>
+<p>Hier steigen wir ein in die Welt der <strong>Partikel-Systeme</strong> und <strong>Pixel-Art-Schiffe</strong>:</p>
+<h3>1. Das 3D-Parallaxe Sternenfeld</h3>
+<p>Um dem Weltraum echte Tiefe zu verleihen, lassen wir 70 Sterne in <strong>3 verschiedenen Tiefen-Ebenen</strong> fliegen:</p>
+<ul>
+<li><strong>Hintergrund</strong> (dunkelgrau, langsam: 25 px/s) $\rightarrow$ Weit entfernte Sterne</li>
+<li><strong>Mittlere Sterne</strong> (hellgrau, mittel: 65 px/s)</li>
+<li><strong>Vordergrund</strong> (strahlend weiß, schnell: 130 px/s) $\rightarrow$ Nahe Sterne</li>
+</ul>
+<pre><code class="language-cpp">
+struct Star {
+    float x, y, speed;
+    uint8_t color;
+};
+
+// In jedem Frame nach unten wandern:
+s.y += s.speed * e.dt();
+if (s.y &gt;= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }
+</code></pre>
+<h3>2. 16x16 Pixel-Art Raumschiffe mit Bitmasken</h3>
+<p>Wir können Raumschiffe direkt im Code als Pixelmuster zeichnen:</p>
+<pre><code class="language-cpp">
+// Das 16x16 Delta X-Wing Schiff (Zeile für Zeile):
+static const uint16_t playerSprite[16] = {
+  0b0000000110000000, // Spitze
+  0b0000001111000000, // Cockpit
+  0b0100001111000010, // Flügelkanonen vorn
+  0b0100111111110010, // Delta-Flügel
+  0b1111111111111111, // Rumpf
+  0b0000001001000000, // Schubflamme
+};
+</code></pre>
+<h3>3. Schiffs-Explosionen mit echter Physik (Trägheit & Farbverlauf)</h3>
+<p>Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern <strong>nehmen den vollen Geschwindigkeitsvektor des Schiffs mit</strong>:</p>
+<pre><code class="language-cpp">
+// 1. Schiffsimpuls + radiale Sprengung
+p.vx = shipVx + burstSpeed * cos(angle);
+p.vy = shipVy + burstSpeed * sin(angle);
+
+// 2. Thermischer Farbverlauf über die Lebensdauer der Trümmer:
+// Frisch (100%-75%): Weißer Blitz -&gt; Gelb -&gt; Orange -&gt; Rote Glut -&gt; Dunkler Rauch
+</code></pre>
+<hr>
+<h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
+<p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>
+<pre><code class="language-cpp">
+class MenuGame : public Game {
+    std::unique_ptr&lt;PongGame&gt; pong;
+    std::unique_ptr&lt;SnakeGame&gt; snake;
+    std::unique_ptr&lt;StarfighterGame&gt; starfighter;
+
+    void update(Engine&amp; e) override {
+        // Mit Escape immer zurück ins Menü!
+        if (e.pressed(Key::Escape)) { currentGame = CurrentGame::Menu; }
+
+        if (e.pressed(Key::Num1)) { currentGame = CurrentGame::Pong; }
+        if (e.pressed(Key::Num2)) { currentGame = CurrentGame::Snake; }
+        if (e.pressed(Key::Num3)) { currentGame = CurrentGame::Starfighter; }
+    }
+};
+</code></pre>
+<hr>
+<h2>📋 Der Spickzettel (Cheat Sheet) auf einen Blick</h2>
+<pre><code class="language-cpp">
+// --- Malen ---
+e.cls(Farbe);                             // Bildschirm leeren
+e.pset(x, y, Farbe);                     // Pixel setzen
+e.line(x0, y0, x1, y1, Farbe);           // Linie ziehen
+e.rectfill(x, y, breite, hoehe, Farbe);  // Ausgefülltes Rechteck
+e.circlefill(x, y, radius, Farbe);       // Ausgefüllter Kreis
+e.draw_text(x, y, &quot;TEXT&quot;, Farbe);        // Text schreiben
+e.draw_digit(x, y, zahl, Farbe, 3);      // Große Ziffer malen
+
+// --- Steuerung ---
+if (e.key(Key::W)) { ... }               // Taste gedrückt halten
+if (e.pressed(Key::Space)) { ... }       // Taste neu angetippt
+e.mouse_x();                             // Maus X
+e.mouse_y();                             // Maus Y
+e.mouse_down();                          // Maustaste gedrückt?
+
+// --- Sound ---
+e.play_tone(frequenz, dauer);            // Ton abspielen
+e.play_melody({ {523, 0.1}, {659, 0.1} }); // Melodie
+
+// --- Farben ---
+Colors::DarkGreen, Colors::Red, Colors::Blue,
+Colors::Yellow, Colors::White, Colors::Black,
+Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray
+</code></pre>
+<p><strong>Viel Spaß beim Erfinden und Programmieren deiner eigenen Spiele! 🚀</strong></p>
+
+</body>
+</html>
