@@ -1,18 +1,18 @@
 #include "Engine.hpp"
-#include "PongGame.hpp"
+#include "MenuGame.hpp"
 
 // =============================================================================
-// Hier startet unser Spiel! (Hauptprogramm)
+// Hier startet unsere Retro-Spielebox! (Hauptprogramm)
 // =============================================================================
 int main() {
   // Erstelle das Spielfenster:
-  // - 320x240 Pixel (wie bei alten Retro-Konsolen)
+  // - 320x240 Pixel (Retro-Auflösung)
   // - 4-fache Vergrößerung (Fenstergröße: 1280x960 Pixel für gestochen scharfe Retro-Pixel)
-  // - Fenstertitel: "Retro 2-Spieler Pong"
-  EngineApp app(320, 240, 4, "Retro 2-Spieler Pong");
+  // - Fenstertitel: "MTG Retro Spielebox"
+  EngineApp app(320, 240, 4, "MTG Retro Spielebox");
 
-  // Setze das Pong-Spiel als unser aktives Spiel
-  app.setGame(std::make_unique<PongGame>());
+  // Starte mit dem Hauptmenü (hier kann man zwischen Pong und Snake wählen)
+  app.setGame(std::make_unique<MenuGame>());
 
   // Starte die Spiel-Schleife (läuft mit flüssigen 60 Bildern pro Sekunde)
   app.run();

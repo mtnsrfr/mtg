@@ -33,6 +33,8 @@ enum class Key {
   Space = static_cast<int>(sf::Keyboard::Key::Space),
   Enter = static_cast<int>(sf::Keyboard::Key::Enter),
   Escape = static_cast<int>(sf::Keyboard::Key::Escape),
+  Num1 = static_cast<int>(sf::Keyboard::Key::Num1),
+  Num2 = static_cast<int>(sf::Keyboard::Key::Num2),
 };
 
 // =============================================================================
