@@ -48,6 +48,7 @@ Du kannst diese Farben überall verwenden:
 | `e.circle(x, y, r, Farbe)` | **Kreis-Rahmen**: Zeichnet den Umriss eines Kreises. | `e.circle(160, 120, 20, Colors::White);` |
 | `e.circlefill(x, y, r, Farbe)` | **Ball malen**: Zeichnet einen ausgefüllten Kreis. | `e.circlefill(160, 120, 8, Colors::Yellow);` |
 | `e.draw_text(x, y, "TEXT", Farbe)` | **Schrift schreiben**: Schreibt Text auf den Bildschirm. | `e.draw_text(100, 50, "HALLO WELT", Colors::White);` |
+| `e.draw_digit(x, y, zahl, Farbe)` | **Große Zahl**: Schreibt Punktestände. | `e.draw_digit(100, 20, 5, Colors::Yellow, 3);` |
 
 > 🎯 **Mini-Quest 1**: Male ein Haus mit einem dreieckigen Dach (aus Linien) und einer bunten Tür!
 
@@ -106,6 +107,7 @@ Jetzt machen wir das Spiel interaktiv!
 * `Key::W`, `Key::S`, `Key::A`, `Key::D`
 * `Key::Up`, `Key::Down`, `Key::Left`, `Key::Right`
 * `Key::Space`, `Key::Enter`, `Key::Escape`
+* `Key::Num1`, `Key::Num2`, `Key::Num3`
 
 ### Mit der Maus malen:
 * `e.mouse_x()` und `e.mouse_y()` verraten dir die Position des Mauszeigers.
@@ -126,7 +128,7 @@ Wenn der Ball oben oder unten anstößt, kehren wir einfach seine vertikale Gesc
 ballY = ballY + ballVy;
 
 if (ballY <= 10 || ballY >= 230) {
-    ballVy = -ballVy;      // Richtung umdrehen: Aus + wird - und aus - wird +!
+    ballVy = -ballVy;        // Richtung umdrehen: Aus + wird - und aus - wird +!
     e.play_tone(400, 0.05f); // Abprall-Ton!
 }
 ```
@@ -136,7 +138,7 @@ Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:
 ```cpp
 if (ballX <= schlaegerX + schlaegerBreite &&
     ballY >= schlaegerY && ballY <= schlaegerY + schlaegerHoehe) {
-    ballVx = -ballVx;      // Ball fliegt wieder nach rechts zurück!
+    ballVx = -ballVx;        // Ball fliegt wieder nach rechts zurück!
     e.play_tone(800, 0.08f); // Treffer-Ton!
 }
 ```
@@ -152,7 +154,7 @@ Töne machen ein Spiel erst richtig lebendig!
 * **Heller Piep-Ton (z. B. Sprung / Treffer)**:
   `e.play_tone(784.0, 0.08f);` (Ton G5)
 * **Tiefer Wumm (z. B. Wandstoß / Explosion)**:
-  `e.play_tone(220.0, 0.15f);` (Ton A3)
+  `e.play_tone(140.0, 0.20f);` (Tiefer Bass)
 * **Sehr hoher Münzen-Sound**:
   `e.play_tone(1200.0, 0.05f);`
 
@@ -169,68 +171,123 @@ e.play_melody({
 
 ---
 
-## 🏆 Level 6: Wie man ein komplettes Spiel baut
+## 🏓 Level 6: Spiel 1 – Das Retro-Pong Match ([PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp))
 
-Schau dir **[PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp)** und **[SnakeGame.hpp](file:///Users/mtn/code/mtg/SnakeGame.hpp)** an. Ein gutes Spiel hat meistens 3 Phasen:
-
-```
-+-------------------------------------------------------+
-|  1. Startbildschirm: "DRÜCKE LEERTASTE ZUM STARTEN"   |
-+---------------------------+---------------------------+
-                            | (Spieler drückt Space)
-                            v
-+-------------------------------------------------------+
-|  2. Das Spiel läuft: Punkte sammeln, Bälle schlagen   |
-+---------------------------+---------------------------+
-                            | (Jemand hat das Ziel erreicht)
-                            v
-+-------------------------------------------------------+
-|  3. Sieger-Bildschirm: "ROT GEWINNT! NEUES SPIEL?"    |
-+-------------------------------------------------------+
-```
+In **Pong** lernen wir, wie zwei Spieler gegeneinander antreten:
+1. **Zwei Schläger**: Spieler 1 (Rot mit `W`/`S`), Spieler 2 (Blau mit Pfeiltasten).
+2. **Dynamischer Abprallwinkel**: Trifft der Ball die Schlägermitte, fliegt er geradeaus. Trifft er den Rand, prallt er im steilen Winkel ab!
+3. **Tempo-Steigerung**: Bei jedem Schlag wird der Ball 5% schneller (`speed *= 1.05f`).
 
 ---
 
-## 💡 Level 7: Die Spiele-Bibliothek
+## 🐍 Level 7: Spiel 2 – Das Schlangen-Duell ([SnakeGame.hpp](file:///Users/mtn/code/mtg/SnakeGame.hpp))
 
-In deinem Projekt findest du bereits drei fertige Spiele, die du spielen, verändern und erweitern kannst:
+In **Snake** lernen wir zwei mächtige neue Programmier-Tricks kennen:
 
-### 1. 🏓 [PongGame.hpp](file:///Users/mtn/code/mtg/PongGame.hpp) (2-Spieler Retro Pong)
-* Spieler 1 (Rot) mit `W`/`S`, Spieler 2 (Blau) mit `Pfeiltasten`.
-* Physik mit dynamischen Abprallwinkeln und Treffer-Tönen!
+### 1. Das Kachel-Gitter (Grid)
+Statt in einzelnen Pixeln rechnen wir hier in Kacheln (jede Kachel ist 8x8 Pixel groß):
+* Unser Spielfeld hat **40 Kacheln Breite** und **30 Kacheln Höhe**.
+* Eine Kachel-Position ist einfach:
+  ```cpp
+  struct Cell { int x, y; };
+  ```
 
-### 2. 🐍 [SnakeGame.hpp](file:///Users/mtn/code/mtg/SnakeGame.hpp) (2-Spieler Schlangen-Duell - Modell B)
-* Beide Schlangen jagen nach roten Äpfeln.
-* **Der Apfel-Klau-Trick**: Wenn eine Schlange anstößt, zerplatzt ihr Körper in Äpfel, die der Gegner fressen kann!
-* Wer zuerst 12 Punkte hat, gewinnt!
+### 2. Wie bewegt sich eine Schlange?
+Die Schlange ist eine Kette von Kacheln (`std::deque<Cell>`). In jedem Schritt passiert Magie:
+```cpp
+// 1. Vorne einen neuen Kopf in Gehrichtung anfügen:
+body.push_front(neuerKopf);
 
-### 3. 🚀 [StarfighterGame.hpp](file:///Users/mtn/code/mtg/StarfighterGame.hpp) (Weltraum-Schlacht)
-* **Partikel-Sternenfeld**: 70 funkelnde Sterne fliegen mit 3 verschiedenen Geschwindigkeiten an dir vorbei.
-* **16x16 Pixel-Art Raumschiffe**: Dein eigener Delta-Wing Jäger mit Doppellaser gegen feindliche TIE-Attacker.
-* **Explosionen**: Treffer lassen bunte Trümmerteilchen (Partikel) in alle Richtungen sprühen!
-* Wer die meisten Angreifer abschießt, stellt den neuen Highscore auf!
+// 2. Hat die Schlange einen Apfel gefressen?
+if (apfelGefressen) {
+    score++; // Schlange wächst automatisch, weil wir den Schwanz NICHT löschen!
+} else {
+    body.pop_back(); // Schwanz nachziehen: Letztes Glied hinten abschneiden
+}
+```
 
-### 4. 🕹️ [MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp) (Die Spiele-Auswahl)
-* Taste `1` startet Pong, Taste `2` startet Snake, Taste `3` startet Starfighter.
-* Mit `Escape` kommst du jederzeit zurück ins Menü!
+### 3. Der „Apfel-Klau“-Mechanismus (Modell B)
+Wenn eine Schlange an die Wand oder in den Gegner fährt:
+```cpp
+// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
+for (size_t i = 1; i < body.size(); ++i) {
+    apples.push_back(body[i]);
+}
+// Schlange startet sofort wieder klein in ihrer Ecke neu!
+respawnSnake();
+```
+Der überlebende Spieler kann die Trümmer-Äpfel blitzschnell fressen und riesig werden!
 
 ---
 
-## ✨ Level 8: Das Geheimnis der Partikel (Sterne & Explosionen)
+## 🚀 Level 8: Spiel 3 – Die Weltraum-Schlacht ([StarfighterGame.hpp](file:///Users/mtn/code/mtg/StarfighterGame.hpp))
 
-Ein **Partikel** ist einfach ein kleiner bunter Punkt, der eine Position $(X, Y)$ und eine Geschwindigkeit hat:
+Hier steigen wir ein in die Welt der **Partikel-Systeme** und **Pixel-Art-Schiffe**:
+
+### 1. Das 3D-Parallaxe Sternenfeld
+Um dem Weltraum echte Tiefe zu verleihen, lassen wir 70 Sterne in **3 verschiedenen Tiefen-Ebenen** fliegen:
+* **Hintergrund** (dunkelgrau, langsam: 25 px/s) $\rightarrow$ Weit entfernte Sterne
+* **Mittlere Sterne** (hellgrau, mittel: 65 px/s)
+* **Vordergrund** (strahlend weiß, schnell: 130 px/s) $\rightarrow$ Nahe Sterne
 
 ```cpp
-struct Stern {
-    float x;
-    float y;
-    float geschwindigkeit; // z.B. 30 (langsam/dunkel) oder 120 (schnell/hell)
+struct Star {
+    float x, y, speed;
+    uint8_t color;
 };
 
-// In jedem Frame wandert der Stern nach unten:
-stern.y += stern.geschwindigkeit * e.dt();
+// In jedem Frame nach unten wandern:
+s.y += s.speed * e.dt();
+if (s.y >= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }
 ```
-Wenn du viele davon auf den Bildschirm zauberst, entsteht ein wunderschöner, lebendiger 3D-Weltraum!
+
+### 2. 16x16 Pixel-Art Raumschiffe mit Bitmasken
+Wir können Raumschiffe direkt im Code als Pixelmuster zeichnen:
+```cpp
+// Das 16x16 Delta X-Wing Schiff (Zeile für Zeile):
+static const uint16_t playerSprite[16] = {
+  0b0000000110000000, // Spitze
+  0b0000001111000000, // Cockpit
+  0b0100001111000010, // Flügelkanonen vorn
+  0b0100111111110010, // Delta-Flügel
+  0b1111111111111111, // Rumpf
+  0b0000001001000000, // Schubflamme
+};
+```
+
+### 3. Schiffs-Explosionen mit echter Physik (Trägheit & Farbverlauf)
+Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern **nehmen den vollen Geschwindigkeitsvektor des Schiffs mit**:
+```cpp
+// 1. Schiffsimpuls + radiale Sprengung
+p.vx = shipVx + burstSpeed * cos(angle);
+p.vy = shipVy + burstSpeed * sin(angle);
+
+// 2. Thermischer Farbverlauf über die Lebensdauer der Trümmer:
+// Frisch (100%-75%): Weißer Blitz -> Gelb -> Orange -> Rote Glut -> Dunkler Rauch
+```
+
+---
+
+## 🕹️ Level 9: Die Retro-Konsole ([MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp))
+
+Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?
+
+```cpp
+class MenuGame : public Game {
+    std::unique_ptr<PongGame> pong;
+    std::unique_ptr<SnakeGame> snake;
+    std::unique_ptr<StarfighterGame> starfighter;
+
+    void update(Engine& e) override {
+        // Mit Escape immer zurück ins Menü!
+        if (e.pressed(Key::Escape)) { currentGame = CurrentGame::Menu; }
+
+        if (e.pressed(Key::Num1)) { currentGame = CurrentGame::Pong; }
+        if (e.pressed(Key::Num2)) { currentGame = CurrentGame::Snake; }
+        if (e.pressed(Key::Num3)) { currentGame = CurrentGame::Starfighter; }
+    }
+};
+```
 
 ---
 
@@ -259,7 +316,8 @@ e.play_melody({ {523, 0.1}, {659, 0.1} }); // Melodie
 
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,
-Colors::Yellow, Colors::White, Colors::Black
+Colors::Yellow, Colors::White, Colors::Black,
+Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray
 ```
 
 **Viel Spaß beim Erfinden und Programmieren deiner eigenen Spiele! 🚀**
