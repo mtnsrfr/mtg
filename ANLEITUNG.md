@@ -19,13 +19,129 @@ Genauso funktioniert dein Computer:
 
 ---
 
+## 🧠 Das C++ Zauberbuch: Die wichtigsten Grundlagen
+
+C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die 6 wichtigsten Bausteine, die du brauchst:
+
+### 1. Variablen (Die beschrifteten Schachteln)
+In Variablen merkt sich der Computer Zahlen, Texte und Zustände:
+* `int` (Ganze Zahlen): Für Punktestände, Leben oder Zähler.
+  ```cpp
+  int score = 0;
+  int leben = 3;
+  ```
+* `float` (Kommazahlen): Für Positionen und Geschwindigkeiten (damit Bewegungen butterweich sind).
+  ```cpp
+  float ballX = 160.0f;
+  float geschwindigkeit = 3.5f;
+  ```
+* `bool` (Schalter: `true` / `false`): Für Ja/Nein-Zustände.
+  ```cpp
+  bool spielAktiv = true;
+  bool laserBereit = false;
+  ```
+
+---
+
+### 2. Entscheidungen treffen (`if` und `else`)
+Mit `if` („Wenn...“) kann dein Spiel auf Ereignisse reagieren:
+```cpp
+if (ballX > 320) {
+    score = score + 1;       // Tor erzielt!
+    e.play_tone(Notes::C5);
+} else {
+    // Sonst: Ball ist noch im Feld
+}
+```
+
+#### Die Vergleichs-Zeichen:
+* `==` Ist gleich? (`if (leben == 0)`)
+* `!=` Ist ungleich? (`if (richtung != Direction::Down)`)
+* `<`, `>`, `<=`, `>=` Kleiner, Größer, Kleiner-Gleich, Größer-Gleich
+* `&&` **UND** (`if (ballX > 0 && ballX < 320)`)
+* `||` **ODER** (`if (e.key(Key::W) || e.key(Key::Up))`)
+
+---
+
+### 3. Wiederholungen (`for`-Schleifen)
+Wenn du viele Dinge auf einmal tun willst (z. B. 70 Sterne zeichnen oder 5 Äpfel platzieren), benutzt du eine `for`-Schleife:
+```cpp
+// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
+for (int i = 0; i < 5; ++i) {
+    spawnApple();
+}
+```
+
+---
+
+### 4. Eigene Funktionen & Methoden (Eigene Zaubersprüche)
+Statt denselben Code 10-mal zu schreiben, packen wir ihn in eine Funktion mit eigenem Namen:
+```cpp
+// Eigener Zauberspruch zum Abfeuern:
+void feuerLaser(Engine& e) {
+    e.play_tone(Notes::As5, 0.04f);
+    lasers.push_back({playerX + 7, playerY, -300.0f, true});
+}
+```
+
+---
+
+### 5. Die `std` Standard-Bibliothek (Schlaue Werkzeuge)
+C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
+
+* **`std::vector` (Die flexible Liste)**:
+  Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:
+  ```cpp
+  std::vector<Star> stars;           // Liste aller Sterne
+  stars.push_back(neuerStern);       // Stern hinten anfügen
+  stars.pop_back();                  // Letzten Stern entfernen
+  int anzahl = stars.size();         // Wie viele Sterne haben wir?
+  ```
+
+* **`std::deque` (Die Schlange / Kette)**:
+  Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:
+  ```cpp
+  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen
+  body.pop_back();            // Hinten Schwanzteil abschneiden
+  ```
+
+* **`std::clamp` (Der Begrenzer)**:
+  Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):
+  ```cpp
+  playerY = std::clamp(playerY, 18.0f, 200.0f);
+  ```
+
+---
+
+### 6. Echtes Hacken: Dein Spiel im Terminal kompilieren!
+Ein **Compiler** übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.
+
+Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:
+```bash
+# 1. Den C++ Compiler 'g++' aufrufen:
+g++ -std=c++17 -I/opt/homebrew/include main.cc -o mein_spiel -L/opt/homebrew/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+
+# 2. Dein fertiges Spiel starten:
+./mein_spiel
+```
+
+Oder noch einfacher mit unserem **Makefile**:
+```bash
+make          # Kompiliert das Spiel
+./test        # Startet das Spiel
+make static   # Baut ein eigenständiges Programm (ohne externe Abhängigkeiten)
+make bundle   # Baut eine echte macOS App: MTG.app!
+```
+
+---
+
 ## 🎨 Level 1: Die Malerwerkstatt (Farben & Formen)
 
 ### 1. Die Zauberleinwand & Koordinaten
 Unser Bildschirm ist **320 Pixel breit** und **240 Pixel hoch**.
-* **$X$ (nach rechts)**: Geht von $0$ (ganz links) bis $320$ (ganz rechts).
-* **$Y$ (nach unten)**: Geht von $0$ (ganz oben) bis $240$ (ganz unten).
-* Die Ecke oben links ist **$(0, 0)$**!
+* **X (nach rechts)**: Geht von 0 (ganz links) bis 320 (ganz rechts).
+* **Y (nach unten)**: Geht von 0 (ganz oben) bis 240 (ganz unten).
+* Die Ecke oben links ist **(0, 0)**!
 
 ### 2. Der Farbkasten
 Du kannst diese Farben überall verwenden:
@@ -87,7 +203,7 @@ class MeinSpiel : public Game {
 Jetzt machen wir das Spiel interaktiv!
 
 ### Tasten abfragen:
-* `e.key(Key::...)` $\rightarrow$ Prüft, ob eine Taste **gedrückt gehalten** wird (perfekt für Schläger / Raumschiffe):
+* `e.key(Key::...)` → Prüft, ob eine Taste **gedrückt gehalten** wird (perfekt für Schläger / Raumschiffe):
   ```cpp
   if (e.key(Key::W)) {
       spielerY = spielerY - 4.0f; // Nach oben fliegen
@@ -96,10 +212,10 @@ Jetzt machen wir das Spiel interaktiv!
       spielerY = spielerY + 4.0f; // Nach unten fliegen
   }
   ```
-* `e.pressed(Key::...)` $\rightarrow$ Prüft, ob eine Taste **gerade angetippt** wurde (perfekt für Schießen oder Springen):
+* `e.pressed(Key::...)` → Prüft, ob eine Taste **gerade angetippt** wurde (perfekt für Schießen oder Springen):
   ```cpp
   if (e.pressed(Key::Space)) {
-      e.play_tone(880, 0.1f); // Schuss-Ton abspielen!
+      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!
   }
   ```
 
@@ -128,8 +244,8 @@ Wenn der Ball oben oder unten anstößt, kehren wir einfach seine vertikale Gesc
 ballY = ballY + ballVy;
 
 if (ballY <= 10 || ballY >= 230) {
-    ballVy = -ballVy;        // Richtung umdrehen: Aus + wird - und aus - wird +!
-    e.play_tone(400, 0.05f); // Abprall-Ton!
+    ballVy = -ballVy;               // Richtung umdrehen: Aus + wird - und aus - wird +!
+    e.play_tone(Notes::G4, 0.05f); // Abprall-Ton!
 }
 ```
 
@@ -138,8 +254,8 @@ Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:
 ```cpp
 if (ballX <= schlaegerX + schlaegerBreite &&
     ballY >= schlaegerY && ballY <= schlaegerY + schlaegerHoehe) {
-    ballVx = -ballVx;        // Ball fliegt wieder nach rechts zurück!
-    e.play_tone(800, 0.08f); // Treffer-Ton!
+    ballVx = -ballVx;               // Ball fliegt wieder nach rechts zurück!
+    e.play_tone(Notes::G5, 0.08f); // Treffer-Ton!
 }
 ```
 
@@ -241,9 +357,9 @@ Hier steigen wir ein in die Welt der **Partikel-Systeme** und **Pixel-Art-Schiff
 
 ### 1. Das 3D-Parallaxe Sternenfeld
 Um dem Weltraum echte Tiefe zu verleihen, lassen wir 70 Sterne in **3 verschiedenen Tiefen-Ebenen** fliegen:
-* **Hintergrund** (dunkelgrau, langsam: 25 px/s) $\rightarrow$ Weit entfernte Sterne
+* **Hintergrund** (dunkelgrau, langsam: 25 px/s) → Weit entfernte Sterne
 * **Mittlere Sterne** (hellgrau, mittel: 65 px/s)
-* **Vordergrund** (strahlend weiß, schnell: 130 px/s) $\rightarrow$ Nahe Sterne
+* **Vordergrund** (strahlend weiß, schnell: 130 px/s) → Nahe Sterne
 
 ```cpp
 struct Star {

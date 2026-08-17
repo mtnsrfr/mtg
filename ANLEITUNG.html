@@ -183,13 +183,119 @@
 <p>  <code>`</code></p>
 </ol>
 <hr>
+<h2>🧠 Das C++ Zauberbuch: Die wichtigsten Grundlagen</h2>
+<p>C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die 6 wichtigsten Bausteine, die du brauchst:</p>
+<h3>1. Variablen (Die beschrifteten Schachteln)</h3>
+<p>In Variablen merkt sich der Computer Zahlen, Texte und Zustände:</p>
+<ul>
+<li><code>int</code> (Ganze Zahlen): Für Punktestände, Leben oder Zähler.</li>
+<p>  <code>`</code>cpp</p>
+<p>  int score = 0;</p>
+<p>  int leben = 3;</p>
+<p>  <code>`</code></p>
+<li><code>float</code> (Kommazahlen): Für Positionen und Geschwindigkeiten (damit Bewegungen butterweich sind).</li>
+<p>  <code>`</code>cpp</p>
+<p>  float ballX = 160.0f;</p>
+<p>  float geschwindigkeit = 3.5f;</p>
+<p>  <code>`</code></p>
+<li><code>bool</code> (Schalter: <code>true</code> / <code>false</code>): Für Ja/Nein-Zustände.</li>
+<p>  <code>`</code>cpp</p>
+<p>  bool spielAktiv = true;</p>
+<p>  bool laserBereit = false;</p>
+<p>  <code>`</code></p>
+</ol>
+<hr>
+<h3>2. Entscheidungen treffen (<code>if</code> und <code>else</code>)</h3>
+<p>Mit <code>if</code> („Wenn...“) kann dein Spiel auf Ereignisse reagieren:</p>
+<pre><code class="language-cpp">
+if (ballX &gt; 320) {
+    score = score + 1;       // Tor erzielt!
+    e.play_tone(Notes::C5);
+} else {
+    // Sonst: Ball ist noch im Feld
+}
+</code></pre>
+<h4>Die Vergleichs-Zeichen:</h4>
+<ul>
+<li><code>==</code> Ist gleich? (<code>if (leben == 0)</code>)</li>
+<li><code>!=</code> Ist ungleich? (<code>if (richtung != Direction::Down)</code>)</li>
+<li><code><</code>, <code>></code>, <code><=</code>, <code>>=</code> Kleiner, Größer, Kleiner-Gleich, Größer-Gleich</li>
+<li><code>&&</code> <strong>UND</strong> (<code>if (ballX > 0 && ballX < 320)</code>)</li>
+<li><code>||</code> <strong>ODER</strong> (<code>if (e.key(Key::W) || e.key(Key::Up))</code>)</li>
+</ol>
+<hr>
+<h3>3. Wiederholungen (<code>for</code>-Schleifen)</h3>
+<p>Wenn du viele Dinge auf einmal tun willst (z. B. 70 Sterne zeichnen oder 5 Äpfel platzieren), benutzt du eine <code>for</code>-Schleife:</p>
+<pre><code class="language-cpp">
+// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
+for (int i = 0; i &lt; 5; ++i) {
+    spawnApple();
+}
+</code></pre>
+<hr>
+<h3>4. Eigene Funktionen & Methoden (Eigene Zaubersprüche)</h3>
+<p>Statt denselben Code 10-mal zu schreiben, packen wir ihn in eine Funktion mit eigenem Namen:</p>
+<pre><code class="language-cpp">
+// Eigener Zauberspruch zum Abfeuern:
+void feuerLaser(Engine&amp; e) {
+    e.play_tone(Notes::As5, 0.04f);
+    lasers.push_back({playerX + 7, playerY, -300.0f, true});
+}
+</code></pre>
+<hr>
+<h3>5. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
+<p>C++ bringt einen Werkzeugkasten namens <code>std::</code> (Standard Library) mit:</p>
+<ul>
+<li><strong><code>std::vector</code> (Die flexible Liste)</strong>:</li>
+<p>  Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:</p>
+<p>  <code>`</code>cpp</p>
+<p>  std::vector<Star> stars;           // Liste aller Sterne</p>
+<p>  stars.push_back(neuerStern);       // Stern hinten anfügen</p>
+<p>  stars.pop_back();                  // Letzten Stern entfernen</p>
+<p>  int anzahl = stars.size();         // Wie viele Sterne haben wir?</p>
+<p>  <code>`</code></p>
+</ol>
+<ul>
+<li><strong><code>std::deque</code> (Die Schlange / Kette)</strong>:</li>
+<p>  Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:</p>
+<p>  <code>`</code>cpp</p>
+<p>  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen</p>
+<p>  body.pop_back();            // Hinten Schwanzteil abschneiden</p>
+<p>  <code>`</code></p>
+</ol>
+<ul>
+<li><strong><code>std::clamp</code> (Der Begrenzer)</strong>:</li>
+<p>  Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
+<p>  <code>`</code>cpp</p>
+<p>  playerY = std::clamp(playerY, 18.0f, 200.0f);</p>
+<p>  <code>`</code></p>
+</ol>
+<hr>
+<h3>6. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
+<p>Ein <strong>Compiler</strong> übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.</p>
+<p>Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:</p>
+<pre><code class="language-bash">
+# 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
+g++ -std=c++17 -I/opt/homebrew/include main.cc -o mein_spiel -L/opt/homebrew/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+
+# 2. Dein fertiges Spiel starten:
+./mein_spiel
+</code></pre>
+<p>Oder noch einfacher mit unserem <strong>Makefile</strong>:</p>
+<pre><code class="language-bash">
+make          # Kompiliert das Spiel
+./test        # Startet das Spiel
+make static   # Baut ein eigenständiges Programm (ohne externe Abhängigkeiten)
+make bundle   # Baut eine echte macOS App: MTG.app!
+</code></pre>
+<hr>
 <h2>🎨 Level 1: Die Malerwerkstatt (Farben & Formen)</h2>
 <h3>1. Die Zauberleinwand & Koordinaten</h3>
 <p>Unser Bildschirm ist <strong>320 Pixel breit</strong> und <strong>240 Pixel hoch</strong>.</p>
 <ul>
-<li><strong>$X$ (nach rechts)</strong>: Geht von $0$ (ganz links) bis $320$ (ganz rechts).</li>
-<li><strong>$Y$ (nach unten)</strong>: Geht von $0$ (ganz oben) bis $240$ (ganz unten).</li>
-<li>Die Ecke oben links ist <strong>$(0, 0)$</strong>!</li>
+<li><strong>X (nach rechts)</strong>: Geht von 0 (ganz links) bis 320 (ganz rechts).</li>
+<li><strong>Y (nach unten)</strong>: Geht von 0 (ganz oben) bis 240 (ganz unten).</li>
+<li>Die Ecke oben links ist <strong>(0, 0)</strong>!</li>
 </ul>
 <h3>2. Der Farbkasten</h3>
 <p>Du kannst diese Farben überall verwenden:</p>
@@ -284,7 +390,7 @@ class MeinSpiel : public Game {
 <p>Jetzt machen wir das Spiel interaktiv!</p>
 <h3>Tasten abfragen:</h3>
 <ul>
-<li><code>e.key(Key::...)</code> $\rightarrow$ Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (perfekt für Schläger / Raumschiffe):</li>
+<li><code>e.key(Key::...)</code> → Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (perfekt für Schläger / Raumschiffe):</li>
 <p>  <code>`</code>cpp</p>
 <p>  if (e.key(Key::W)) {</p>
 <p>      spielerY = spielerY - 4.0f; // Nach oben fliegen</p>
@@ -293,10 +399,10 @@ class MeinSpiel : public Game {
 <p>      spielerY = spielerY + 4.0f; // Nach unten fliegen</p>
 <p>  }</p>
 <p>  <code>`</code></p>
-<li><code>e.pressed(Key::...)</code> $\rightarrow$ Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (perfekt für Schießen oder Springen):</li>
+<li><code>e.pressed(Key::...)</code> → Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (perfekt für Schießen oder Springen):</li>
 <p>  <code>`</code>cpp</p>
 <p>  if (e.pressed(Key::Space)) {</p>
-<p>      e.play_tone(880, 0.1f); // Schuss-Ton abspielen!</p>
+<p>      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!</p>
 <p>  }</p>
 <p>  <code>`</code></p>
 </ol>
@@ -325,8 +431,8 @@ class MeinSpiel : public Game {
 ballY = ballY + ballVy;
 
 if (ballY &lt;= 10 || ballY &gt;= 230) {
-    ballVy = -ballVy;        // Richtung umdrehen: Aus + wird - und aus - wird +!
-    e.play_tone(400, 0.05f); // Abprall-Ton!
+    ballVy = -ballVy;               // Richtung umdrehen: Aus + wird - und aus - wird +!
+    e.play_tone(Notes::G4, 0.05f); // Abprall-Ton!
 }
 </code></pre>
 <h3>2. Schläger trifft Ball (Kollisionsprüfung)</h3>
@@ -334,8 +440,8 @@ if (ballY &lt;= 10 || ballY &gt;= 230) {
 <pre><code class="language-cpp">
 if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
     ballY &gt;= schlaegerY &amp;&amp; ballY &lt;= schlaegerY + schlaegerHoehe) {
-    ballVx = -ballVx;        // Ball fliegt wieder nach rechts zurück!
-    e.play_tone(800, 0.08f); // Treffer-Ton!
+    ballVx = -ballVx;               // Ball fliegt wieder nach rechts zurück!
+    e.play_tone(Notes::G5, 0.08f); // Treffer-Ton!
 }
 </code></pre>
 <hr>
@@ -427,9 +533,9 @@ respawnSnake();
 <h3>1. Das 3D-Parallaxe Sternenfeld</h3>
 <p>Um dem Weltraum echte Tiefe zu verleihen, lassen wir 70 Sterne in <strong>3 verschiedenen Tiefen-Ebenen</strong> fliegen:</p>
 <ul>
-<li><strong>Hintergrund</strong> (dunkelgrau, langsam: 25 px/s) $\rightarrow$ Weit entfernte Sterne</li>
+<li><strong>Hintergrund</strong> (dunkelgrau, langsam: 25 px/s) → Weit entfernte Sterne</li>
 <li><strong>Mittlere Sterne</strong> (hellgrau, mittel: 65 px/s)</li>
-<li><strong>Vordergrund</strong> (strahlend weiß, schnell: 130 px/s) $\rightarrow$ Nahe Sterne</li>
+<li><strong>Vordergrund</strong> (strahlend weiß, schnell: 130 px/s) → Nahe Sterne</li>
 </ul>
 <pre><code class="language-cpp">
 struct Star {
