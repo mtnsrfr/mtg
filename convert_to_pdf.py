@@ -166,7 +166,7 @@ html_document = f"""<!DOCTYPE html>
   
   @page {{
     size: A4;
-    margin: 18mm 14mm 18mm 14mm;
+    margin: 14mm 12mm 14mm 12mm;
   }}
 
   * {{
@@ -175,93 +175,95 @@ html_document = f"""<!DOCTYPE html>
 
   body {{
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.6;
+    line-height: 1.55;
     color: #1e293b;
     background: #ffffff;
-    max-width: 880px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 10px 15px;
   }}
 
   h1 {{
-    font-size: 2.2rem;
+    font-size: 2.1rem;
     font-weight: 800;
     color: #0f172a;
     border-bottom: 3px solid #3b82f6;
-    padding-bottom: 12px;
-    margin-top: 10px;
-    margin-bottom: 20px;
+    padding-bottom: 10px;
+    margin-top: 5px;
+    margin-bottom: 18px;
   }}
 
   h2 {{
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 700;
     color: #1e3a8a;
-    margin-top: 35px;
-    margin-bottom: 14px;
+    margin-top: 30px;
+    margin-bottom: 12px;
     border-bottom: 1.5px solid #e2e8f0;
-    padding-bottom: 6px;
+    padding-bottom: 5px;
     page-break-after: avoid;
   }}
 
   h3 {{
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: #1d4ed8;
-    margin-top: 24px;
-    margin-bottom: 10px;
-    page-break-after: avoid;
-  }}
-
-  h4 {{
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #334155;
-    margin-top: 16px;
+    margin-top: 20px;
     margin-bottom: 8px;
     page-break-after: avoid;
   }}
 
-  p {{
+  h4 {{
     font-size: 1.02rem;
+    font-weight: 600;
     color: #334155;
-    margin: 10px 0;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }}
+
+  p {{
+    font-size: 0.98rem;
+    color: #334155;
+    margin: 8px 0;
   }}
 
   ul, ol {{
-    margin: 10px 0 16px 24px;
+    margin: 8px 0 14px 22px;
     padding: 0;
   }}
 
   li {{
-    font-size: 1.02rem;
+    font-size: 0.98rem;
     color: #334155;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }}
 
   code {{
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
     background: #eff6ff;
     color: #1d4ed8;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.88em;
     border: 1px solid #dbeafe;
   }}
 
   pre {{
     background: #0f172a;
     color: #f8fafc;
-    padding: 14px 18px;
-    border-radius: 8px;
+    padding: 12px 16px;
+    border-radius: 6px;
     overflow-x: auto;
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    font-size: 0.92rem;
-    line-height: 1.48;
-    margin: 14px 0;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    margin: 10px 0 14px 0;
     page-break-inside: avoid;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     border-left: 4px solid #3b82f6;
+    white-space: pre-wrap;
+    word-break: break-word;
   }}
 
   pre code {{
@@ -270,20 +272,22 @@ html_document = f"""<!DOCTYPE html>
     padding: 0;
     border: none;
     font-size: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
   }}
 
   table {{
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 16px 0;
     page-break-inside: avoid;
   }}
 
   th, td {{
     border: 1px solid #cbd5e1;
-    padding: 9px 12px;
+    padding: 8px 10px;
     text-align: left;
-    font-size: 0.98rem;
+    font-size: 0.92rem;
   }}
 
   th {{
@@ -299,18 +303,18 @@ html_document = f"""<!DOCTYPE html>
   blockquote {{
     border-left: 4px solid #f59e0b;
     background: #fffbeb;
-    padding: 12px 18px;
-    margin: 18px 0;
-    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
     color: #92400e;
     font-weight: 600;
-    font-size: 1.02rem;
+    font-size: 0.98rem;
   }}
 
   hr {{
     border: none;
     border-top: 2px dashed #cbd5e1;
-    margin: 28px 0;
+    margin: 24px 0;
   }}
 
   a {{

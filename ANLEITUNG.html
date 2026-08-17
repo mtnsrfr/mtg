@@ -8,7 +8,7 @@
   
   @page {
     size: A4;
-    margin: 18mm 14mm 18mm 14mm;
+    margin: 14mm 12mm 14mm 12mm;
   }
 
   * {
@@ -17,93 +17,95 @@
 
   body {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.6;
+    line-height: 1.55;
     color: #1e293b;
     background: #ffffff;
-    max-width: 880px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 10px 15px;
   }
 
   h1 {
-    font-size: 2.2rem;
+    font-size: 2.1rem;
     font-weight: 800;
     color: #0f172a;
     border-bottom: 3px solid #3b82f6;
-    padding-bottom: 12px;
-    margin-top: 10px;
-    margin-bottom: 20px;
+    padding-bottom: 10px;
+    margin-top: 5px;
+    margin-bottom: 18px;
   }
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 700;
     color: #1e3a8a;
-    margin-top: 35px;
-    margin-bottom: 14px;
+    margin-top: 30px;
+    margin-bottom: 12px;
     border-bottom: 1.5px solid #e2e8f0;
-    padding-bottom: 6px;
+    padding-bottom: 5px;
     page-break-after: avoid;
   }
 
   h3 {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: #1d4ed8;
-    margin-top: 24px;
-    margin-bottom: 10px;
-    page-break-after: avoid;
-  }
-
-  h4 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #334155;
-    margin-top: 16px;
+    margin-top: 20px;
     margin-bottom: 8px;
     page-break-after: avoid;
   }
 
-  p {
+  h4 {
     font-size: 1.02rem;
+    font-weight: 600;
     color: #334155;
-    margin: 10px 0;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  p {
+    font-size: 0.98rem;
+    color: #334155;
+    margin: 8px 0;
   }
 
   ul, ol {
-    margin: 10px 0 16px 24px;
+    margin: 8px 0 14px 22px;
     padding: 0;
   }
 
   li {
-    font-size: 1.02rem;
+    font-size: 0.98rem;
     color: #334155;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   code {
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
     background: #eff6ff;
     color: #1d4ed8;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.88em;
     border: 1px solid #dbeafe;
   }
 
   pre {
     background: #0f172a;
     color: #f8fafc;
-    padding: 14px 18px;
-    border-radius: 8px;
+    padding: 12px 16px;
+    border-radius: 6px;
     overflow-x: auto;
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    font-size: 0.92rem;
-    line-height: 1.48;
-    margin: 14px 0;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    margin: 10px 0 14px 0;
     page-break-inside: avoid;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     border-left: 4px solid #3b82f6;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   pre code {
@@ -112,20 +114,22 @@
     padding: 0;
     border: none;
     font-size: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 16px 0;
     page-break-inside: avoid;
   }
 
   th, td {
     border: 1px solid #cbd5e1;
-    padding: 9px 12px;
+    padding: 8px 10px;
     text-align: left;
-    font-size: 0.98rem;
+    font-size: 0.92rem;
   }
 
   th {
@@ -141,18 +145,18 @@
   blockquote {
     border-left: 4px solid #f59e0b;
     background: #fffbeb;
-    padding: 12px 18px;
-    margin: 18px 0;
-    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
     color: #92400e;
     font-weight: 600;
-    font-size: 1.02rem;
+    font-size: 0.98rem;
   }
 
   hr {
     border: none;
     border-top: 2px dashed #cbd5e1;
-    margin: 28px 0;
+    margin: 24px 0;
   }
 
   a {
@@ -252,10 +256,11 @@
 <h3>2. Entscheidungen treffen (<code>if</code> und <code>else</code>)</h3>
 <p>Mit <code>if</code> („Wenn...“) kann dein Spiel auf Ereignisse reagieren:</p>
 <pre><code class="language-cpp">if (ballX &gt; 320) {
-    score = score + 1;       // Tor erzielt!
+    // Tor erzielt!
+    score = score + 1;
     e.play_tone(Notes::C5);
 } else {
-    // Sonst: Ball ist noch im Feld
+    // Sonst: Ball ist noch im Spielfeld
 }</code></pre>
 <h4>Die Vergleichs-Zeichen:</h4>
 <ul>
@@ -268,7 +273,7 @@
 <hr>
 <h3>3. Wiederholungen (<code>for</code>-Schleifen)</h3>
 <p>Wenn du viele Dinge auf einmal tun willst (z. B. 70 Sterne zeichnen oder 5 Äpfel platzieren), benutzt du eine <code>for</code>-Schleife:</p>
-<pre><code class="language-cpp">// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
+<pre><code class="language-cpp">// Zählt von 0 bis 4 (wiederholt sich 5-mal):
 for (int i = 0; i &lt; 5; ++i) {
     spawnApple();
 }</code></pre>
@@ -287,35 +292,38 @@ void feuerLaser(Engine&amp; e) {
 <li><strong><code>std::vector</code> (Die flexible Liste)</strong>:</li>
 </ul>
 <p>Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:</p>
-<pre><code class="language-cpp">  std::vector&lt;Star&gt; stars;           // Liste aller Sterne
-  stars.push_back(neuerStern);       // Stern hinten anfügen
-  stars.pop_back();                  // Letzten Stern entfernen
-  int anzahl = stars.size();         // Wie viele Sterne haben wir?</code></pre>
+<pre><code class="language-cpp">  std::vector&lt;Star&gt; stars;     // Liste aller Sterne
+  stars.push_back(neuerStern); // Stern hinten anfügen
+  stars.pop_back();            // Stern entfernen
+  int anzahl = stars.size();   // Wie viele Sterne?</code></pre>
 <ul>
 <li><strong><code>std::deque</code> (Die Schlange / Kette)</strong>:</li>
 </ul>
-<p>Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:</p>
-<pre><code class="language-cpp">  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen
-  body.pop_back();            // Hinten Schwanzteil abschneiden</code></pre>
+<p>Perfekt für Snake! Bei einer Deque kannst du blitzschnell vorne anbauen und hinten abschneiden:</p>
+<pre><code class="language-cpp">  body.push_front(neuerKopf); // Vorne Kopf anfügen
+  body.pop_back();            // Hinten Schwanz kappen</code></pre>
 <ul>
 <li><strong><code>std::clamp</code> (Der Begrenzer)</strong>:</li>
 </ul>
-<p>Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
+<p>Hält einen Wert sauber zwischen Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
 <pre><code class="language-cpp">  playerY = std::clamp(playerY, 18.0f, 200.0f);</code></pre>
 <hr>
 <h3>6. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
 <p>Ein <strong>Compiler</strong> übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.</p>
 <p>Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:</p>
 <pre><code class="language-bash"># 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
-g++ -std=c++17 -I/opt/homebrew/include main.cc -o mein_spiel -L/opt/homebrew/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+g++ -std=c++17 -I/opt/homebrew/include main.cc \
+    -o mein_spiel -L/opt/homebrew/lib \
+    -lsfml-graphics -lsfml-window \
+    -lsfml-system -lsfml-audio
 
 # 2. Dein fertiges Spiel starten:
 ./mein_spiel</code></pre>
 <p>Oder noch einfacher mit unserem <strong>Makefile</strong>:</p>
 <pre><code class="language-bash">make          # Kompiliert das Spiel
 ./test        # Startet das Spiel
-make static   # Baut ein eigenständiges Programm (ohne externe Abhängigkeiten)
-make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
+make static   # Baut Datei ohne externe Abhängigkeiten
+make bundle   # Baut echte macOS App: MTG.app!</code></pre>
 <hr>
 <h2>🎨 Level 1: Die Malerwerkstatt (Farben &amp; Formen)</h2>
 <h3>1. Die Zauberleinwand &amp; Koordinaten</h3>
@@ -344,7 +352,7 @@ make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 </tr></thead><tbody>
 <tr>
 <td><code>e.cls(Farbe)</code></td>
-<td><strong>Tafel putzen</strong>: Malt den ganzen Bildschirm mit einer Farbe an.</td>
+<td><strong>Tafel putzen</strong>: Malt den ganzen Bildschirm an.</td>
 <td><code>e.cls(Colors::DarkGreen);</code></td>
 </tr>
 <tr>
@@ -354,37 +362,37 @@ make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 </tr>
 <tr>
 <td><code>e.line(x1, y1, x2, y2, Farbe)</code></td>
-<td><strong>Linie ziehen</strong>: Verbindet zwei Punkte mit einem Strich.</td>
+<td><strong>Linie ziehen</strong>: Verbindet zwei Punkte.</td>
 <td><code>e.line(0, 0, 320, 240, Colors::White);</code></td>
 </tr>
 <tr>
 <td><code>e.rect(x, y, b, h, Farbe)</code></td>
-<td><strong>Rechteck-Rahmen</strong>: Zeichnet den Umriss eines Kastens.</td>
+<td><strong>Rechteck-Rahmen</strong>: Zeichnet Kasten-Umriss.</td>
 <td><code>e.rect(10, 10, 50, 30, Colors::Red);</code></td>
 </tr>
 <tr>
 <td><code>e.rectfill(x, y, b, h, Farbe)</code></td>
-<td><strong>Rechteck füllen</strong>: Zeichnet einen ausgefüllten Kasten.</td>
+<td><strong>Rechteck füllen</strong>: Ausgefüllter Kasten.</td>
 <td><code>e.rectfill(10, 10, 50, 30, Colors::Red);</code></td>
 </tr>
 <tr>
 <td><code>e.circle(x, y, r, Farbe)</code></td>
-<td><strong>Kreis-Rahmen</strong>: Zeichnet den Umriss eines Kreises.</td>
+<td><strong>Kreis-Rahmen</strong>: Zeichnet Kreis-Umriss.</td>
 <td><code>e.circle(160, 120, 20, Colors::White);</code></td>
 </tr>
 <tr>
 <td><code>e.circlefill(x, y, r, Farbe)</code></td>
-<td><strong>Ball malen</strong>: Zeichnet einen ausgefüllten Kreis.</td>
+<td><strong>Ball malen</strong>: Ausgefüllter Kreis.</td>
 <td><code>e.circlefill(160, 120, 8, Colors::Yellow);</code></td>
 </tr>
 <tr>
 <td><code>e.draw_text(x, y, &quot;TEXT&quot;, Farbe)</code></td>
-<td><strong>Schrift schreiben</strong>: Schreibt Text auf den Bildschirm.</td>
-<td><code>e.draw_text(100, 50, &quot;HALLO WELT&quot;, Colors::White);</code></td>
+<td><strong>Schrift schreiben</strong>: Text anzeigen.</td>
+<td><code>e.draw_text(100, 50, &quot;HALLO&quot;, Colors::White);</code></td>
 </tr>
 <tr>
 <td><code>e.draw_digit(x, y, zahl, Farbe)</code></td>
-<td><strong>Große Zahl</strong>: Schreibt Punktestände.</td>
+<td><strong>Große Zahl</strong>: Punktestände.</td>
 <td><code>e.draw_digit(100, 20, 5, Colors::Yellow, 3);</code></td>
 </tr>
 </tbody></table>
@@ -393,7 +401,8 @@ make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 <h2>🏃 Level 2: Leben einhauchen! (Variablen &amp; Bewegung)</h2>
 <h3>Was ist eine Variable?</h3>
 <p>Eine Variable ist wie eine <strong>beschriftete Schachtel</strong>, in der sich eine Zahl merkt:</p>
-<pre><code class="language-cpp">float ballX = 100.0f; // Eine Schachtel namens ballX mit dem Wert 100</code></pre>
+<pre><code class="language-cpp">// Eine Schachtel namens ballX mit dem Wert 100:
+float ballX = 100.0f;</code></pre>
 <h3>Die Zauberformel für Bewegung</h3>
 <p>Wenn wir in jedem Bild (<code>update</code>) die Zahl ein kleines Stückchen verändern, bewegt sich das Objekt:</p>
 <pre><code class="language-cpp">class MeinSpiel : public Game {
@@ -414,16 +423,16 @@ make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 <p>Jetzt machen wir das Spiel interaktiv!</p>
 <h3>Tasten abfragen:</h3>
 <ul>
-<li><code>e.key(Key::...)</code> → Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (perfekt für Schläger / Raumschiffe):</li>
+<li><code>e.key(Key::...)</code> → Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (für Schläger / Raumschiffe):</li>
 <pre><code class="language-cpp">  if (e.key(Key::W)) {
-      spielerY = spielerY - 4.0f; // Nach oben fliegen
+      spielerY = spielerY - 4.0f; // Nach oben
   }
   if (e.key(Key::S)) {
-      spielerY = spielerY + 4.0f; // Nach unten fliegen
+      spielerY = spielerY + 4.0f; // Nach unten
   }</code></pre>
-<li><code>e.pressed(Key::...)</code> → Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (perfekt für Schießen oder Springen):</li>
+<li><code>e.pressed(Key::...)</code> → Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (für Schuss oder Sprung):</li>
 <pre><code class="language-cpp">  if (e.pressed(Key::Space)) {
-      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!
+      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton!
   }</code></pre>
 </ul>
 <h3>Verfügbare Tasten:</h3>
@@ -448,14 +457,17 @@ make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 <pre><code class="language-cpp">ballY = ballY + ballVy;
 
 if (ballY &lt;= 10 || ballY &gt;= 230) {
-    ballVy = -ballVy;               // Richtung umdrehen: Aus + wird - und aus - wird +!
+    // Richtung umdrehen: Aus + wird - und umgekehrt!
+    ballVy = -ballVy;
     e.play_tone(Notes::G4, 0.05f); // Abprall-Ton!
 }</code></pre>
 <h3>2. Schläger trifft Ball (Kollisionsprüfung)</h3>
 <p>Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:</p>
 <pre><code class="language-cpp">if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
-    ballY &gt;= schlaegerY &amp;&amp; ballY &lt;= schlaegerY + schlaegerHoehe) {
-    ballVx = -ballVx;               // Ball fliegt wieder nach rechts zurück!
+    ballY &gt;= schlaegerY &amp;&amp;
+    ballY &lt;= schlaegerY + schlaegerHoehe) {
+    // Ball fliegt wieder nach rechts zurück:
+    ballVx = -ballVx;
     e.play_tone(Notes::G5, 0.08f); // Treffer-Ton!
 }</code></pre>
 <hr>
@@ -464,10 +476,10 @@ if (ballY &lt;= 10 || ballY &gt;= 230) {
 <h3>1. Die Notennamen (<code>Notes::...</code>)</h3>
 <ul>
 <li><strong>Oktave 3 (Bass)</strong>: <code>Notes::C3</code>, <code>Notes::E3</code>, <code>Notes::G3</code>, <code>Notes::A3</code>, etc.</li>
-<li><strong>Oktave 4 (Klavier-Mitte)</strong>: <code>Notes::C4</code> (Mittleres C), <code>Notes::D4</code>, <code>Notes::E4</code>, <code>Notes::F4</code>, <code>Notes::G4</code>, <code>Notes::A4</code> (Kammerton 440 Hz), <code>Notes::B4</code></li>
+<li><strong>Oktave 4 (Klavier-Mitte)</strong>: <code>Notes::C4</code> (Mittleres C), <code>Notes::D4</code>, <code>Notes::E4</code>, <code>Notes::F4</code>, <code>Notes::G4</code>, <code>Notes::A4</code> (440 Hz), <code>Notes::B4</code></li>
 <li><strong>Oktave 5 (Hohe Melodie)</strong>: <code>Notes::C5</code>, <code>Notes::D5</code>, <code>Notes::E5</code>, <code>Notes::F5</code>, <code>Notes::G5</code>, <code>Notes::A5</code>, <code>Notes::B5</code></li>
 <li><strong>Oktave 6 (Piepser/Glocken)</strong>: <code>Notes::C6</code>, <code>Notes::E6</code>, <code>Notes::G6</code></li>
-<li><em>Tipp für Halbtöne</em>: Ein <code>s</code> steht für Kreuz (#) wie <code>Notes::Fs4</code> (Fis / F#) oder <code>Notes::Cs5</code> (Cis / C#).</li>
+<li><em>Tipp für Halbtöne</em>: Ein <code>s</code> steht für Kreuz (#) wie <code>Notes::Fs4</code> (Fis) oder <code>Notes::Cs5</code> (Cis).</li>
 </ul>
 <h3>2. Einzelne Töne abspielen:</h3>
 <p><code>e.play_tone(Note, DauerInSekunden)</code>:</p>
@@ -524,17 +536,19 @@ body.push_front(neuerKopf);
 
 // 2. Hat die Schlange einen Apfel gefressen?
 if (apfelGefressen) {
-    score++; // Schlange wächst automatisch, weil wir den Schwanz NICHT löschen!
+    // Schlange wächst (Schwanz bleibt erhalten):
+    score++;
 } else {
-    body.pop_back(); // Schwanz nachziehen: Letztes Glied hinten abschneiden
+    // Schwanz nachziehen (letztes Glied kappen):
+    body.pop_back();
 }</code></pre>
 <h3>3. Der „Apfel-Klau“-Mechanismus (Modell B)</h3>
 <p>Wenn eine Schlange an die Wand oder in den Gegner fährt:</p>
-<pre><code class="language-cpp">// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
+<pre><code class="language-cpp">// Jeden Körperteil in Äpfel auf dem Feld verwandeln:
 for (size_t i = 1; i &lt; body.size(); ++i) {
     apples.push_back(body[i]);
 }
-// Schlange startet sofort wieder klein in ihrer Ecke neu!
+// Schlange startet sofort wieder klein in ihrer Ecke neu:
 respawnSnake();</code></pre>
 <p>Der überlebende Spieler kann die Trümmer-Äpfel blitzschnell fressen und riesig werden!</p>
 <hr>
@@ -554,7 +568,10 @@ respawnSnake();</code></pre>
 
 // In jedem Frame nach unten wandern:
 s.y += s.speed * e.dt();
-if (s.y &gt;= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }</code></pre>
+if (s.y &gt;= 240.0f) {
+    s.y = 0.0f;
+    s.x = rand() % 320;
+}</code></pre>
 <h3>2. 16x16 Pixel-Art Raumschiffe mit Bitmasken</h3>
 <p>Wir können Raumschiffe direkt im Code als Pixelmuster zeichnen:</p>
 <pre><code class="language-cpp">// Das 16x16 Delta X-Wing Schiff (Zeile für Zeile):
@@ -568,12 +585,12 @@ static const uint16_t playerSprite[16] = {
 };</code></pre>
 <h3>3. Schiffs-Explosionen mit echter Physik (Trägheit &amp; Farbverlauf)</h3>
 <p>Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern <strong>nehmen den vollen Geschwindigkeitsvektor des Schiffs mit</strong>:</p>
-<pre><code class="language-cpp">// 1. Schiffsimpuls + radiale Sprengung
+<pre><code class="language-cpp">// 1. Schiffsimpuls + radiale Sprengung:
 p.vx = shipVx + burstSpeed * cos(angle);
 p.vy = shipVy + burstSpeed * sin(angle);
 
-// 2. Thermischer Farbverlauf über die Lebensdauer der Trümmer:
-// Frisch (100%-75%): Weißer Blitz -&gt; Gelb -&gt; Orange -&gt; Rote Glut -&gt; Dunkler Rauch</code></pre>
+// 2. Thermischer Farbverlauf über Lebensdauer:
+// Weiß -&gt; Gelb -&gt; Orange -&gt; Rot -&gt; Dunkelgrau</code></pre>
 <hr>
 <h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
 <p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>
@@ -583,8 +600,10 @@ p.vy = shipVy + burstSpeed * sin(angle);
     std::unique_ptr&lt;StarfighterGame&gt; starfighter;
 
     void update(Engine&amp; e) override {
-        // Mit Escape immer zurück ins Menü!
-        if (e.pressed(Key::Escape)) { currentGame = CurrentGame::Menu; }
+        // Mit Escape immer zurück ins Menü:
+        if (e.pressed(Key::Escape)) {
+            currentGame = CurrentGame::Menu;
+        }
 
         if (e.pressed(Key::Num1)) { currentGame = CurrentGame::Pong; }
         if (e.pressed(Key::Num2)) { currentGame = CurrentGame::Snake; }
@@ -594,24 +613,28 @@ p.vy = shipVy + burstSpeed * sin(angle);
 <hr>
 <h2>📋 Der Spickzettel (Cheat Sheet) auf einen Blick</h2>
 <pre><code class="language-cpp">// --- Malen ---
-e.cls(Farbe);                             // Bildschirm leeren
-e.pset(x, y, Farbe);                     // Pixel setzen
-e.line(x0, y0, x1, y1, Farbe);           // Linie ziehen
-e.rectfill(x, y, breite, hoehe, Farbe);  // Ausgefülltes Rechteck
-e.circlefill(x, y, radius, Farbe);       // Ausgefüllter Kreis
-e.draw_text(x, y, &quot;TEXT&quot;, Farbe);        // Text schreiben
-e.draw_digit(x, y, zahl, Farbe, 3);      // Große Ziffer malen
+e.cls(Farbe);                            // Bildschirm leeren
+e.pset(x, y, Farbe);                    // Pixel setzen
+e.line(x0, y0, x1, y1, Farbe);          // Linie ziehen
+e.rectfill(x, y, breite, hoehe, Farbe); // Ausgefülltes Rechteck
+e.circlefill(x, y, radius, Farbe);      // Ausgefüllter Kreis
+e.draw_text(x, y, &quot;TEXT&quot;, Farbe);       // Text schreiben
+e.draw_digit(x, y, zahl, Farbe, 3);     // Große Ziffer malen
 
 // --- Steuerung ---
-if (e.key(Key::W)) { ... }               // Taste gedrückt halten
-if (e.pressed(Key::Space)) { ... }       // Taste neu angetippt
-e.mouse_x();                             // Maus X
-e.mouse_y();                             // Maus Y
-e.mouse_down();                          // Maustaste gedrückt?
+if (e.key(Key::W)) { ... }              // Taste gedrückt halten
+if (e.pressed(Key::Space)) { ... }      // Taste neu angetippt
+e.mouse_x();                            // Maus X
+e.mouse_y();                            // Maus Y
+e.mouse_down();                         // Maustaste gedrückt?
 
 // --- Sound &amp; Noten ---
-e.play_tone(Notes::C5, 0.1f);             // Einzelnen Ton abspielen
-e.play_melody({ {Notes::C5, 0.1f}, {Notes::E5, 0.1f}, {Notes::G5, 0.2f} }); // Melodie
+e.play_tone(Notes::C5, 0.1f);           // Einzelnen Ton abspielen
+e.play_melody({                         // Melodie abspielen
+    {Notes::C5, 0.1f},
+    {Notes::E5, 0.1f},
+    {Notes::G5, 0.2f}
+});
 
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,

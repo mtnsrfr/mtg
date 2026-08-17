@@ -47,10 +47,11 @@ In Variablen merkt sich der Computer Zahlen, Texte und Zustände:
 Mit `if` („Wenn...“) kann dein Spiel auf Ereignisse reagieren:
 ```cpp
 if (ballX > 320) {
-    score = score + 1;       // Tor erzielt!
+    // Tor erzielt!
+    score = score + 1;
     e.play_tone(Notes::C5);
 } else {
-    // Sonst: Ball ist noch im Feld
+    // Sonst: Ball ist noch im Spielfeld
 }
 ```
 
@@ -66,7 +67,7 @@ if (ballX > 320) {
 ### 3. Wiederholungen (`for`-Schleifen)
 Wenn du viele Dinge auf einmal tun willst (z. B. 70 Sterne zeichnen oder 5 Äpfel platzieren), benutzt du eine `for`-Schleife:
 ```cpp
-// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
+// Zählt von 0 bis 4 (wiederholt sich 5-mal):
 for (int i = 0; i < 5; ++i) {
     spawnApple();
 }
@@ -92,21 +93,21 @@ C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
 * **`std::vector` (Die flexible Liste)**:
   Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:
   ```cpp
-  std::vector<Star> stars;           // Liste aller Sterne
-  stars.push_back(neuerStern);       // Stern hinten anfügen
-  stars.pop_back();                  // Letzten Stern entfernen
-  int anzahl = stars.size();         // Wie viele Sterne haben wir?
+  std::vector<Star> stars;     // Liste aller Sterne
+  stars.push_back(neuerStern); // Stern hinten anfügen
+  stars.pop_back();            // Stern entfernen
+  int anzahl = stars.size();   // Wie viele Sterne?
   ```
 
 * **`std::deque` (Die Schlange / Kette)**:
-  Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:
+  Perfekt für Snake! Bei einer Deque kannst du blitzschnell vorne anbauen und hinten abschneiden:
   ```cpp
-  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen
-  body.pop_back();            // Hinten Schwanzteil abschneiden
+  body.push_front(neuerKopf); // Vorne Kopf anfügen
+  body.pop_back();            // Hinten Schwanz kappen
   ```
 
 * **`std::clamp` (Der Begrenzer)**:
-  Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):
+  Hält einen Wert sauber zwischen Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):
   ```cpp
   playerY = std::clamp(playerY, 18.0f, 200.0f);
   ```
@@ -119,7 +120,10 @@ Ein **Compiler** übersetzt deinen C++ Code in Maschinensprache, die der Prozess
 Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:
 ```bash
 # 1. Den C++ Compiler 'g++' aufrufen:
-g++ -std=c++17 -I/opt/homebrew/include main.cc -o mein_spiel -L/opt/homebrew/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+g++ -std=c++17 -I/opt/homebrew/include main.cc \
+    -o mein_spiel -L/opt/homebrew/lib \
+    -lsfml-graphics -lsfml-window \
+    -lsfml-system -lsfml-audio
 
 # 2. Dein fertiges Spiel starten:
 ./mein_spiel
@@ -129,8 +133,8 @@ Oder noch einfacher mit unserem **Makefile**:
 ```bash
 make          # Kompiliert das Spiel
 ./test        # Startet das Spiel
-make static   # Baut ein eigenständiges Programm (ohne externe Abhängigkeiten)
-make bundle   # Baut eine echte macOS App: MTG.app!
+make static   # Baut Datei ohne externe Abhängigkeiten
+make bundle   # Baut echte macOS App: MTG.app!
 ```
 
 ---
@@ -156,15 +160,15 @@ Du kannst diese Farben überall verwenden:
 ### 3. Deine Mal-Werkzeuge
 | Befehl | Was er macht | Beispiel |
 | :--- | :--- | :--- |
-| `e.cls(Farbe)` | **Tafel putzen**: Malt den ganzen Bildschirm mit einer Farbe an. | `e.cls(Colors::DarkGreen);` |
+| `e.cls(Farbe)` | **Tafel putzen**: Malt den ganzen Bildschirm an. | `e.cls(Colors::DarkGreen);` |
 | `e.pset(x, y, Farbe)` | **Punkt malen**: Setzt einen einzelnen Pixel. | `e.pset(160, 120, Colors::Yellow);` |
-| `e.line(x1, y1, x2, y2, Farbe)` | **Linie ziehen**: Verbindet zwei Punkte mit einem Strich. | `e.line(0, 0, 320, 240, Colors::White);` |
-| `e.rect(x, y, b, h, Farbe)` | **Rechteck-Rahmen**: Zeichnet den Umriss eines Kastens. | `e.rect(10, 10, 50, 30, Colors::Red);` |
-| `e.rectfill(x, y, b, h, Farbe)` | **Rechteck füllen**: Zeichnet einen ausgefüllten Kasten. | `e.rectfill(10, 10, 50, 30, Colors::Red);` |
-| `e.circle(x, y, r, Farbe)` | **Kreis-Rahmen**: Zeichnet den Umriss eines Kreises. | `e.circle(160, 120, 20, Colors::White);` |
-| `e.circlefill(x, y, r, Farbe)` | **Ball malen**: Zeichnet einen ausgefüllten Kreis. | `e.circlefill(160, 120, 8, Colors::Yellow);` |
-| `e.draw_text(x, y, "TEXT", Farbe)` | **Schrift schreiben**: Schreibt Text auf den Bildschirm. | `e.draw_text(100, 50, "HALLO WELT", Colors::White);` |
-| `e.draw_digit(x, y, zahl, Farbe)` | **Große Zahl**: Schreibt Punktestände. | `e.draw_digit(100, 20, 5, Colors::Yellow, 3);` |
+| `e.line(x1, y1, x2, y2, Farbe)` | **Linie ziehen**: Verbindet zwei Punkte. | `e.line(0, 0, 320, 240, Colors::White);` |
+| `e.rect(x, y, b, h, Farbe)` | **Rechteck-Rahmen**: Zeichnet Kasten-Umriss. | `e.rect(10, 10, 50, 30, Colors::Red);` |
+| `e.rectfill(x, y, b, h, Farbe)` | **Rechteck füllen**: Ausgefüllter Kasten. | `e.rectfill(10, 10, 50, 30, Colors::Red);` |
+| `e.circle(x, y, r, Farbe)` | **Kreis-Rahmen**: Zeichnet Kreis-Umriss. | `e.circle(160, 120, 20, Colors::White);` |
+| `e.circlefill(x, y, r, Farbe)` | **Ball malen**: Ausgefüllter Kreis. | `e.circlefill(160, 120, 8, Colors::Yellow);` |
+| `e.draw_text(x, y, "TEXT", Farbe)` | **Schrift schreiben**: Text anzeigen. | `e.draw_text(100, 50, "HALLO", Colors::White);` |
+| `e.draw_digit(x, y, zahl, Farbe)` | **Große Zahl**: Punktestände. | `e.draw_digit(100, 20, 5, Colors::Yellow, 3);` |
 
 > 🎯 **Mini-Quest 1**: Male ein Haus mit einem dreieckigen Dach (aus Linien) und einer bunten Tür!
 
@@ -175,7 +179,8 @@ Du kannst diese Farben überall verwenden:
 ### Was ist eine Variable?
 Eine Variable ist wie eine **beschriftete Schachtel**, in der sich eine Zahl merkt:
 ```cpp
-float ballX = 100.0f; // Eine Schachtel namens ballX mit dem Wert 100
+// Eine Schachtel namens ballX mit dem Wert 100:
+float ballX = 100.0f;
 ```
 
 ### Die Zauberformel für Bewegung
@@ -203,19 +208,19 @@ class MeinSpiel : public Game {
 Jetzt machen wir das Spiel interaktiv!
 
 ### Tasten abfragen:
-* `e.key(Key::...)` → Prüft, ob eine Taste **gedrückt gehalten** wird (perfekt für Schläger / Raumschiffe):
+* `e.key(Key::...)` → Prüft, ob eine Taste **gedrückt gehalten** wird (für Schläger / Raumschiffe):
   ```cpp
   if (e.key(Key::W)) {
-      spielerY = spielerY - 4.0f; // Nach oben fliegen
+      spielerY = spielerY - 4.0f; // Nach oben
   }
   if (e.key(Key::S)) {
-      spielerY = spielerY + 4.0f; // Nach unten fliegen
+      spielerY = spielerY + 4.0f; // Nach unten
   }
   ```
-* `e.pressed(Key::...)` → Prüft, ob eine Taste **gerade angetippt** wurde (perfekt für Schießen oder Springen):
+* `e.pressed(Key::...)` → Prüft, ob eine Taste **gerade angetippt** wurde (für Schuss oder Sprung):
   ```cpp
   if (e.pressed(Key::Space)) {
-      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!
+      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton!
   }
   ```
 
@@ -244,7 +249,8 @@ Wenn der Ball oben oder unten anstößt, kehren wir einfach seine vertikale Gesc
 ballY = ballY + ballVy;
 
 if (ballY <= 10 || ballY >= 230) {
-    ballVy = -ballVy;               // Richtung umdrehen: Aus + wird - und aus - wird +!
+    // Richtung umdrehen: Aus + wird - und umgekehrt!
+    ballVy = -ballVy;
     e.play_tone(Notes::G4, 0.05f); // Abprall-Ton!
 }
 ```
@@ -253,8 +259,10 @@ if (ballY <= 10 || ballY >= 230) {
 Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:
 ```cpp
 if (ballX <= schlaegerX + schlaegerBreite &&
-    ballY >= schlaegerY && ballY <= schlaegerY + schlaegerHoehe) {
-    ballVx = -ballVx;               // Ball fliegt wieder nach rechts zurück!
+    ballY >= schlaegerY &&
+    ballY <= schlaegerY + schlaegerHoehe) {
+    // Ball fliegt wieder nach rechts zurück:
+    ballVx = -ballVx;
     e.play_tone(Notes::G5, 0.08f); // Treffer-Ton!
 }
 ```
@@ -267,10 +275,10 @@ Töne machen ein Spiel erst richtig lebendig! Du musst dir keine komplizierten H
 
 ### 1. Die Notennamen (`Notes::...`)
 * **Oktave 3 (Bass)**: `Notes::C3`, `Notes::E3`, `Notes::G3`, `Notes::A3`, etc.
-* **Oktave 4 (Klavier-Mitte)**: `Notes::C4` (Mittleres C), `Notes::D4`, `Notes::E4`, `Notes::F4`, `Notes::G4`, `Notes::A4` (Kammerton 440 Hz), `Notes::B4`
+* **Oktave 4 (Klavier-Mitte)**: `Notes::C4` (Mittleres C), `Notes::D4`, `Notes::E4`, `Notes::F4`, `Notes::G4`, `Notes::A4` (440 Hz), `Notes::B4`
 * **Oktave 5 (Hohe Melodie)**: `Notes::C5`, `Notes::D5`, `Notes::E5`, `Notes::F5`, `Notes::G5`, `Notes::A5`, `Notes::B5`
 * **Oktave 6 (Piepser/Glocken)**: `Notes::C6`, `Notes::E6`, `Notes::G6`
-* *Tipp für Halbtöne*: Ein `s` steht für Kreuz (#) wie `Notes::Fs4` (Fis / F#) oder `Notes::Cs5` (Cis / C#).
+* *Tipp für Halbtöne*: Ein `s` steht für Kreuz (#) wie `Notes::Fs4` (Fis) oder `Notes::Cs5` (Cis).
 
 ### 2. Einzelne Töne abspielen:
 `e.play_tone(Note, DauerInSekunden)`:
@@ -331,20 +339,22 @@ body.push_front(neuerKopf);
 
 // 2. Hat die Schlange einen Apfel gefressen?
 if (apfelGefressen) {
-    score++; // Schlange wächst automatisch, weil wir den Schwanz NICHT löschen!
+    // Schlange wächst (Schwanz bleibt erhalten):
+    score++;
 } else {
-    body.pop_back(); // Schwanz nachziehen: Letztes Glied hinten abschneiden
+    // Schwanz nachziehen (letztes Glied kappen):
+    body.pop_back();
 }
 ```
 
 ### 3. Der „Apfel-Klau“-Mechanismus (Modell B)
 Wenn eine Schlange an die Wand oder in den Gegner fährt:
 ```cpp
-// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
+// Jeden Körperteil in Äpfel auf dem Feld verwandeln:
 for (size_t i = 1; i < body.size(); ++i) {
     apples.push_back(body[i]);
 }
-// Schlange startet sofort wieder klein in ihrer Ecke neu!
+// Schlange startet sofort wieder klein in ihrer Ecke neu:
 respawnSnake();
 ```
 Der überlebende Spieler kann die Trümmer-Äpfel blitzschnell fressen und riesig werden!
@@ -369,7 +379,10 @@ struct Star {
 
 // In jedem Frame nach unten wandern:
 s.y += s.speed * e.dt();
-if (s.y >= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }
+if (s.y >= 240.0f) {
+    s.y = 0.0f;
+    s.x = rand() % 320;
+}
 ```
 
 ### 2. 16x16 Pixel-Art Raumschiffe mit Bitmasken
@@ -389,12 +402,12 @@ static const uint16_t playerSprite[16] = {
 ### 3. Schiffs-Explosionen mit echter Physik (Trägheit & Farbverlauf)
 Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern **nehmen den vollen Geschwindigkeitsvektor des Schiffs mit**:
 ```cpp
-// 1. Schiffsimpuls + radiale Sprengung
+// 1. Schiffsimpuls + radiale Sprengung:
 p.vx = shipVx + burstSpeed * cos(angle);
 p.vy = shipVy + burstSpeed * sin(angle);
 
-// 2. Thermischer Farbverlauf über die Lebensdauer der Trümmer:
-// Frisch (100%-75%): Weißer Blitz -> Gelb -> Orange -> Rote Glut -> Dunkler Rauch
+// 2. Thermischer Farbverlauf über Lebensdauer:
+// Weiß -> Gelb -> Orange -> Rot -> Dunkelgrau
 ```
 
 ---
@@ -410,8 +423,10 @@ class MenuGame : public Game {
     std::unique_ptr<StarfighterGame> starfighter;
 
     void update(Engine& e) override {
-        // Mit Escape immer zurück ins Menü!
-        if (e.pressed(Key::Escape)) { currentGame = CurrentGame::Menu; }
+        // Mit Escape immer zurück ins Menü:
+        if (e.pressed(Key::Escape)) {
+            currentGame = CurrentGame::Menu;
+        }
 
         if (e.pressed(Key::Num1)) { currentGame = CurrentGame::Pong; }
         if (e.pressed(Key::Num2)) { currentGame = CurrentGame::Snake; }
@@ -426,24 +441,28 @@ class MenuGame : public Game {
 
 ```cpp
 // --- Malen ---
-e.cls(Farbe);                             // Bildschirm leeren
-e.pset(x, y, Farbe);                     // Pixel setzen
-e.line(x0, y0, x1, y1, Farbe);           // Linie ziehen
-e.rectfill(x, y, breite, hoehe, Farbe);  // Ausgefülltes Rechteck
-e.circlefill(x, y, radius, Farbe);       // Ausgefüllter Kreis
-e.draw_text(x, y, "TEXT", Farbe);        // Text schreiben
-e.draw_digit(x, y, zahl, Farbe, 3);      // Große Ziffer malen
+e.cls(Farbe);                            // Bildschirm leeren
+e.pset(x, y, Farbe);                    // Pixel setzen
+e.line(x0, y0, x1, y1, Farbe);          // Linie ziehen
+e.rectfill(x, y, breite, hoehe, Farbe); // Ausgefülltes Rechteck
+e.circlefill(x, y, radius, Farbe);      // Ausgefüllter Kreis
+e.draw_text(x, y, "TEXT", Farbe);       // Text schreiben
+e.draw_digit(x, y, zahl, Farbe, 3);     // Große Ziffer malen
 
 // --- Steuerung ---
-if (e.key(Key::W)) { ... }               // Taste gedrückt halten
-if (e.pressed(Key::Space)) { ... }       // Taste neu angetippt
-e.mouse_x();                             // Maus X
-e.mouse_y();                             // Maus Y
-e.mouse_down();                          // Maustaste gedrückt?
+if (e.key(Key::W)) { ... }              // Taste gedrückt halten
+if (e.pressed(Key::Space)) { ... }      // Taste neu angetippt
+e.mouse_x();                            // Maus X
+e.mouse_y();                            // Maus Y
+e.mouse_down();                         // Maustaste gedrückt?
 
 // --- Sound & Noten ---
-e.play_tone(Notes::C5, 0.1f);             // Einzelnen Ton abspielen
-e.play_melody({ {Notes::C5, 0.1f}, {Notes::E5, 0.1f}, {Notes::G5, 0.2f} }); // Melodie
+e.play_tone(Notes::C5, 0.1f);           // Einzelnen Ton abspielen
+e.play_melody({                         // Melodie abspielen
+    {Notes::C5, 0.1f},
+    {Notes::E5, 0.1f},
+    {Notes::G5, 0.2f}
+});
 
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,
