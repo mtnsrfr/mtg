@@ -23,46 +23,9 @@
 // =============================================================================
 
 struct StarfighterGame : Game {
-  StarfighterGame() {
-    initStars();
-    resetGame();
-  }
-
-  void update(Engine &e) override {
-    // 1. Weltraumhintergrund (Tiefschwarz)
-    e.cls(Colors::Black);
-
-    // 2. Sternenfeld-Partikel bewegen und zeichnen (Parallaxe-Hintergrund)
-    updateAndDrawStars(e);
-
-    // 3. Je nach Zustand Spielablauf steuern
-    switch (state) {
-    case State::Title:
-      updateTitle(e);
-      break;
-    case State::Playing:
-      updatePlaying(e);
-      break;
-    case State::GameOver:
-      updateGameOver(e);
-      break;
-    }
-
-    // 4. Laser, Explosionen und Schiffe zeichnen
-    updateAndDrawExplosions(e);
-    drawLasers(e);
-
-    if (state != State::GameOver || playerAlive) {
-      drawPlayer(e);
-    }
-    if (enemyAlive) {
-      drawEnemy(e);
-    }
-
-    // 5. Spielstand oben anzeigen
-    drawUI(e);
-  }
-
+  // ===========================================================================
+  // 1. SPIEL-VARIABLEN & EINSTELLUNGEN
+  // ===========================================================================
   enum class State {
     Title,
     Playing,
@@ -124,6 +87,52 @@ struct StarfighterGame : Game {
   // --- Punkte & Highscore ---
   int score = 0;
   int highscore = 0;
+
+  // ===========================================================================
+  // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
+  // ===========================================================================
+  StarfighterGame() {
+    initStars();
+    resetGame();
+  }
+
+  // ===========================================================================
+  // 3. HAUPTSCHLEIFE (Wird 60-mal pro Sekunde aufgerufen)
+  // ===========================================================================
+  void update(Engine &e) override {
+    // 1. Weltraumhintergrund (Tiefschwarz)
+    e.cls(Colors::Black);
+
+    // 2. Sternenfeld-Partikel bewegen und zeichnen (Parallaxe-Hintergrund)
+    updateAndDrawStars(e);
+
+    // 3. Je nach Zustand Spielablauf steuern
+    switch (state) {
+    case State::Title:
+      updateTitle(e);
+      break;
+    case State::Playing:
+      updatePlaying(e);
+      break;
+    case State::GameOver:
+      updateGameOver(e);
+      break;
+    }
+
+    // 4. Laser, Explosionen und Schiffe zeichnen
+    updateAndDrawExplosions(e);
+    drawLasers(e);
+
+    if (state != State::GameOver || playerAlive) {
+      drawPlayer(e);
+    }
+    if (enemyAlive) {
+      drawEnemy(e);
+    }
+
+    // 5. Spielstand oben anzeigen
+    drawUI(e);
+  }
 
   // ===========================================================================
   // Sound-Effekte

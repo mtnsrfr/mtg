@@ -13,42 +13,9 @@
 // Leertaste (Space):       Spiel starten / Neustarten
 // =============================================================================
 struct PongGame : Game {
-  PongGame() {
-    resetGame();
-  }
-
-  // Diese Funktion wird 60-mal pro Sekunde aufgerufen (das Herzstück des Spiels)
-  void update(Engine &e) override {
-    // 1. Spielfeld mit dunklem Rasengrün übermalen
-    e.cls(Colors::DarkGreen);
-
-    // 2. Spielfeldlinien zeichnen (Netz, Begrenzung, Mittelkreis)
-    drawPitch(e);
-
-    // 3. Je nachdem in welcher Phase wir sind, die passende Logik ausführen
-    switch (state) {
-    case State::Title:
-      updateTitle(e); // Startbildschirm: Wartet auf Leertaste
-      break;
-    case State::Playing:
-      updatePlaying(e); // Das aktive Match: Ball fliegt, Schläger bewegen sich
-      break;
-    case State::PointScored:
-      updatePointScored(e); // Jemand hat ein Tor erzielt: Kurze Jubelpause
-      break;
-    case State::Victory:
-      updateVictory(e); // Ein Spieler hat 5 Punkte erreicht und gewonnen!
-      break;
-    }
-
-    // 4. Schläger, Ball und Spielstand zeichnen
-    drawPaddles(e);
-    if (state != State::Title) {
-      drawBall(e);
-    }
-    drawScores(e);
-  }
-
+  // ===========================================================================
+  // 1. SPIEL-VARIABLEN & EINSTELLUNGEN
+  // ===========================================================================
   // --- Spiel-Phasen (Zustände) ---
   enum class State {
     Title,       // Start-Menü ("Drücke Leertaste zum Starten")
@@ -86,6 +53,47 @@ struct PongGame : Game {
   // --- Timer & Hilfsvariablen ---
   float stateTimer = 0.0f; // Wartezeit-Uhr für Torpausen
   int lastScorer = 0;      // Welcher Spieler hat zuletzt gepunktet (1 oder 2)
+
+  // ===========================================================================
+  // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
+  // ===========================================================================
+  PongGame() {
+    resetGame();
+  }
+
+  // ===========================================================================
+  // 3. HAUPTSCHLEIFE (Wird 60-mal pro Sekunde aufgerufen)
+  // ===========================================================================
+  void update(Engine &e) override {
+    // 1. Spielfeld mit dunklem Rasengrün übermalen
+    e.cls(Colors::DarkGreen);
+
+    // 2. Spielfeldlinien zeichnen (Netz, Begrenzung, Mittelkreis)
+    drawPitch(e);
+
+    // 3. Je nachdem in welcher Phase wir sind, die passende Logik ausführen
+    switch (state) {
+    case State::Title:
+      updateTitle(e); // Startbildschirm: Wartet auf Leertaste
+      break;
+    case State::Playing:
+      updatePlaying(e); // Das aktive Match: Ball fliegt, Schläger bewegen sich
+      break;
+    case State::PointScored:
+      updatePointScored(e); // Jemand hat ein Tor erzielt: Kurze Jubelpause
+      break;
+    case State::Victory:
+      updateVictory(e); // Ein Spieler hat 5 Punkte erreicht und gewonnen!
+      break;
+    }
+
+    // 4. Schläger, Ball und Spielstand zeichnen
+    drawPaddles(e);
+    if (state != State::Title) {
+      drawBall(e);
+    }
+    drawScores(e);
+  }
 
   // ===========================================================================
   // Sound-Effekte für Pong

@@ -26,37 +26,9 @@
 // =============================================================================
 
 struct SnakeGame : Game {
-  SnakeGame() {
-    resetGame();
-  }
-
-  // Wird 60-mal pro Sekunde aufgerufen
-  void update(Engine &e) override {
-    // 1. Dunkelgrünen Rasen zeichnen
-    e.cls(Colors::DarkGreen);
-
-    // 2. Spielfeldrand und Punktestand oben zeichnen
-    drawGrid(e);
-    drawScores(e);
-
-    // 3. Je nach Spielphase Logik ausführen
-    switch (state) {
-    case State::Title:
-      updateTitle(e);
-      break;
-    case State::Playing:
-      updatePlaying(e);
-      break;
-    case State::Victory:
-      updateVictory(e);
-      break;
-    }
-
-    // 4. Äpfel und Schlangen zeichnen
-    drawApples(e);
-    drawSnakes(e);
-  }
-
+  // ===========================================================================
+  // 1. SPIEL-VARIABLEN & EINSTELLUNGEN
+  // ===========================================================================
   // --- Spiel-Phasen ---
   enum class State {
     Title,   // Startbildschirm ("Leertaste drücken")
@@ -118,6 +90,42 @@ struct SnakeGame : Game {
   // Takt-Timer: Schlangen bewegen sich alle 0.11 Sekunden um 1 Feld
   float moveTimer = 0.0f;
   const float stepDelay = 0.11f;
+
+  // ===========================================================================
+  // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
+  // ===========================================================================
+  SnakeGame() {
+    resetGame();
+  }
+
+  // ===========================================================================
+  // 3. HAUPTSCHLEIFE (Wird 60-mal pro Sekunde aufgerufen)
+  // ===========================================================================
+  void update(Engine &e) override {
+    // 1. Dunkelgrünen Rasen zeichnen
+    e.cls(Colors::DarkGreen);
+
+    // 2. Spielfeldrand und Punktestand oben zeichnen
+    drawGrid(e);
+    drawScores(e);
+
+    // 3. Je nach Spielphase Logik ausführen
+    switch (state) {
+    case State::Title:
+      updateTitle(e);
+      break;
+    case State::Playing:
+      updatePlaying(e);
+      break;
+    case State::Victory:
+      updateVictory(e);
+      break;
+    }
+
+    // 4. Äpfel und Schlangen zeichnen
+    drawApples(e);
+    drawSnakes(e);
+  }
 
   // ===========================================================================
   // Sound-Effekte

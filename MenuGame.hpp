@@ -16,17 +16,38 @@
 // - ESCAPE: Jederzeit zurück ins Hauptmenü!
 // =============================================================================
 struct MenuGame : Game {
+  // ===========================================================================
+  // 1. SPIEL-VARIABLEN & AUSWAHL
+  // ===========================================================================
+  enum class CurrentGame {
+    Menu,
+    Pong,
+    Snake,
+    Starfighter
+  };
+
+  CurrentGame currentGame = CurrentGame::Menu;
+  std::unique_ptr<PongGame> pong;
+  std::unique_ptr<SnakeGame> snake;
+  std::unique_ptr<StarfighterGame> starfighter;
+
+  // ===========================================================================
+  // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
+  // ===========================================================================
   MenuGame() {
     pong = std::make_unique<PongGame>();
     snake = std::make_unique<SnakeGame>();
     starfighter = std::make_unique<StarfighterGame>();
   }
 
+  // ===========================================================================
+  // 3. HAUPTSCHLEIFE (Wird 60-mal pro Sekunde aufgerufen)
+  // ===========================================================================
   void update(Engine &e) override {
     // Wenn Escape gedrückt wird: Immer zurück ins Menü!
     if (e.pressed(Key::Escape) && currentGame != CurrentGame::Menu) {
       currentGame = CurrentGame::Menu;
-      e.play_tone(440.0, 0.08f);
+      e.play_tone(Notes::A4, 0.08f);
     }
 
     // Welches Spiel ist gerade aktiv?
@@ -45,18 +66,6 @@ struct MenuGame : Game {
       break;
     }
   }
-
-  enum class CurrentGame {
-    Menu,
-    Pong,
-    Snake,
-    Starfighter
-  };
-
-  CurrentGame currentGame = CurrentGame::Menu;
-  std::unique_ptr<PongGame> pong;
-  std::unique_ptr<SnakeGame> snake;
-  std::unique_ptr<StarfighterGame> starfighter;
 
   void drawMenu(Engine &e) {
     e.cls(Colors::DarkGreen);

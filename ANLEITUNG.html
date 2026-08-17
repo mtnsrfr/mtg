@@ -278,33 +278,44 @@ for (int i = 0; i &lt; 5; ++i) {
     spawnApple();
 }</code></pre>
 <hr>
-<h3>4. Eigene Funktionen &amp; Methoden (Eigene Zaubersprüche)</h3>
-<p>Statt denselben Code 10-mal zu schreiben, packen wir ihn in eine Funktion mit eigenem Namen:</p>
-<pre><code class="language-cpp">// Eigener Zauberspruch zum Abfeuern:
-void feuerLaser(Engine&amp; e) {
-    e.play_tone(Notes::As5, 0.04f);
-    lasers.push_back({playerX + 7, playerY, -300.0f, true});
-}</code></pre>
 <hr>
-<h3>5. Baupläne für Spiele &amp; Objekte (<code>struct</code>)</h3>
-<p>Ein <code>struct</code> ist wie ein <strong>Bauplan</strong>. Darin packst du Variablen (Eigenschaften) und Funktionen (Aktionen) sauber zusammen:</p>
-<pre><code class="language-cpp">// 1. Ein kleiner Bauplan für einen Stern:
-struct Star {
-    float x;
-    float y;
-    float speed;
-};
+<h3>4. Baupläne für Spiele &amp; Objekte (<code>struct</code>)</h3>
+<p>Ein <code>struct</code> ist ein <strong>Bauplan</strong> für ein ganzes Spiel oder ein Objekt (wie einen Stern oder Laser). In jedem Spiel ordnen wir den Code von oben nach unten in 4 klare Abschnitte:</p>
+<pre><code class="language-cpp">struct MeinSpiel : Game {
+    // 1. VARIABLEN (Zustand &amp; Eigenschaften)
+    float ballX = 160.0f;
+    float ballY = 120.0f;
+    int score = 0;
 
-// 2. Ein Bauplan für ein ganzes Spiel:
-struct MeinSpiel : Game {
-    float ballX = 0.0f;
+    // 2. KONSTRUKTOR (Startklar machen!)
+    // Heißt genau wie das struct und wird beim Start 1-mal ausgeführt:
+    MeinSpiel() {
+        score = 0;
+    }
 
+    // 3. HAUPTSCHLEIFE (60-mal pro Sekunde)
     void update(Engine&amp; e) override {
-        // Spiel-Logik hier drin!
+        e.cls(Colors::DarkGreen);
+        bewegeBall(); // Ruft unsere Methode auf
+        zeichneBall(e);
+    }
+
+    // 4. METHODEN (Eigene Hilfs-Aktionen)
+    void bewegeBall() {
+        // DER ZAUBERTRICK: Methoden können direkt auf ALLE
+        // Variablen oben (ballX, ballY, score) zugreifen!
+        ballX += 2.0f;
+    }
+
+    void zeichneBall(Engine&amp; e) {
+        e.circlefill(ballX, ballY, 8, Colors::Yellow);
     }
 };</code></pre>
+<blockquote>💡 <strong>Was ist der Unterschied zwischen Funktion und Methode?</strong></blockquote>
+<blockquote><em> Eine <strong>Funktion</strong>, die </em>innerhalb* eines <code>struct</code>s steht, nennt man <strong>Methode</strong>.</blockquote>
+<blockquote>* <strong>Der Super-Vorteil</strong>: Alle Methoden im selben <code>struct</code> haben wie durch Gedankenübertragung <strong>automatisch Zugriff auf alle Variablen</strong> ganz oben! Du musst <code>ballX</code> oder <code>score</code> nicht extra übergeben.</blockquote>
 <blockquote>💡 <strong>Der Geheimtipp: <code>struct</code> vs. <code>class</code></strong>:</blockquote>
-<blockquote>In C++ sind <code>struct</code> und <code>class</code> fast genau dasselbe! Der einzige Unterschied: Bei <code>struct</code> ist standardmäßig alles öffentlich zugänglich. Bei <code>class</code> müsste man überall extra <code>public:</code> davorschreiben. Mit <code>struct</code> spart man sich also lästige Tipparbeit!</blockquote>
+<blockquote>In C++ sind <code>struct</code> und <code>class</code> fast genau dasselbe! Der einzige Unterschied: Bei <code>struct</code> ist standardmäßig alles öffentlich zugänglich. Bei <code>class</code> müsste man überall extra <code>public:</code> davorschreiben. Mit <code>struct</code> sparen wir uns lästiges Tippen!</blockquote>
 <hr>
 <h3>6. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
 <p>C++ bringt einen Werkzeugkasten namens <code>std::</code> (Standard Library) mit:</p>

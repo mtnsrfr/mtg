@@ -75,41 +75,50 @@ for (int i = 0; i < 5; ++i) {
 
 ---
 
-### 4. Eigene Funktionen & Methoden (Eigene Zaubersprüche)
-Statt denselben Code 10-mal zu schreiben, packen wir ihn in eine Funktion mit eigenem Namen:
-```cpp
-// Eigener Zauberspruch zum Abfeuern:
-void feuerLaser(Engine& e) {
-    e.play_tone(Notes::As5, 0.04f);
-    lasers.push_back({playerX + 7, playerY, -300.0f, true});
-}
-```
-
 ---
 
-### 5. Baupläne für Spiele & Objekte (`struct`)
-Ein `struct` ist wie ein **Bauplan**. Darin packst du Variablen (Eigenschaften) und Funktionen (Aktionen) sauber zusammen:
+### 4. Baupläne für Spiele & Objekte (`struct`)
+Ein `struct` ist ein **Bauplan** für ein ganzes Spiel oder ein Objekt (wie einen Stern oder Laser). In jedem Spiel ordnen wir den Code von oben nach unten in 4 klare Abschnitte:
 
 ```cpp
-// 1. Ein kleiner Bauplan für einen Stern:
-struct Star {
-    float x;
-    float y;
-    float speed;
-};
-
-// 2. Ein Bauplan für ein ganzes Spiel:
 struct MeinSpiel : Game {
-    float ballX = 0.0f;
+    // 1. VARIABLEN (Zustand & Eigenschaften)
+    float ballX = 160.0f;
+    float ballY = 120.0f;
+    int score = 0;
 
+    // 2. KONSTRUKTOR (Startklar machen!)
+    // Heißt genau wie das struct und wird beim Start 1-mal ausgeführt:
+    MeinSpiel() {
+        score = 0;
+    }
+
+    // 3. HAUPTSCHLEIFE (60-mal pro Sekunde)
     void update(Engine& e) override {
-        // Spiel-Logik hier drin!
+        e.cls(Colors::DarkGreen);
+        bewegeBall(); // Ruft unsere Methode auf
+        zeichneBall(e);
+    }
+
+    // 4. METHODEN (Eigene Hilfs-Aktionen)
+    void bewegeBall() {
+        // DER ZAUBERTRICK: Methoden können direkt auf ALLE
+        // Variablen oben (ballX, ballY, score) zugreifen!
+        ballX += 2.0f;
+    }
+
+    void zeichneBall(Engine& e) {
+        e.circlefill(ballX, ballY, 8, Colors::Yellow);
     }
 };
 ```
 
+> 💡 **Was ist der Unterschied zwischen Funktion und Methode?**
+> * Eine **Funktion**, die *innerhalb* eines `struct`s steht, nennt man **Methode**.
+> * **Der Super-Vorteil**: Alle Methoden im selben `struct` haben wie durch Gedankenübertragung **automatisch Zugriff auf alle Variablen** ganz oben! Du musst `ballX` oder `score` nicht extra übergeben.
+
 > 💡 **Der Geheimtipp: `struct` vs. `class`**:
-> In C++ sind `struct` und `class` fast genau dasselbe! Der einzige Unterschied: Bei `struct` ist standardmäßig alles öffentlich zugänglich. Bei `class` müsste man überall extra `public:` davorschreiben. Mit `struct` spart man sich also lästige Tipparbeit!
+> In C++ sind `struct` und `class` fast genau dasselbe! Der einzige Unterschied: Bei `struct` ist standardmäßig alles öffentlich zugänglich. Bei `class` müsste man überall extra `public:` davorschreiben. Mit `struct` sparen wir uns lästiges Tippen!
 
 ---
 
