@@ -49,7 +49,6 @@ struct PongGame : Game {
     drawScores(e);
   }
 
-private:
   // --- Spiel-Phasen (Zustände) ---
   enum class State {
     Title,       // Start-Menü ("Drücke Leertaste zum Starten")

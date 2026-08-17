@@ -57,7 +57,6 @@ struct SnakeGame : Game {
     drawSnakes(e);
   }
 
-private:
   // --- Spiel-Phasen ---
   enum class State {
     Title,   // Startbildschirm ("Leertaste drücken")

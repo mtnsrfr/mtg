@@ -63,7 +63,6 @@ struct StarfighterGame : Game {
     drawUI(e);
   }
 
-private:
   enum class State {
     Title,
     Playing,

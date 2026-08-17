@@ -46,7 +46,6 @@ struct MenuGame : Game {
     }
   }
 
-private:
   enum class CurrentGame {
     Menu,
     Pong,
