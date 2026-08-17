@@ -60,11 +60,90 @@ constexpr uint8_t LightGray = 9;  // Hellgrau
 constexpr int PALETTE_SIZE = 256;
 
 // =============================================================================
-// 3. SOUND-SYNTHESIZER (Erzeugt Töne und Melodien)
+// 3. MUSIKNOTEN & FREQUENZEN (in Hertz)
+// =============================================================================
+// Hier findest du alle Notennamen, damit du keine Hertz-Zahlen eintippen musst:
+// z.B. Notes::C4 (Mittleres C), Notes::A4 (Kammerton A), Notes::G5, etc.
+// 's' steht für Kreuz (#) z.B. Fs4 = Fis (F#) / 'b' für 'b' z.B. Bb4 = B (B♭)
+// =============================================================================
+namespace Notes {
+// Oktave 2 (Tiefe Basstöne)
+constexpr double C2  = 65.41;
+constexpr double Cs2 = 69.30; constexpr double Db2 = Cs2;
+constexpr double D2  = 73.42;
+constexpr double Ds2 = 77.78; constexpr double Eb2 = Ds2;
+constexpr double E2  = 82.41;
+constexpr double F2  = 87.31;
+constexpr double Fs2 = 92.50; constexpr double Gb2 = Fs2;
+constexpr double G2  = 98.00;
+constexpr double Gs2 = 103.83; constexpr double Ab2 = Gs2;
+constexpr double A2  = 110.00;
+constexpr double As2 = 116.54; constexpr double Bb2 = As2;
+constexpr double B2  = 123.47;
+
+// Oktave 3 (Bass / Bariton)
+constexpr double C3  = 130.81;
+constexpr double Cs3 = 138.59; constexpr double Db3 = Cs3;
+constexpr double D3  = 146.83;
+constexpr double Ds3 = 155.56; constexpr double Eb3 = Ds3;
+constexpr double E3  = 164.81;
+constexpr double F3  = 174.61;
+constexpr double Fs3 = 185.00; constexpr double Gb3 = Fs3;
+constexpr double G3  = 196.00;
+constexpr double Gs3 = 207.65; constexpr double Ab3 = Gs3;
+constexpr double A3  = 220.00;
+constexpr double As3 = 233.08; constexpr double Bb3 = As3;
+constexpr double B3  = 246.94;
+
+// Oktave 4 (Mittlere Oktave - C4 ist das mittlere C am Klavier, A4 = 440 Hz)
+constexpr double C4  = 261.63;
+constexpr double Cs4 = 277.18; constexpr double Db4 = Cs4;
+constexpr double D4  = 293.66;
+constexpr double Ds4 = 311.13; constexpr double Eb4 = Ds4;
+constexpr double E4  = 329.63;
+constexpr double F4  = 349.23;
+constexpr double Fs4 = 369.99; constexpr double Gb4 = Fs4;
+constexpr double G4  = 392.00;
+constexpr double Gs4 = 415.30; constexpr double Ab4 = Gs4;
+constexpr double A4  = 440.00;
+constexpr double As4 = 466.16; constexpr double Bb4 = As4;
+constexpr double B4  = 493.88;
+
+// Oktave 5 (Hohe Töne / Melodien)
+constexpr double C5  = 523.25;
+constexpr double Cs5 = 554.37; constexpr double Db5 = Cs5;
+constexpr double D5  = 587.33;
+constexpr double Ds5 = 622.25; constexpr double Eb5 = Ds5;
+constexpr double E5  = 659.25;
+constexpr double F5  = 698.46;
+constexpr double Fs5 = 739.99; constexpr double Gb5 = Fs5;
+constexpr double G5  = 783.99;
+constexpr double Gs5 = 830.61; constexpr double Ab5 = Gs5;
+constexpr double A5  = 880.00;
+constexpr double As5 = 932.33; constexpr double Bb5 = As5;
+constexpr double B5  = 987.77;
+
+// Oktave 6 (Sehr hohe Töne / Piepser / Glocken)
+constexpr double C6  = 1046.50;
+constexpr double Cs6 = 1108.73; constexpr double Db6 = Cs6;
+constexpr double D6  = 1174.66;
+constexpr double Ds6 = 1244.51; constexpr double Eb6 = Ds6;
+constexpr double E6  = 1318.51;
+constexpr double F6  = 1396.91;
+constexpr double Fs6 = 1479.98; constexpr double Gb6 = Fs6;
+constexpr double G6  = 1567.98;
+constexpr double Gs6 = 1661.22; constexpr double Ab6 = Gs6;
+constexpr double A6  = 1760.00;
+constexpr double As6 = 1864.66; constexpr double Bb6 = As6;
+constexpr double B6  = 1975.53;
+} // namespace Notes
+
+// =============================================================================
+// 4. SOUND-SYNTHESIZER (Erzeugt Töne und Melodien)
 // =============================================================================
 // Ein einzelner Ton mit Frequenz (in Hertz) und Dauer (in Sekunden)
 struct Tone {
-  double freq;    // Tonhöhe in Hertz (z.B. 440 Hz = Kammerton A)
+  double freq;    // Tonhöhe in Hertz (z.B. Notes::A4 oder 440.0)
   float duration; // Dauer in Sekunden (z.B. 0.15s)
 };
 

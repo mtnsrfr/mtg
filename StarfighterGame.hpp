@@ -131,35 +131,35 @@ private:
   // Sound-Effekte
   // ===========================================================================
   void playPlayerShoot(Engine &e) {
-    // Hoher, schneller Laser-Pew (950 Hz)
-    e.play_tone(950.0, 0.04f);
+    // Hoher, schneller Laser-Pew (Note As5)
+    e.play_tone(Notes::As5, 0.04f);
   }
 
   void playEnemyShoot(Engine &e) {
-    // Dunkler Alien-Plasma-Pew (420 Hz)
-    e.play_tone(420.0, 0.05f);
+    // Dunkler Alien-Plasma-Pew (Note Gs4)
+    e.play_tone(Notes::Gs4, 0.05f);
   }
 
   void playExplosion(Engine &e) {
-    // Tiefer, satter Wumm bei Explosion (130 Hz)
-    e.play_tone(130.0, 0.22f);
+    // Tiefer, satter Wumm bei Explosion (Tiefer Bass C3)
+    e.play_tone(Notes::C3, 0.22f);
   }
 
   void playStartSound(Engine &e) {
     e.play_melody({
-        {440.00, 0.08f},
-        {554.37, 0.08f},
-        {659.25, 0.08f},
-        {880.00, 0.25f}
+        {Notes::A4, 0.08f},
+        {Notes::Cs5, 0.08f},
+        {Notes::E5, 0.08f},
+        {Notes::A5, 0.25f}
     });
   }
 
   void playGameOverSound(Engine &e) {
     e.play_melody({
-        {440.00, 0.15f},
-        {370.00, 0.15f},
-        {311.13, 0.18f},
-        {220.00, 0.40f}
+        {Notes::A4, 0.15f},
+        {Notes::Fs4, 0.15f},
+        {Notes::Ds4, 0.18f},
+        {Notes::A3, 0.40f}
     });
   }
 

@@ -339,26 +339,42 @@ if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
 }
 </code></pre>
 <hr>
-<h2>🎵 Level 5: Töne & Musik (Der Sound-Baukasten)</h2>
-<p>Töne machen ein Spiel erst richtig lebendig!</p>
-<h3>1. Einzelne Töne abspielen:</h3>
-<p><code>e.play_tone(FrequenzInHertz, DauerInSekunden)</code>:</p>
+<h2>🎵 Level 5: Töne & Musik (Der Noten-Baukasten)</h2>
+<p>Töne machen ein Spiel erst richtig lebendig! Du musst dir keine komplizierten Hertz-Zahlen (wie 311.13 Hz) merken, sondern kannst einfach echte <strong>Notennamen</strong> (<code>Notes::...</code>) verwenden:</p>
+<h3>1. Die Notennamen (<code>Notes::...</code>)</h3>
+<ul>
+<li><strong>Oktave 3 (Bass)</strong>: <code>Notes::C3</code>, <code>Notes::E3</code>, <code>Notes::G3</code>, <code>Notes::A3</code>, etc.</li>
+<li><strong>Oktave 4 (Klavier-Mitte)</strong>: <code>Notes::C4</code> (Mittleres C), <code>Notes::D4</code>, <code>Notes::E4</code>, <code>Notes::F4</code>, <code>Notes::G4</code>, <code>Notes::A4</code> (Kammerton 440 Hz), <code>Notes::B4</code></li>
+<li><strong>Oktave 5 (Hohe Melodie)</strong>: <code>Notes::C5</code>, <code>Notes::D5</code>, <code>Notes::E5</code>, <code>Notes::F5</code>, <code>Notes::G5</code>, <code>Notes::A5</code>, <code>Notes::B5</code></li>
+<li><strong>Oktave 6 (Piepser/Glocken)</strong>: <code>Notes::C6</code>, <code>Notes::E6</code>, <code>Notes::G6</code></li>
+<li><em>Tipp für Halbtöne</em>: Ein <code>s</code> steht für Kreuz (#) wie <code>Notes::Fs4</code> (Fis / F#) oder <code>Notes::Cs5</code> (Cis / C#).</li>
+</ol>
+<h3>2. Einzelne Töne abspielen:</h3>
+<p><code>e.play_tone(Note, DauerInSekunden)</code>:</p>
 <ul>
 <li><strong>Heller Piep-Ton (z. B. Sprung / Treffer)</strong>:</li>
-<p>  <code>e.play_tone(784.0, 0.08f);</code> (Ton G5)</p>
+<p>  <code>e.play_tone(Notes::G5, 0.08f);</code></p>
 <li><strong>Tiefer Wumm (z. B. Wandstoß / Explosion)</strong>:</li>
-<p>  <code>e.play_tone(140.0, 0.20f);</code> (Tiefer Bass)</p>
+<p>  <code>e.play_tone(Notes::C3, 0.20f);</code></p>
 <li><strong>Sehr hoher Münzen-Sound</strong>:</li>
-<p>  <code>e.play_tone(1200.0, 0.05f);</code></p>
+<p>  <code>e.play_tone(Notes::E6, 0.06f);</code></p>
 </ol>
-<h3>2. Eigene Melodien komponieren:</h3>
-<p>Mit <code>e.play_melody</code> kannst du mehrere Töne nacheinander abspielen:</p>
+<h3>3. Eigene Melodien komponieren:</h3>
+<p>Mit <code>e.play_melody</code> kannst du mehrere Noten nacheinander abspielen:</p>
 <pre><code class="language-cpp">
 // Eine fröhliche 3-Ton-Fanfare:
 e.play_melody({
-    {523.25, 0.10f}, // C5
-    {659.25, 0.10f}, // E5
-    {783.99, 0.25f}  // G5 (länger)
+    {Notes::C5, 0.10f}, // Ton C
+    {Notes::E5, 0.10f}, // Ton E
+    {Notes::G5, 0.25f}  // Ton G (länger)
+});
+
+// Eine traurige Verlierer-Melodie:
+e.play_melody({
+    {Notes::A4,  0.15f},
+    {Notes::Fs4, 0.15f},
+    {Notes::Ds4, 0.18f},
+    {Notes::A3,  0.40f}
 });
 </code></pre>
 <hr>
@@ -486,9 +502,9 @@ e.mouse_x();                             // Maus X
 e.mouse_y();                             // Maus Y
 e.mouse_down();                          // Maustaste gedrückt?
 
-// --- Sound ---
-e.play_tone(frequenz, dauer);            // Ton abspielen
-e.play_melody({ {523, 0.1}, {659, 0.1} }); // Melodie
+// --- Sound &amp; Noten ---
+e.play_tone(Notes::C5, 0.1f);             // Einzelnen Ton abspielen
+e.play_melody({ {Notes::C5, 0.1f}, {Notes::E5, 0.1f}, {Notes::G5, 0.2f} }); // Melodie
 
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,

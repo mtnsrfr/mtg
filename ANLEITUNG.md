@@ -145,27 +145,42 @@ if (ballX <= schlaegerX + schlaegerBreite &&
 
 ---
 
-## 🎵 Level 5: Töne & Musik (Der Sound-Baukasten)
+## 🎵 Level 5: Töne & Musik (Der Noten-Baukasten)
 
-Töne machen ein Spiel erst richtig lebendig!
+Töne machen ein Spiel erst richtig lebendig! Du musst dir keine komplizierten Hertz-Zahlen (wie 311.13 Hz) merken, sondern kannst einfach echte **Notennamen** (`Notes::...`) verwenden:
 
-### 1. Einzelne Töne abspielen:
-`e.play_tone(FrequenzInHertz, DauerInSekunden)`:
+### 1. Die Notennamen (`Notes::...`)
+* **Oktave 3 (Bass)**: `Notes::C3`, `Notes::E3`, `Notes::G3`, `Notes::A3`, etc.
+* **Oktave 4 (Klavier-Mitte)**: `Notes::C4` (Mittleres C), `Notes::D4`, `Notes::E4`, `Notes::F4`, `Notes::G4`, `Notes::A4` (Kammerton 440 Hz), `Notes::B4`
+* **Oktave 5 (Hohe Melodie)**: `Notes::C5`, `Notes::D5`, `Notes::E5`, `Notes::F5`, `Notes::G5`, `Notes::A5`, `Notes::B5`
+* **Oktave 6 (Piepser/Glocken)**: `Notes::C6`, `Notes::E6`, `Notes::G6`
+* *Tipp für Halbtöne*: Ein `s` steht für Kreuz (#) wie `Notes::Fs4` (Fis / F#) oder `Notes::Cs5` (Cis / C#).
+
+### 2. Einzelne Töne abspielen:
+`e.play_tone(Note, DauerInSekunden)`:
 * **Heller Piep-Ton (z. B. Sprung / Treffer)**:
-  `e.play_tone(784.0, 0.08f);` (Ton G5)
+  `e.play_tone(Notes::G5, 0.08f);`
 * **Tiefer Wumm (z. B. Wandstoß / Explosion)**:
-  `e.play_tone(140.0, 0.20f);` (Tiefer Bass)
+  `e.play_tone(Notes::C3, 0.20f);`
 * **Sehr hoher Münzen-Sound**:
-  `e.play_tone(1200.0, 0.05f);`
+  `e.play_tone(Notes::E6, 0.06f);`
 
-### 2. Eigene Melodien komponieren:
-Mit `e.play_melody` kannst du mehrere Töne nacheinander abspielen:
+### 3. Eigene Melodien komponieren:
+Mit `e.play_melody` kannst du mehrere Noten nacheinander abspielen:
 ```cpp
 // Eine fröhliche 3-Ton-Fanfare:
 e.play_melody({
-    {523.25, 0.10f}, // C5
-    {659.25, 0.10f}, // E5
-    {783.99, 0.25f}  // G5 (länger)
+    {Notes::C5, 0.10f}, // Ton C
+    {Notes::E5, 0.10f}, // Ton E
+    {Notes::G5, 0.25f}  // Ton G (länger)
+});
+
+// Eine traurige Verlierer-Melodie:
+e.play_melody({
+    {Notes::A4,  0.15f},
+    {Notes::Fs4, 0.15f},
+    {Notes::Ds4, 0.18f},
+    {Notes::A3,  0.40f}
 });
 ```
 
@@ -310,9 +325,9 @@ e.mouse_x();                             // Maus X
 e.mouse_y();                             // Maus Y
 e.mouse_down();                          // Maustaste gedrückt?
 
-// --- Sound ---
-e.play_tone(frequenz, dauer);            // Ton abspielen
-e.play_melody({ {523, 0.1}, {659, 0.1} }); // Melodie
+// --- Sound & Noten ---
+e.play_tone(Notes::C5, 0.1f);             // Einzelnen Ton abspielen
+e.play_melody({ {Notes::C5, 0.1f}, {Notes::E5, 0.1f}, {Notes::G5, 0.2f} }); // Melodie
 
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,

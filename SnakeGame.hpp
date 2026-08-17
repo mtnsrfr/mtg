@@ -125,34 +125,34 @@ private:
   // Sound-Effekte
   // ===========================================================================
   void playNomSound(Engine &e) {
-    // Heller Blip beim Apfelessen (G5 = 784 Hz)
-    e.play_tone(784.0, 0.06f);
+    // Heller Blip beim Apfelessen (G5)
+    e.play_tone(Notes::G5, 0.06f);
   }
 
   void playCrashSound(Engine &e) {
-    // Tiefer Knall beim Zusammenstoß (180 Hz)
-    e.play_tone(180.0, 0.20f);
+    // Tiefer Knall beim Zusammenstoß (Fs3)
+    e.play_tone(Notes::Fs3, 0.20f);
   }
 
   void playStartSound(Engine &e) {
     // Fröhliche 4-Ton-Aufstiegs-Fanfare
     e.play_melody({
-        {523.25, 0.10f}, // C5
-        {659.25, 0.10f}, // E5
-        {783.99, 0.10f}, // G5
-        {1046.50, 0.25f} // C6
+        {Notes::C5, 0.10f},
+        {Notes::E5, 0.10f},
+        {Notes::G5, 0.10f},
+        {Notes::C6, 0.25f}
     });
   }
 
   void playVictorySound(Engine &e) {
     // Sieges-Melodie
     e.play_melody({
-        {523.25, 0.12f},
-        {659.25, 0.12f},
-        {783.99, 0.12f},
-        {1046.50, 0.15f},
-        {880.00, 0.15f},
-        {1046.50, 0.35f}
+        {Notes::C5, 0.12f},
+        {Notes::E5, 0.12f},
+        {Notes::G5, 0.12f},
+        {Notes::C6, 0.15f},
+        {Notes::A5, 0.15f},
+        {Notes::C6, 0.35f}
     });
   }
 

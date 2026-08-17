@@ -97,15 +97,15 @@ private:
 
     // Tasteneingabe zur Spielauswahl
     if (e.pressed(Key::Num1)) {
-      e.play_tone(523.25, 0.10f); // C5
+      e.play_tone(Notes::C5, 0.10f);
       pong = std::make_unique<PongGame>(); // Frisch starten
       currentGame = CurrentGame::Pong;
     } else if (e.pressed(Key::Num2)) {
-      e.play_tone(659.25, 0.10f); // E5
+      e.play_tone(Notes::E5, 0.10f);
       snake = std::make_unique<SnakeGame>(); // Frisch starten
       currentGame = CurrentGame::Snake;
     } else if (e.pressed(Key::Num3)) {
-      e.play_tone(783.99, 0.10f); // G5
+      e.play_tone(Notes::G5, 0.10f);
       starfighter = std::make_unique<StarfighterGame>(); // Frisch starten
       currentGame = CurrentGame::Starfighter;
     }

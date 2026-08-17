@@ -93,32 +93,32 @@ private:
   // Sound-Effekte für Pong
   // ===========================================================================
   void playPaddleHit(Engine &e) {
-    // Heller, knackiger Ton (G5 = 784 Hz), wenn der Ball den Schläger trifft
-    e.play_tone(784.0, 0.08f);
+    // Heller, knackiger Ton (G5), wenn der Ball den Schläger trifft
+    e.play_tone(Notes::G5, 0.08f);
   }
 
   void playWallHit(Engine &e) {
-    // Tieferer Abprall-Ton (G4 = 392 Hz), wenn der Ball oben/unten anstößt
-    e.play_tone(392.0, 0.06f);
+    // Tieferer Abprall-Ton (G4), wenn der Ball oben/unten anstößt
+    e.play_tone(Notes::G4, 0.06f);
   }
 
   void playStartSound(Engine &e) {
     // Fröhliche 4-Ton-Aufstiegs-Fanfare beim Spielstart (C-Dur Arpeggio: C5 -> E5 -> G5 -> C6)
     e.play_melody({
-        {523.25, 0.10f}, // C5
-        {659.25, 0.10f}, // E5
-        {783.99, 0.10f}, // G5
-        {1046.50, 0.28f} // C6 (langer Schlusston)
+        {Notes::C5, 0.10f},
+        {Notes::E5, 0.10f},
+        {Notes::G5, 0.10f},
+        {Notes::C6, 0.28f}
     });
   }
 
   void playSadSound(Engine &e) {
-    // Traurige absteigende 4-Ton-Melodie bei Punktverlust (F#4 -> F4 -> E4 -> D#4)
+    // Traurige absteigende 4-Ton-Melodie bei Punktverlust (Fs4 -> F4 -> E4 -> Ds4)
     e.play_melody({
-        {369.99, 0.18f}, // F#4
-        {349.23, 0.18f}, // F4
-        {329.63, 0.20f}, // E4
-        {311.13, 0.45f}  // D#4
+        {Notes::Fs4, 0.18f},
+        {Notes::F4, 0.18f},
+        {Notes::E4, 0.20f},
+        {Notes::Ds4, 0.45f}
     });
   }
 
