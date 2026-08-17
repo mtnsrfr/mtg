@@ -4,11 +4,15 @@
 <meta charset="UTF-8">
 <title>Die Spiele-Schmiede: Zero to Hero</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
   
   @page {
     size: A4;
-    margin: 20mm 15mm 20mm 15mm;
+    margin: 18mm 14mm 18mm 14mm;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
@@ -16,7 +20,7 @@
     line-height: 1.6;
     color: #1e293b;
     background: #ffffff;
-    max-width: 860px;
+    max-width: 880px;
     margin: 0 auto;
     padding: 30px 20px;
   }
@@ -28,6 +32,7 @@
     border-bottom: 3px solid #3b82f6;
     padding-bottom: 12px;
     margin-top: 10px;
+    margin-bottom: 20px;
   }
 
   h2 {
@@ -35,7 +40,8 @@
     font-weight: 700;
     color: #1e3a8a;
     margin-top: 35px;
-    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 14px;
+    border-bottom: 1.5px solid #e2e8f0;
     padding-bottom: 6px;
     page-break-after: avoid;
   }
@@ -44,41 +50,68 @@
     font-size: 1.2rem;
     font-weight: 600;
     color: #1d4ed8;
-    margin-top: 20px;
+    margin-top: 24px;
+    margin-bottom: 10px;
     page-break-after: avoid;
   }
 
-  p, li {
+  h4 {
     font-size: 1.05rem;
+    font-weight: 600;
     color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+
+  p {
+    font-size: 1.02rem;
+    color: #334155;
+    margin: 10px 0;
+  }
+
+  ul, ol {
+    margin: 10px 0 16px 24px;
+    padding: 0;
+  }
+
+  li {
+    font-size: 1.02rem;
+    color: #334155;
+    margin-bottom: 6px;
   }
 
   code {
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    background: #f1f5f9;
-    color: #0369a1;
+    background: #eff6ff;
+    color: #1d4ed8;
     padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.92em;
+    font-size: 0.9em;
+    border: 1px solid #dbeafe;
   }
 
   pre {
     background: #0f172a;
     color: #f8fafc;
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-radius: 8px;
     overflow-x: auto;
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    font-size: 0.95rem;
-    line-height: 1.45;
+    font-size: 0.92rem;
+    line-height: 1.48;
+    margin: 14px 0;
     page-break-inside: avoid;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #3b82f6;
   }
 
   pre code {
     background: transparent;
-    color: inherit;
+    color: #f8fafc;
     padding: 0;
+    border: none;
+    font-size: inherit;
   }
 
   table {
@@ -90,12 +123,13 @@
 
   th, td {
     border: 1px solid #cbd5e1;
-    padding: 10px 14px;
+    padding: 9px 12px;
     text-align: left;
+    font-size: 0.98rem;
   }
 
   th {
-    background: #f8fafc;
+    background: #f1f5f9;
     font-weight: 700;
     color: #0f172a;
   }
@@ -112,12 +146,19 @@
     border-radius: 0 8px 8px 0;
     color: #92400e;
     font-weight: 600;
+    font-size: 1.02rem;
   }
 
   hr {
     border: none;
     border-top: 2px dashed #cbd5e1;
-    margin: 30px 0;
+    margin: 28px 0;
+  }
+
+  a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
   }
 
   .print-bar {
@@ -140,6 +181,7 @@
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
+    transition: background 0.15s ease;
   }
   .print-btn:hover {
     background: #1d4ed8;
@@ -153,8 +195,18 @@
       padding: 0;
     }
     pre {
-      background: #1e293b !important;
+      background: #0f172a !important;
       color: #f8fafc !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    th {
+      background: #f1f5f9 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    blockquote {
+      background: #fffbeb !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -176,12 +228,10 @@
 <ul>
 <li>Unser Spiel malt <strong>60-mal in jeder einzelnen Sekunde</strong> ein neues Bild auf den Bildschirm.</li>
 <li>Das Herzstück jedes Spiels ist diese eine Funktion:</li>
-<p>  <code>`</code>cpp</p>
-<p>  void update(Engine& e) {</p>
-<p>      // Alles hier drin wird 60-mal pro Sekunde ausgeführt!</p>
-<p>  }</p>
-<p>  <code>`</code></p>
-</ol>
+<pre><code class="language-cpp">  void update(Engine&amp; e) {
+      // Alles hier drin wird 60-mal pro Sekunde ausgeführt!
+  }</code></pre>
+</ul>
 <hr>
 <h2>🧠 Das C++ Zauberbuch: Die wichtigsten Grundlagen</h2>
 <p>C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die 6 wichtigsten Bausteine, die du brauchst:</p>
@@ -189,108 +239,86 @@
 <p>In Variablen merkt sich der Computer Zahlen, Texte und Zustände:</p>
 <ul>
 <li><code>int</code> (Ganze Zahlen): Für Punktestände, Leben oder Zähler.</li>
-<p>  <code>`</code>cpp</p>
-<p>  int score = 0;</p>
-<p>  int leben = 3;</p>
-<p>  <code>`</code></p>
+<pre><code class="language-cpp">  int score = 0;
+  int leben = 3;</code></pre>
 <li><code>float</code> (Kommazahlen): Für Positionen und Geschwindigkeiten (damit Bewegungen butterweich sind).</li>
-<p>  <code>`</code>cpp</p>
-<p>  float ballX = 160.0f;</p>
-<p>  float geschwindigkeit = 3.5f;</p>
-<p>  <code>`</code></p>
+<pre><code class="language-cpp">  float ballX = 160.0f;
+  float geschwindigkeit = 3.5f;</code></pre>
 <li><code>bool</code> (Schalter: <code>true</code> / <code>false</code>): Für Ja/Nein-Zustände.</li>
-<p>  <code>`</code>cpp</p>
-<p>  bool spielAktiv = true;</p>
-<p>  bool laserBereit = false;</p>
-<p>  <code>`</code></p>
-</ol>
+<pre><code class="language-cpp">  bool spielAktiv = true;
+  bool laserBereit = false;</code></pre>
+</ul>
 <hr>
 <h3>2. Entscheidungen treffen (<code>if</code> und <code>else</code>)</h3>
 <p>Mit <code>if</code> („Wenn...“) kann dein Spiel auf Ereignisse reagieren:</p>
-<pre><code class="language-cpp">
-if (ballX &gt; 320) {
+<pre><code class="language-cpp">if (ballX &gt; 320) {
     score = score + 1;       // Tor erzielt!
     e.play_tone(Notes::C5);
 } else {
     // Sonst: Ball ist noch im Feld
-}
-</code></pre>
+}</code></pre>
 <h4>Die Vergleichs-Zeichen:</h4>
 <ul>
 <li><code>==</code> Ist gleich? (<code>if (leben == 0)</code>)</li>
 <li><code>!=</code> Ist ungleich? (<code>if (richtung != Direction::Down)</code>)</li>
-<li><code><</code>, <code>></code>, <code><=</code>, <code>>=</code> Kleiner, Größer, Kleiner-Gleich, Größer-Gleich</li>
-<li><code>&&</code> <strong>UND</strong> (<code>if (ballX > 0 && ballX < 320)</code>)</li>
+<li><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code> Kleiner, Größer, Kleiner-Gleich, Größer-Gleich</li>
+<li><code>&amp;&amp;</code> <strong>UND</strong> (<code>if (ballX &gt; 0 &amp;&amp; ballX &lt; 320)</code>)</li>
 <li><code>||</code> <strong>ODER</strong> (<code>if (e.key(Key::W) || e.key(Key::Up))</code>)</li>
-</ol>
+</ul>
 <hr>
 <h3>3. Wiederholungen (<code>for</code>-Schleifen)</h3>
 <p>Wenn du viele Dinge auf einmal tun willst (z. B. 70 Sterne zeichnen oder 5 Äpfel platzieren), benutzt du eine <code>for</code>-Schleife:</p>
-<pre><code class="language-cpp">
-// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
+<pre><code class="language-cpp">// Zählt von 0 bis 4 (wiederholt sich genau 5-mal):
 for (int i = 0; i &lt; 5; ++i) {
     spawnApple();
-}
-</code></pre>
+}</code></pre>
 <hr>
-<h3>4. Eigene Funktionen & Methoden (Eigene Zaubersprüche)</h3>
+<h3>4. Eigene Funktionen &amp; Methoden (Eigene Zaubersprüche)</h3>
 <p>Statt denselben Code 10-mal zu schreiben, packen wir ihn in eine Funktion mit eigenem Namen:</p>
-<pre><code class="language-cpp">
-// Eigener Zauberspruch zum Abfeuern:
+<pre><code class="language-cpp">// Eigener Zauberspruch zum Abfeuern:
 void feuerLaser(Engine&amp; e) {
     e.play_tone(Notes::As5, 0.04f);
     lasers.push_back({playerX + 7, playerY, -300.0f, true});
-}
-</code></pre>
+}</code></pre>
 <hr>
 <h3>5. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
 <p>C++ bringt einen Werkzeugkasten namens <code>std::</code> (Standard Library) mit:</p>
 <ul>
 <li><strong><code>std::vector</code> (Die flexible Liste)</strong>:</li>
-<p>  Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:</p>
-<p>  <code>`</code>cpp</p>
-<p>  std::vector<Star> stars;           // Liste aller Sterne</p>
-<p>  stars.push_back(neuerStern);       // Stern hinten anfügen</p>
-<p>  stars.pop_back();                  // Letzten Stern entfernen</p>
-<p>  int anzahl = stars.size();         // Wie viele Sterne haben wir?</p>
-<p>  <code>`</code></p>
-</ol>
+</ul>
+<p>Ein Vector ist wie ein Gummiband-Array. Er wächst automatisch, wenn neue Dinge dazukommen:</p>
+<pre><code class="language-cpp">  std::vector&lt;Star&gt; stars;           // Liste aller Sterne
+  stars.push_back(neuerStern);       // Stern hinten anfügen
+  stars.pop_back();                  // Letzten Stern entfernen
+  int anzahl = stars.size();         // Wie viele Sterne haben wir?</code></pre>
 <ul>
 <li><strong><code>std::deque</code> (Die Schlange / Kette)</strong>:</li>
-<p>  Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:</p>
-<p>  <code>`</code>cpp</p>
-<p>  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen</p>
-<p>  body.pop_back();            // Hinten Schwanzteil abschneiden</p>
-<p>  <code>`</code></p>
-</ol>
+</ul>
+<p>Perfekt für Snake! Bei einer Deque („Double Ended Queue“) kannst du blitzschnell vorne anbauen und hinten abschneiden:</p>
+<pre><code class="language-cpp">  body.push_front(neuerKopf); // Vorne neuen Kopf anfügen
+  body.pop_back();            // Hinten Schwanzteil abschneiden</code></pre>
 <ul>
 <li><strong><code>std::clamp</code> (Der Begrenzer)</strong>:</li>
-<p>  Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
-<p>  <code>`</code>cpp</p>
-<p>  playerY = std::clamp(playerY, 18.0f, 200.0f);</p>
-<p>  <code>`</code></p>
-</ol>
+</ul>
+<p>Hält einen Wert sauber zwischen einem Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
+<pre><code class="language-cpp">  playerY = std::clamp(playerY, 18.0f, 200.0f);</code></pre>
 <hr>
 <h3>6. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
 <p>Ein <strong>Compiler</strong> übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.</p>
 <p>Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:</p>
-<pre><code class="language-bash">
-# 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
+<pre><code class="language-bash"># 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
 g++ -std=c++17 -I/opt/homebrew/include main.cc -o mein_spiel -L/opt/homebrew/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 # 2. Dein fertiges Spiel starten:
-./mein_spiel
-</code></pre>
+./mein_spiel</code></pre>
 <p>Oder noch einfacher mit unserem <strong>Makefile</strong>:</p>
-<pre><code class="language-bash">
-make          # Kompiliert das Spiel
+<pre><code class="language-bash">make          # Kompiliert das Spiel
 ./test        # Startet das Spiel
 make static   # Baut ein eigenständiges Programm (ohne externe Abhängigkeiten)
-make bundle   # Baut eine echte macOS App: MTG.app!
-</code></pre>
+make bundle   # Baut eine echte macOS App: MTG.app!</code></pre>
 <hr>
-<h2>🎨 Level 1: Die Malerwerkstatt (Farben & Formen)</h2>
-<h3>1. Die Zauberleinwand & Koordinaten</h3>
+<h2>🎨 Level 1: Die Malerwerkstatt (Farben &amp; Formen)</h2>
+<h3>1. Die Zauberleinwand &amp; Koordinaten</h3>
 <p>Unser Bildschirm ist <strong>320 Pixel breit</strong> und <strong>240 Pixel hoch</strong>.</p>
 <ul>
 <li><strong>X (nach rechts)</strong>: Geht von 0 (ganz links) bis 320 (ganz rechts).</li>
@@ -307,7 +335,7 @@ make bundle   # Baut eine echte macOS App: MTG.app!
 <li><code>Colors::White</code> (Schneeweiß)</li>
 <li><code>Colors::Black</code> (Tiefschwarz)</li>
 <li><code>Colors::Orange</code>, <code>Colors::LightGreen</code>, <code>Colors::DarkGray</code>, <code>Colors::LightGray</code></li>
-</ol>
+</ul>
 <h3>3. Deine Mal-Werkzeuge</h3>
 <table><thead><tr>
 <th>Befehl</th>
@@ -350,9 +378,9 @@ make bundle   # Baut eine echte macOS App: MTG.app!
 <td><code>e.circlefill(160, 120, 8, Colors::Yellow);</code></td>
 </tr>
 <tr>
-<td><code>e.draw_text(x, y, "TEXT", Farbe)</code></td>
+<td><code>e.draw_text(x, y, &quot;TEXT&quot;, Farbe)</code></td>
 <td><strong>Schrift schreiben</strong>: Schreibt Text auf den Bildschirm.</td>
-<td><code>e.draw_text(100, 50, "HALLO WELT", Colors::White);</code></td>
+<td><code>e.draw_text(100, 50, &quot;HALLO WELT&quot;, Colors::White);</code></td>
 </tr>
 <tr>
 <td><code>e.draw_digit(x, y, zahl, Farbe)</code></td>
@@ -362,16 +390,13 @@ make bundle   # Baut eine echte macOS App: MTG.app!
 </tbody></table>
 <blockquote>🎯 <strong>Mini-Quest 1</strong>: Male ein Haus mit einem dreieckigen Dach (aus Linien) und einer bunten Tür!</blockquote>
 <hr>
-<h2>🏃 Level 2: Leben einhauchen! (Variablen & Bewegung)</h2>
+<h2>🏃 Level 2: Leben einhauchen! (Variablen &amp; Bewegung)</h2>
 <h3>Was ist eine Variable?</h3>
 <p>Eine Variable ist wie eine <strong>beschriftete Schachtel</strong>, in der sich eine Zahl merkt:</p>
-<pre><code class="language-cpp">
-float ballX = 100.0f; // Eine Schachtel namens ballX mit dem Wert 100
-</code></pre>
+<pre><code class="language-cpp">float ballX = 100.0f; // Eine Schachtel namens ballX mit dem Wert 100</code></pre>
 <h3>Die Zauberformel für Bewegung</h3>
 <p>Wenn wir in jedem Bild (<code>update</code>) die Zahl ein kleines Stückchen verändern, bewegt sich das Objekt:</p>
-<pre><code class="language-cpp">
-class MeinSpiel : public Game {
+<pre><code class="language-cpp">class MeinSpiel : public Game {
     float ballX = 0.0f;
 
     void update(Engine&amp; e) override {
@@ -383,29 +408,24 @@ class MeinSpiel : public Game {
         // Ball an der neuen Position malen:
         e.circlefill(ballX, 120, 8, Colors::Yellow);
     }
-};
-</code></pre>
+};</code></pre>
 <hr>
-<h2>🕹️ Level 3: Die Fernbedienung (Tastatur & Maus)</h2>
+<h2>🕹️ Level 3: Die Fernbedienung (Tastatur &amp; Maus)</h2>
 <p>Jetzt machen wir das Spiel interaktiv!</p>
 <h3>Tasten abfragen:</h3>
 <ul>
 <li><code>e.key(Key::...)</code> → Prüft, ob eine Taste <strong>gedrückt gehalten</strong> wird (perfekt für Schläger / Raumschiffe):</li>
-<p>  <code>`</code>cpp</p>
-<p>  if (e.key(Key::W)) {</p>
-<p>      spielerY = spielerY - 4.0f; // Nach oben fliegen</p>
-<p>  }</p>
-<p>  if (e.key(Key::S)) {</p>
-<p>      spielerY = spielerY + 4.0f; // Nach unten fliegen</p>
-<p>  }</p>
-<p>  <code>`</code></p>
+<pre><code class="language-cpp">  if (e.key(Key::W)) {
+      spielerY = spielerY - 4.0f; // Nach oben fliegen
+  }
+  if (e.key(Key::S)) {
+      spielerY = spielerY + 4.0f; // Nach unten fliegen
+  }</code></pre>
 <li><code>e.pressed(Key::...)</code> → Prüft, ob eine Taste <strong>gerade angetippt</strong> wurde (perfekt für Schießen oder Springen):</li>
-<p>  <code>`</code>cpp</p>
-<p>  if (e.pressed(Key::Space)) {</p>
-<p>      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!</p>
-<p>  }</p>
-<p>  <code>`</code></p>
-</ol>
+<pre><code class="language-cpp">  if (e.pressed(Key::Space)) {
+      e.play_tone(Notes::As5, 0.1f); // Schuss-Ton abspielen!
+  }</code></pre>
+</ul>
 <h3>Verfügbare Tasten:</h3>
 <ul>
 <li><code>Key::W</code>, <code>Key::S</code>, <code>Key::A</code>, <code>Key::D</code></li>
@@ -417,35 +437,29 @@ class MeinSpiel : public Game {
 <ul>
 <li><code>e.mouse_x()</code> und <code>e.mouse_y()</code> verraten dir die Position des Mauszeigers.</li>
 <li><code>e.mouse_down()</code> prüft, ob die Maustaste gedrückt ist:</li>
-<p>  <code>`</code>cpp</p>
-<p>  if (e.mouse_down()) {</p>
-<p>      e.circlefill(e.mouse_x(), e.mouse_y(), 5, Colors::Yellow);</p>
-<p>  }</p>
-<p>  <code>`</code></p>
-</ol>
+<pre><code class="language-cpp">  if (e.mouse_down()) {
+      e.circlefill(e.mouse_x(), e.mouse_y(), 5, Colors::Yellow);
+  }</code></pre>
+</ul>
 <hr>
-<h2>💥 Level 4: Kollisionen & Spielphysik</h2>
+<h2>💥 Level 4: Kollisionen &amp; Spielphysik</h2>
 <h3>1. Wand-Abprall (Der Flummi-Trick)</h3>
 <p>Wenn der Ball oben oder unten anstößt, kehren wir einfach seine vertikale Geschwindigkeit (<code>ballVy</code>) um:</p>
-<pre><code class="language-cpp">
-ballY = ballY + ballVy;
+<pre><code class="language-cpp">ballY = ballY + ballVy;
 
 if (ballY &lt;= 10 || ballY &gt;= 230) {
     ballVy = -ballVy;               // Richtung umdrehen: Aus + wird - und aus - wird +!
     e.play_tone(Notes::G4, 0.05f); // Abprall-Ton!
-}
-</code></pre>
+}</code></pre>
 <h3>2. Schläger trifft Ball (Kollisionsprüfung)</h3>
 <p>Wir prüfen, ob sich der Ball innerhalb der Schläger-Grenzen befindet:</p>
-<pre><code class="language-cpp">
-if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
+<pre><code class="language-cpp">if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
     ballY &gt;= schlaegerY &amp;&amp; ballY &lt;= schlaegerY + schlaegerHoehe) {
     ballVx = -ballVx;               // Ball fliegt wieder nach rechts zurück!
     e.play_tone(Notes::G5, 0.08f); // Treffer-Ton!
-}
-</code></pre>
+}</code></pre>
 <hr>
-<h2>🎵 Level 5: Töne & Musik (Der Noten-Baukasten)</h2>
+<h2>🎵 Level 5: Töne &amp; Musik (Der Noten-Baukasten)</h2>
 <p>Töne machen ein Spiel erst richtig lebendig! Du musst dir keine komplizierten Hertz-Zahlen (wie 311.13 Hz) merken, sondern kannst einfach echte <strong>Notennamen</strong> (<code>Notes::...</code>) verwenden:</p>
 <h3>1. Die Notennamen (<code>Notes::...</code>)</h3>
 <ul>
@@ -454,21 +468,24 @@ if (ballX &lt;= schlaegerX + schlaegerBreite &amp;&amp;
 <li><strong>Oktave 5 (Hohe Melodie)</strong>: <code>Notes::C5</code>, <code>Notes::D5</code>, <code>Notes::E5</code>, <code>Notes::F5</code>, <code>Notes::G5</code>, <code>Notes::A5</code>, <code>Notes::B5</code></li>
 <li><strong>Oktave 6 (Piepser/Glocken)</strong>: <code>Notes::C6</code>, <code>Notes::E6</code>, <code>Notes::G6</code></li>
 <li><em>Tipp für Halbtöne</em>: Ein <code>s</code> steht für Kreuz (#) wie <code>Notes::Fs4</code> (Fis / F#) oder <code>Notes::Cs5</code> (Cis / C#).</li>
-</ol>
+</ul>
 <h3>2. Einzelne Töne abspielen:</h3>
 <p><code>e.play_tone(Note, DauerInSekunden)</code>:</p>
 <ul>
 <li><strong>Heller Piep-Ton (z. B. Sprung / Treffer)</strong>:</li>
-<p>  <code>e.play_tone(Notes::G5, 0.08f);</code></p>
+</ul>
+<p><code>e.play_tone(Notes::G5, 0.08f);</code></p>
+<ul>
 <li><strong>Tiefer Wumm (z. B. Wandstoß / Explosion)</strong>:</li>
-<p>  <code>e.play_tone(Notes::C3, 0.20f);</code></p>
+</ul>
+<p><code>e.play_tone(Notes::C3, 0.20f);</code></p>
+<ul>
 <li><strong>Sehr hoher Münzen-Sound</strong>:</li>
-<p>  <code>e.play_tone(Notes::E6, 0.06f);</code></p>
-</ol>
+</ul>
+<p><code>e.play_tone(Notes::E6, 0.06f);</code></p>
 <h3>3. Eigene Melodien komponieren:</h3>
 <p>Mit <code>e.play_melody</code> kannst du mehrere Noten nacheinander abspielen:</p>
-<pre><code class="language-cpp">
-// Eine fröhliche 3-Ton-Fanfare:
+<pre><code class="language-cpp">// Eine fröhliche 3-Ton-Fanfare:
 e.play_melody({
     {Notes::C5, 0.10f}, // Ton C
     {Notes::E5, 0.10f}, // Ton E
@@ -481,8 +498,7 @@ e.play_melody({
     {Notes::Fs4, 0.15f},
     {Notes::Ds4, 0.18f},
     {Notes::A3,  0.40f}
-});
-</code></pre>
+});</code></pre>
 <hr>
 <h2>🏓 Level 6: Spiel 1 – Das Retro-Pong Match (<a href="file:///Users/mtn/code/mtg/PongGame.hpp">PongGame.hpp</a>)</h2>
 <p>In <strong>Pong</strong> lernen wir, wie zwei Spieler gegeneinander antreten:</p>
@@ -499,14 +515,11 @@ e.play_melody({
 <ul>
 <li>Unser Spielfeld hat <strong>40 Kacheln Breite</strong> und <strong>30 Kacheln Höhe</strong>.</li>
 <li>Eine Kachel-Position ist einfach:</li>
-<p>  <code>`</code>cpp</p>
-<p>  struct Cell { int x, y; };</p>
-<p>  <code>`</code></p>
-</ol>
+<pre><code class="language-cpp">  struct Cell { int x, y; };</code></pre>
+</ul>
 <h3>2. Wie bewegt sich eine Schlange?</h3>
-<p>Die Schlange ist eine Kette von Kacheln (<code>std::deque<Cell></code>). In jedem Schritt passiert Magie:</p>
-<pre><code class="language-cpp">
-// 1. Vorne einen neuen Kopf in Gehrichtung anfügen:
+<p>Die Schlange ist eine Kette von Kacheln (<code>std::deque&lt;Cell&gt;</code>). In jedem Schritt passiert Magie:</p>
+<pre><code class="language-cpp">// 1. Vorne einen neuen Kopf in Gehrichtung anfügen:
 body.push_front(neuerKopf);
 
 // 2. Hat die Schlange einen Apfel gefressen?
@@ -514,18 +527,15 @@ if (apfelGefressen) {
     score++; // Schlange wächst automatisch, weil wir den Schwanz NICHT löschen!
 } else {
     body.pop_back(); // Schwanz nachziehen: Letztes Glied hinten abschneiden
-}
-</code></pre>
+}</code></pre>
 <h3>3. Der „Apfel-Klau“-Mechanismus (Modell B)</h3>
 <p>Wenn eine Schlange an die Wand oder in den Gegner fährt:</p>
-<pre><code class="language-cpp">
-// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
+<pre><code class="language-cpp">// Jeden Körperteil der Schlange in einen leckeren Apfel auf dem Feld verwandeln:
 for (size_t i = 1; i &lt; body.size(); ++i) {
     apples.push_back(body[i]);
 }
 // Schlange startet sofort wieder klein in ihrer Ecke neu!
-respawnSnake();
-</code></pre>
+respawnSnake();</code></pre>
 <p>Der überlebende Spieler kann die Trümmer-Äpfel blitzschnell fressen und riesig werden!</p>
 <hr>
 <h2>🚀 Level 8: Spiel 3 – Die Weltraum-Schlacht (<a href="file:///Users/mtn/code/mtg/StarfighterGame.hpp">StarfighterGame.hpp</a>)</h2>
@@ -537,20 +547,17 @@ respawnSnake();
 <li><strong>Mittlere Sterne</strong> (hellgrau, mittel: 65 px/s)</li>
 <li><strong>Vordergrund</strong> (strahlend weiß, schnell: 130 px/s) → Nahe Sterne</li>
 </ul>
-<pre><code class="language-cpp">
-struct Star {
+<pre><code class="language-cpp">struct Star {
     float x, y, speed;
     uint8_t color;
 };
 
 // In jedem Frame nach unten wandern:
 s.y += s.speed * e.dt();
-if (s.y &gt;= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }
-</code></pre>
+if (s.y &gt;= 240.0f) { s.y = 0.0f; s.x = rand() % 320; }</code></pre>
 <h3>2. 16x16 Pixel-Art Raumschiffe mit Bitmasken</h3>
 <p>Wir können Raumschiffe direkt im Code als Pixelmuster zeichnen:</p>
-<pre><code class="language-cpp">
-// Das 16x16 Delta X-Wing Schiff (Zeile für Zeile):
+<pre><code class="language-cpp">// Das 16x16 Delta X-Wing Schiff (Zeile für Zeile):
 static const uint16_t playerSprite[16] = {
   0b0000000110000000, // Spitze
   0b0000001111000000, // Cockpit
@@ -558,23 +565,19 @@ static const uint16_t playerSprite[16] = {
   0b0100111111110010, // Delta-Flügel
   0b1111111111111111, // Rumpf
   0b0000001001000000, // Schubflamme
-};
-</code></pre>
-<h3>3. Schiffs-Explosionen mit echter Physik (Trägheit & Farbverlauf)</h3>
+};</code></pre>
+<h3>3. Schiffs-Explosionen mit echter Physik (Trägheit &amp; Farbverlauf)</h3>
 <p>Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern <strong>nehmen den vollen Geschwindigkeitsvektor des Schiffs mit</strong>:</p>
-<pre><code class="language-cpp">
-// 1. Schiffsimpuls + radiale Sprengung
+<pre><code class="language-cpp">// 1. Schiffsimpuls + radiale Sprengung
 p.vx = shipVx + burstSpeed * cos(angle);
 p.vy = shipVy + burstSpeed * sin(angle);
 
 // 2. Thermischer Farbverlauf über die Lebensdauer der Trümmer:
-// Frisch (100%-75%): Weißer Blitz -&gt; Gelb -&gt; Orange -&gt; Rote Glut -&gt; Dunkler Rauch
-</code></pre>
+// Frisch (100%-75%): Weißer Blitz -&gt; Gelb -&gt; Orange -&gt; Rote Glut -&gt; Dunkler Rauch</code></pre>
 <hr>
 <h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
 <p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>
-<pre><code class="language-cpp">
-class MenuGame : public Game {
+<pre><code class="language-cpp">class MenuGame : public Game {
     std::unique_ptr&lt;PongGame&gt; pong;
     std::unique_ptr&lt;SnakeGame&gt; snake;
     std::unique_ptr&lt;StarfighterGame&gt; starfighter;
@@ -587,12 +590,10 @@ class MenuGame : public Game {
         if (e.pressed(Key::Num2)) { currentGame = CurrentGame::Snake; }
         if (e.pressed(Key::Num3)) { currentGame = CurrentGame::Starfighter; }
     }
-};
-</code></pre>
+};</code></pre>
 <hr>
 <h2>📋 Der Spickzettel (Cheat Sheet) auf einen Blick</h2>
-<pre><code class="language-cpp">
-// --- Malen ---
+<pre><code class="language-cpp">// --- Malen ---
 e.cls(Farbe);                             // Bildschirm leeren
 e.pset(x, y, Farbe);                     // Pixel setzen
 e.line(x0, y0, x1, y1, Farbe);           // Linie ziehen
@@ -615,8 +616,7 @@ e.play_melody({ {Notes::C5, 0.1f}, {Notes::E5, 0.1f}, {Notes::G5, 0.2f} }); // M
 // --- Farben ---
 Colors::DarkGreen, Colors::Red, Colors::Blue,
 Colors::Yellow, Colors::White, Colors::Black,
-Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray
-</code></pre>
+Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray</code></pre>
 <p><strong>Viel Spaß beim Erfinden und Programmieren deiner eigenen Spiele! 🚀</strong></p>
 
 </body>

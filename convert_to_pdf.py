@@ -8,36 +8,69 @@ html_path = "/Users/mtn/code/mtg/ANLEITUNG.html"
 with open(md_path, "r", encoding="utf-8") as f:
     text = f.read()
 
-# Simple, beautiful Markdown to HTML converter
+def inline_format(s):
+    # Escape HTML special characters in normal text first
+    s = html.escape(s)
+    
+    # Inline code (un-escape inside code tag)
+    def replace_code(m):
+        code_text = m.group(1)
+        return f'<code>{code_text}</code>'
+    s = re.sub(r'`(.+?)`', replace_code, s)
+    
+    # Bold **text**
+    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    # Italic *text*
+    s = re.sub(r'\*(.+?)\*', r'<em>\1</em>', s)
+    # Markdown links [text](url)
+    s = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', s)
+    return s
+
 def md_to_html(md):
     lines = md.split("\n")
     out = []
     in_code = False
+    code_lines = []
+    code_lang = ""
     in_table = False
-    in_list = False
-    table_rows = []
+    list_stack = [] # tracks 'ul' or 'ol'
+
+    def close_lists():
+        nonlocal list_stack
+        while list_stack:
+            tag = list_stack.pop()
+            out.append(f"</{tag}>")
 
     for line in lines:
-        if line.startswith("```"):
+        stripped = line.strip()
+
+        # Check for Fenced Code Block start / end (supports any leading indentation)
+        if stripped.startswith("```"):
             if in_code:
-                out.append("</code></pre>")
+                # End of code block
+                code_content = html.escape("\n".join(code_lines))
+                out.append(f'<pre><code class="language-{code_lang}">{code_content}</code></pre>')
                 in_code = False
+                code_lines = []
+                code_lang = ""
             else:
-                lang = line[3:].strip()
-                out.append(f'<pre><code class="language-{lang}">')
+                # Start of code block
                 in_code = True
+                code_lang = stripped[3:].strip()
+                code_lines = []
             continue
 
         if in_code:
-            out.append(html.escape(line))
+            code_lines.append(line)
             continue
 
         # Tables
-        if line.startswith("|") and line.endswith("|"):
-            if "---" in line:
-                continue # separator
-            cells = [c.strip() for c in line.strip("|").split("|")]
+        if stripped.startswith("|") and stripped.endswith("|"):
+            if "---" in stripped:
+                continue # Skip markdown table separator row
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
             if not in_table:
+                close_lists()
                 in_table = True
                 out.append("<table><thead><tr>")
                 for c in cells:
@@ -53,56 +86,73 @@ def md_to_html(md):
             out.append("</tbody></table>")
             in_table = False
 
-        # Headings
-        if line.startswith("# "):
-            out.append(f"<h1>{inline_format(line[2:])}</h1>")
-        elif line.startswith("## "):
-            out.append(f"<h2>{inline_format(line[3:])}</h2>")
-        elif line.startswith("### "):
-            out.append(f"<h3>{inline_format(line[4:])}</h3>")
-        elif line.startswith("#### "):
-            out.append(f"<h4>{inline_format(line[5:])}</h4>")
-        elif line.startswith("> "):
-            out.append(f"<blockquote>{inline_format(line[2:])}</blockquote>")
-        elif line.startswith("* ") or line.startswith("- "):
-            if not in_list:
-                out.append("<ul>")
-                in_list = True
-            out.append(f"<li>{inline_format(line[2:])}</li>")
-        elif line.startswith("1. ") or line.startswith("2. ") or line.startswith("3. ") or line.startswith("4. "):
-            if not in_list:
-                out.append("<ol>")
-                in_list = True
-            out.append(f"<li>{inline_format(line[3:])}</li>")
-        elif line.strip() == "---":
-            if in_list:
-                out.append("</ul>" if "<ul>" in out[-2] else "</ol>")
-                in_list = False
+        # Empty lines
+        if stripped == "":
+            close_lists()
+            continue
+
+        # Horizontal rules
+        if stripped == "---" or stripped == "***":
+            close_lists()
             out.append("<hr>")
-        elif line.strip() == "":
-            if in_list:
-                out.append("</ul>" if "<ul>" in "".join(out[-5:]) else "</ol>")
-                in_list = False
-        else:
-            out.append(f"<p>{inline_format(line)}</p>")
+            continue
+
+        # Headings
+        if stripped.startswith("# "):
+            close_lists()
+            out.append(f"<h1>{inline_format(stripped[2:])}</h1>")
+            continue
+        elif stripped.startswith("## "):
+            close_lists()
+            out.append(f"<h2>{inline_format(stripped[3:])}</h2>")
+            continue
+        elif stripped.startswith("### "):
+            close_lists()
+            out.append(f"<h3>{inline_format(stripped[4:])}</h3>")
+            continue
+        elif stripped.startswith("#### "):
+            close_lists()
+            out.append(f"<h4>{inline_format(stripped[5:])}</h4>")
+            continue
+
+        # Blockquotes
+        if stripped.startswith("> "):
+            close_lists()
+            out.append(f"<blockquote>{inline_format(stripped[2:])}</blockquote>")
+            continue
+
+        # Bullet Lists
+        if stripped.startswith("* ") or stripped.startswith("- "):
+            if not list_stack or list_stack[-1] != 'ul':
+                close_lists()
+                out.append("<ul>")
+                list_stack.append('ul')
+            out.append(f"<li>{inline_format(stripped[2:])}</li>")
+            continue
+
+        # Numbered Lists
+        num_match = re.match(r'^(\d+)\.\s+(.*)$', stripped)
+        if num_match:
+            if not list_stack or list_stack[-1] != 'ol':
+                close_lists()
+                out.append("<ol>")
+                list_stack.append('ol')
+            out.append(f"<li>{inline_format(num_match.group(2))}</li>")
+            continue
+
+        # Normal Paragraphs
+        close_lists()
+        out.append(f"<p>{inline_format(stripped)}</p>")
+
+    if in_code:
+        code_content = html.escape("\n".join(code_lines))
+        out.append(f'<pre><code class="language-{code_lang}">{code_content}</code></pre>')
 
     if in_table:
         out.append("</tbody></table>")
-    if in_list:
-        out.append("</ul>")
 
+    close_lists()
     return "\n".join(out)
-
-def inline_format(s):
-    # bold
-    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
-    # italic
-    s = re.sub(r'\*(.+?)\*', r'<em>\1</em>', s)
-    # inline code
-    s = re.sub(r'`(.+?)`', r'<code>\1</code>', s)
-    # links
-    s = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', s)
-    return s
 
 body_html = md_to_html(text)
 
@@ -112,11 +162,15 @@ html_document = f"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <title>Die Spiele-Schmiede: Zero to Hero</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
   
   @page {{
     size: A4;
-    margin: 20mm 15mm 20mm 15mm;
+    margin: 18mm 14mm 18mm 14mm;
+  }}
+
+  * {{
+    box-sizing: border-box;
   }}
 
   body {{
@@ -124,7 +178,7 @@ html_document = f"""<!DOCTYPE html>
     line-height: 1.6;
     color: #1e293b;
     background: #ffffff;
-    max-width: 860px;
+    max-width: 880px;
     margin: 0 auto;
     padding: 30px 20px;
   }}
@@ -136,6 +190,7 @@ html_document = f"""<!DOCTYPE html>
     border-bottom: 3px solid #3b82f6;
     padding-bottom: 12px;
     margin-top: 10px;
+    margin-bottom: 20px;
   }}
 
   h2 {{
@@ -143,7 +198,8 @@ html_document = f"""<!DOCTYPE html>
     font-weight: 700;
     color: #1e3a8a;
     margin-top: 35px;
-    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 14px;
+    border-bottom: 1.5px solid #e2e8f0;
     padding-bottom: 6px;
     page-break-after: avoid;
   }}
@@ -152,41 +208,68 @@ html_document = f"""<!DOCTYPE html>
     font-size: 1.2rem;
     font-weight: 600;
     color: #1d4ed8;
-    margin-top: 20px;
+    margin-top: 24px;
+    margin-bottom: 10px;
     page-break-after: avoid;
   }}
 
-  p, li {{
+  h4 {{
     font-size: 1.05rem;
+    font-weight: 600;
     color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }}
+
+  p {{
+    font-size: 1.02rem;
+    color: #334155;
+    margin: 10px 0;
+  }}
+
+  ul, ol {{
+    margin: 10px 0 16px 24px;
+    padding: 0;
+  }}
+
+  li {{
+    font-size: 1.02rem;
+    color: #334155;
+    margin-bottom: 6px;
   }}
 
   code {{
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    background: #f1f5f9;
-    color: #0369a1;
+    background: #eff6ff;
+    color: #1d4ed8;
     padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.92em;
+    font-size: 0.9em;
+    border: 1px solid #dbeafe;
   }}
 
   pre {{
     background: #0f172a;
     color: #f8fafc;
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-radius: 8px;
     overflow-x: auto;
     font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
-    font-size: 0.95rem;
-    line-height: 1.45;
+    font-size: 0.92rem;
+    line-height: 1.48;
+    margin: 14px 0;
     page-break-inside: avoid;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #3b82f6;
   }}
 
   pre code {{
     background: transparent;
-    color: inherit;
+    color: #f8fafc;
     padding: 0;
+    border: none;
+    font-size: inherit;
   }}
 
   table {{
@@ -198,12 +281,13 @@ html_document = f"""<!DOCTYPE html>
 
   th, td {{
     border: 1px solid #cbd5e1;
-    padding: 10px 14px;
+    padding: 9px 12px;
     text-align: left;
+    font-size: 0.98rem;
   }}
 
   th {{
-    background: #f8fafc;
+    background: #f1f5f9;
     font-weight: 700;
     color: #0f172a;
   }}
@@ -220,12 +304,19 @@ html_document = f"""<!DOCTYPE html>
     border-radius: 0 8px 8px 0;
     color: #92400e;
     font-weight: 600;
+    font-size: 1.02rem;
   }}
 
   hr {{
     border: none;
     border-top: 2px dashed #cbd5e1;
-    margin: 30px 0;
+    margin: 28px 0;
+  }}
+
+  a {{
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
   }}
 
   .print-bar {{
@@ -248,6 +339,7 @@ html_document = f"""<!DOCTYPE html>
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
+    transition: background 0.15s ease;
   }}
   .print-btn:hover {{
     background: #1d4ed8;
@@ -261,8 +353,18 @@ html_document = f"""<!DOCTYPE html>
       padding: 0;
     }}
     pre {{
-      background: #1e293b !important;
+      background: #0f172a !important;
       color: #f8fafc !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }}
+    th {{
+      background: #f1f5f9 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }}
+    blockquote {{
+      background: #fffbeb !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }}
@@ -284,4 +386,4 @@ html_document = f"""<!DOCTYPE html>
 with open(html_path, "w", encoding="utf-8") as f:
     f.write(html_document)
 
-print(f"Generated: {html_path}")
+print(f"Successfully generated: {html_path}")
