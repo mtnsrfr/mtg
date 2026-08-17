@@ -16,12 +16,13 @@ Genauso funktioniert dein Computer:
       // Alles hier drin wird 60-mal pro Sekunde ausgeführt!
   }
   ```
+  *(Hinweis: Warum hinter `Engine` ein `&`-Zeichen steht, erfährst du im [Anhang B](#-anhang-b-das-geheimnis-des--zeichens-referenzen) – am Anfang musst du dir darüber keine Sorgen machen!)*
 
 ---
 
 ## 🧠 Das C++ Zauberbuch: Die wichtigsten Grundlagen
 
-C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die 6 wichtigsten Bausteine, die du brauchst:
+C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die wichtigsten Bausteine, die du brauchst:
 
 ### 1. Variablen (Die beschrifteten Schachteln)
 In Variablen merkt sich der Computer Zahlen, Texte und Zustände:
@@ -75,20 +76,18 @@ for (int i = 0; i < 5; ++i) {
 
 ---
 
----
-
 ### 4. Baupläne für Spiele & Objekte (`struct`)
 Ein `struct` ist ein **Bauplan** für ein ganzes Spiel oder ein Objekt (wie einen Stern oder Laser). In jedem Spiel ordnen wir den Code von oben nach unten in 4 klare Abschnitte:
 
 ```cpp
 struct MeinSpiel : Game {
-    // 1. VARIABLEN (Zustand & Eigenschaften)
+    // 1. VARIABLEN (Zustand & Eigenschaften ganz oben!)
     float ballX = 160.0f;
     float ballY = 120.0f;
     int score = 0;
 
     // 2. KONSTRUKTOR (Startklar machen!)
-    // Heißt genau wie das struct und wird beim Start 1-mal ausgeführt:
+    // Heißt wie das struct und wird beim Start 1-mal ausgeführt:
     MeinSpiel() {
         score = 0;
     }
@@ -122,7 +121,7 @@ struct MeinSpiel : Game {
 
 ---
 
-### 6. Die `std` Standard-Bibliothek (Schlaue Werkzeuge)
+### 5. Die `std` Standard-Bibliothek (Schlaue Werkzeuge)
 C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
 
 * **`std::vector` (Die flexible Liste)**:
@@ -149,7 +148,7 @@ C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
 
 ---
 
-### 7. Echtes Hacken: Dein Spiel im Terminal kompilieren!
+### 6. Echtes Hacken: Dein Spiel im Terminal kompilieren!
 Ein **Compiler** übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.
 
 Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:
@@ -351,6 +350,7 @@ In **Pong** lernen wir, wie zwei Spieler gegeneinander antreten:
 1. **Zwei Schläger**: Spieler 1 (Rot mit `W`/`S`), Spieler 2 (Blau mit Pfeiltasten).
 2. **Dynamischer Abprallwinkel**: Trifft der Ball die Schlägermitte, fliegt er geradeaus. Trifft er den Rand, prallt er im steilen Winkel ab!
 3. **Tempo-Steigerung**: Bei jedem Schlag wird der Ball 5% schneller (`speed *= 1.05f`).
+4. **Spielphasen mit `enum class` & `switch`**: Wie das Spiel zwischen Startmenü, Ballwechsel und Sieg umschaltet *(Details siehe [Anhang A](#-anhang-a-enum-class--switch-case-die-spielphasen-weiche))*.
 
 ---
 
@@ -413,6 +413,7 @@ struct Star {
 };
 
 // In jedem Frame nach unten wandern:
+// (Warum hier e.dt() steht, erfährst du im Anhang D!)
 s.y += s.speed * e.dt();
 if (s.y >= 240.0f) {
     s.y = 0.0f;
@@ -437,7 +438,7 @@ static const uint16_t playerSprite[16] = {
 ### 3. Schiffs-Explosionen mit echter Physik (Trägheit & Farbverlauf)
 Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern **nehmen den vollen Geschwindigkeitsvektor des Schiffs mit**:
 ```cpp
-// 1. Schiffsimpuls + radiale Sprengung:
+// 1. Schiffsimpuls + radiale Sprengung (Sinus/Kosinus aus Anhang E):
 p.vx = shipVx + burstSpeed * cos(angle);
 p.vy = shipVy + burstSpeed * sin(angle);
 
@@ -505,4 +506,126 @@ Colors::Yellow, Colors::White, Colors::Black,
 Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray
 ```
 
-**Viel Spaß beim Erfinden und Programmieren deiner eigenen Spiele! 🚀**
+---
+
+## 📚 Anhang: Für Fortgeschrittene & Neugierige
+
+> 💡 **Hinweis**: *Diesen Anhang musst du am Anfang noch nicht auswendig wissen! Schau einfach hier rein, wenn du wissen willst, was bestimmte Profi-Zeichen (wie `&` oder `const`) bedeuten oder wie besondere Programmiertricks im Detail funktionieren.*
+
+---
+
+### 🔀 Anhang A: `enum class` & `switch-case` (Die Spielphasen-Weiche)
+
+#### 1. Was ist ein `enum class`?
+Statt dir für Spielphasen kryptische Zahlen zu merken (`0 = Start, 1 = Spielt, 2 = Vorbei`), erfindest du mit `enum class` deine eigenen, sprechenden Wörter:
+```cpp
+enum class State {
+    Title,       // Startbildschirm
+    Playing,     // Spiel läuft
+    PointScored, // Tor erzielt
+    Victory      // Jemand hat gewonnen
+};
+
+State state = State::Title;
+```
+
+#### 2. Was ist `switch` und `case`?
+Ein `switch` ist wie eine **Weiche auf einer Eisenbahnschiene**. Statt viele `if ... else if ... else if` zu schreiben, springt das Programm direkt zur passenden Station:
+```cpp
+switch (state) {
+case State::Title:
+    updateTitle(e);
+    break; // Fertig, Weiche verlassen!
+case State::Playing:
+    updatePlaying(e);
+    break;
+case State::Victory:
+    updateVictory(e);
+    break;
+}
+```
+
+---
+
+### 🔌 Anhang B: Das Geheimnis des `&`-Zeichens (Referenzen)
+
+Vielleicht ist dir aufgefallen, dass bei `void update(Engine &e)` ein kleines `&` hinter `Engine` steht.
+
+#### Was bedeutet das?
+* **Ohne `&`**: Der Computer würde eine komplette **Kopie** der Spiele-Engine anfertigen. Das ist wie das Foto einer Fernbedienung – wenn du auf das Foto drückst, passiert am Fernseher gar nichts!
+* **Mit `&` (Referenz)**: Wir übergeben dem Spiel das **echte Original**. Wenn das Spiel `e.cls()` ruft, malt es direkt auf den echten Monitor. Außerdem ist es viel schneller, weil der Computer nichts kopieren muss.
+
+---
+
+### 🛡️ Anhang C: `const` & `constexpr` (Der Schreibschutz)
+
+Wenn vor einer Variable `const` steht:
+```cpp
+const float maxBallSpeed = 320.0f;
+```
+bedeutet das: **Dieser Wert ist unveränderlich (Konstante)!**
+* Es ist wie ein **Sicherheitsgurt**: Wenn du später im Code aus Versehen `maxBallSpeed = 0` schreiben würdest, warnt dich der Compiler sofort mit einem roten Fehler.
+* `constexpr` bedeutet, dass der Wert schon beim Kompilieren feststeht (z. B. für Kachelgrößen wie `static constexpr int CELL_SIZE = 8;`).
+
+---
+
+### ⏱️ Anhang D: Delta-Time (`e.dt()`) – Warum das Spiel immer gleich schnell läuft
+
+Hast du einen Monitor mit 60 Hz, 120 Hz oder 240 Hz? 
+* Wenn wir einfach `ballX += 3.0f` pro Bild rechnen, würde der Ball auf einem 120 Hz Monitor **doppelt so schnell fliegen** wie auf einem 60 Hz Monitor!
+* Die Lösung heißt **Delta-Time (`e.dt()`)**: Das ist die exakte Zeit in Sekunden, die seit dem letzten Bild vergangen ist (z. B. `0.0166` Sekunden bei 60 FPS).
+* Wenn wir rechnen:
+  ```cpp
+  ballX += 180.0f * e.dt(); // 180 Pixel pro Sekunde
+  ```
+  bewegt sich der Ball auf jedem Computer der Welt **haargenau gleich schnell**!
+
+---
+
+### 📐 Anhang E: Mathe-Zauber mit `<cmath>` (Sinus, Kosinus & Abstand)
+
+In `<cmath>` stecken clevere mathematische Werkzeuge:
+
+#### 1. Sinus & Kosinus (`std::sin`, `std::cos`)
+* **Kreisbewegungen & Explosionen**: Mit `cos(winkel)` und `sin(winkel)` kannst du Trümmer perfekt in alle 360 Grad im Kreis wegschleudern!
+* **Schlangenlinien**: Mit `y = startY + sin(zeit * 3.0f) * 20.0f` fliegt ein Raumschiff in einer sanften Wellenlinie über den Bildschirm.
+
+#### 2. Der Betrag / Abstand (`std::abs`)
+* `std::abs(zahl)` macht aus jeder negativen Zahl eine positive (`std::abs(-5) = 5`).
+* Perfekt für Kollisionen: `std::abs(playerX - enemyX) < 14.0f` prüft blitzschnell, ob zwei Schiffe näher als 14 Pixel beieinander sind!
+
+#### 3. Zufallszahlen (`rand() % N`)
+* `rand() % 320` würfelt eine Zufallszahl zwischen 0 und 319 (perfekt, um Sterne oder Äpfel zufällig zu verteilen).
+
+---
+
+### 📦 Anhang F: Header-Dateien & `#pragma once`
+
+Warum haben unsere Dateien die Endung `.hpp`?
+* `.hpp` steht für **C++ Header**.
+* Jedes Spiel (`PongGame.hpp`, `SnakeGame.hpp`, `StarfighterGame.hpp`) wohnt in seiner eigenen Datei.
+* In `main.cc` binden wir sie mit `#include "PongGame.hpp"` einfach ein wie Bausteine.
+* **`#pragma once`** ganz oben in der Datei sorgt dafür, dass der Computer die Datei niemals versehentlich doppelt liest.
+
+---
+
+### 🚀 Anhang G: Coole Ideen für deine nächsten Spiele!
+
+Hier sind ein paar spannende Herausforderungen, wenn du Lust hast, eigene Spiele zu erfinden:
+
+1. **🤖 Computer-Gegner für Pong**:
+   Lass den rechten Schläger automatisch der Y-Position des Balls folgen:
+   ```cpp
+   if (p2Y + 18.0f < ballY) { p2Y += paddleSpeed * e.dt(); }
+   if (p2Y + 18.0f > ballY) { p2Y -= paddleSpeed * e.dt(); }
+   ```
+2. **🧱 Breakout / Stein-Zerstörer**:
+   Platziere oben ein Gitter aus bunten Steinen (`struct Brick { float x, y; bool alive; };`). Trifft der Ball einen Stein, verschwindet er und gibt Punkte!
+3. **❤️ Schild / Lebensbalken für Starfighter**:
+   Lass dein Raumschiff 3 Treffer aushalten und zeichne oben einen grünen Energiebalken mit `e.rectfill(20, 10, lebenspunkte * 20, 6, Colors::LightGreen);`!
+4. **💾 Highscore auf der Festplatte speichern**:
+   Mit C++ Dateibefehlen (`std::ofstream` / `std::ifstream`) kannst du den Rekord in eine Textdatei schreiben, damit er nach dem Ausschalten nicht verloren geht!
+
+---
+
+**Viel Spaß beim Erfinden, Experimentieren und Programmieren! 🚀🕹️**

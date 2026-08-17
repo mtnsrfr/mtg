@@ -236,9 +236,10 @@
       // Alles hier drin wird 60-mal pro Sekunde ausgeführt!
   }</code></pre>
 </ul>
+<p><em>(Hinweis: Warum hinter <code>Engine</code> ein <code>&amp;</code>-Zeichen steht, erfährst du im <a href="#-anhang-b-das-geheimnis-des--zeichens-referenzen">Anhang B</a> – am Anfang musst du dir darüber keine Sorgen machen!)</em></p>
 <hr>
 <h2>🧠 Das C++ Zauberbuch: Die wichtigsten Grundlagen</h2>
-<p>C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die 6 wichtigsten Bausteine, die du brauchst:</p>
+<p>C++ ist eine der schnellsten und mächtigsten Programmiersprachen der Welt. Fast alle großen Konsolen- und PC-Spiele werden in C++ geschrieben. Hier sind die wichtigsten Bausteine, die du brauchst:</p>
 <h3>1. Variablen (Die beschrifteten Schachteln)</h3>
 <p>In Variablen merkt sich der Computer Zahlen, Texte und Zustände:</p>
 <ul>
@@ -278,17 +279,16 @@ for (int i = 0; i &lt; 5; ++i) {
     spawnApple();
 }</code></pre>
 <hr>
-<hr>
 <h3>4. Baupläne für Spiele &amp; Objekte (<code>struct</code>)</h3>
 <p>Ein <code>struct</code> ist ein <strong>Bauplan</strong> für ein ganzes Spiel oder ein Objekt (wie einen Stern oder Laser). In jedem Spiel ordnen wir den Code von oben nach unten in 4 klare Abschnitte:</p>
 <pre><code class="language-cpp">struct MeinSpiel : Game {
-    // 1. VARIABLEN (Zustand &amp; Eigenschaften)
+    // 1. VARIABLEN (Zustand &amp; Eigenschaften ganz oben!)
     float ballX = 160.0f;
     float ballY = 120.0f;
     int score = 0;
 
     // 2. KONSTRUKTOR (Startklar machen!)
-    // Heißt genau wie das struct und wird beim Start 1-mal ausgeführt:
+    // Heißt wie das struct und wird beim Start 1-mal ausgeführt:
     MeinSpiel() {
         score = 0;
     }
@@ -317,7 +317,7 @@ for (int i = 0; i &lt; 5; ++i) {
 <blockquote>💡 <strong>Der Geheimtipp: <code>struct</code> vs. <code>class</code></strong>:</blockquote>
 <blockquote>In C++ sind <code>struct</code> und <code>class</code> fast genau dasselbe! Der einzige Unterschied: Bei <code>struct</code> ist standardmäßig alles öffentlich zugänglich. Bei <code>class</code> müsste man überall extra <code>public:</code> davorschreiben. Mit <code>struct</code> sparen wir uns lästiges Tippen!</blockquote>
 <hr>
-<h3>6. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
+<h3>5. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
 <p>C++ bringt einen Werkzeugkasten namens <code>std::</code> (Standard Library) mit:</p>
 <ul>
 <li><strong><code>std::vector</code> (Die flexible Liste)</strong>:</li>
@@ -339,7 +339,7 @@ for (int i = 0; i &lt; 5; ++i) {
 <p>Hält einen Wert sauber zwischen Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
 <pre><code class="language-cpp">  playerY = std::clamp(playerY, 18.0f, 200.0f);</code></pre>
 <hr>
-<h3>7. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
+<h3>6. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
 <p>Ein <strong>Compiler</strong> übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.</p>
 <p>Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:</p>
 <pre><code class="language-bash"># 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
@@ -549,6 +549,7 @@ e.play_melody({
 <li><strong>Zwei Schläger</strong>: Spieler 1 (Rot mit <code>W</code>/<code>S</code>), Spieler 2 (Blau mit Pfeiltasten).</li>
 <li><strong>Dynamischer Abprallwinkel</strong>: Trifft der Ball die Schlägermitte, fliegt er geradeaus. Trifft er den Rand, prallt er im steilen Winkel ab!</li>
 <li><strong>Tempo-Steigerung</strong>: Bei jedem Schlag wird der Ball 5% schneller (<code>speed *= 1.05f</code>).</li>
+<li><strong>Spielphasen mit <code>enum class</code> &amp; <code>switch</code></strong>: Wie das Spiel zwischen Startmenü, Ballwechsel und Sieg umschaltet <em>(Details siehe <a href="#-anhang-a-enum-class--switch-case-die-spielphasen-weiche">Anhang A</a>)</em>.</li>
 </ol>
 <hr>
 <h2>🐍 Level 7: Spiel 2 – Das Schlangen-Duell (<a href="file:///Users/mtn/code/mtg/SnakeGame.hpp">SnakeGame.hpp</a>)</h2>
@@ -598,6 +599,7 @@ respawnSnake();</code></pre>
 };
 
 // In jedem Frame nach unten wandern:
+// (Warum hier e.dt() steht, erfährst du im Anhang D!)
 s.y += s.speed * e.dt();
 if (s.y &gt;= 240.0f) {
     s.y = 0.0f;
@@ -616,7 +618,7 @@ static const uint16_t playerSprite[16] = {
 };</code></pre>
 <h3>3. Schiffs-Explosionen mit echter Physik (Trägheit &amp; Farbverlauf)</h3>
 <p>Wenn ein Schiff explodiert, sprengen sich die Trümmer nicht nur im Kreis auseinander, sondern <strong>nehmen den vollen Geschwindigkeitsvektor des Schiffs mit</strong>:</p>
-<pre><code class="language-cpp">// 1. Schiffsimpuls + radiale Sprengung:
+<pre><code class="language-cpp">// 1. Schiffsimpuls + radiale Sprengung (Sinus/Kosinus aus Anhang E):
 p.vx = shipVx + burstSpeed * cos(angle);
 p.vy = shipVy + burstSpeed * sin(angle);
 
@@ -671,7 +673,110 @@ e.play_melody({                         // Melodie abspielen
 Colors::DarkGreen, Colors::Red, Colors::Blue,
 Colors::Yellow, Colors::White, Colors::Black,
 Colors::Orange, Colors::LightGreen, Colors::DarkGray, Colors::LightGray</code></pre>
-<p><strong>Viel Spaß beim Erfinden und Programmieren deiner eigenen Spiele! 🚀</strong></p>
+<hr>
+<h2>📚 Anhang: Für Fortgeschrittene &amp; Neugierige</h2>
+<blockquote>💡 <strong>Hinweis</strong>: <em>Diesen Anhang musst du am Anfang noch nicht auswendig wissen! Schau einfach hier rein, wenn du wissen willst, was bestimmte Profi-Zeichen (wie <code>&amp;</code> oder <code>const</code>) bedeuten oder wie besondere Programmiertricks im Detail funktionieren.</em></blockquote>
+<hr>
+<h3>🔀 Anhang A: <code>enum class</code> &amp; <code>switch-case</code> (Die Spielphasen-Weiche)</h3>
+<h4>1. Was ist ein <code>enum class</code>?</h4>
+<p>Statt dir für Spielphasen kryptische Zahlen zu merken (<code>0 = Start, 1 = Spielt, 2 = Vorbei</code>), erfindest du mit <code>enum class</code> deine eigenen, sprechenden Wörter:</p>
+<pre><code class="language-cpp">enum class State {
+    Title,       // Startbildschirm
+    Playing,     // Spiel läuft
+    PointScored, // Tor erzielt
+    Victory      // Jemand hat gewonnen
+};
+
+State state = State::Title;</code></pre>
+<h4>2. Was ist <code>switch</code> und <code>case</code>?</h4>
+<p>Ein <code>switch</code> ist wie eine <strong>Weiche auf einer Eisenbahnschiene</strong>. Statt viele <code>if ... else if ... else if</code> zu schreiben, springt das Programm direkt zur passenden Station:</p>
+<pre><code class="language-cpp">switch (state) {
+case State::Title:
+    updateTitle(e);
+    break; // Fertig, Weiche verlassen!
+case State::Playing:
+    updatePlaying(e);
+    break;
+case State::Victory:
+    updateVictory(e);
+    break;
+}</code></pre>
+<hr>
+<h3>🔌 Anhang B: Das Geheimnis des <code>&amp;</code>-Zeichens (Referenzen)</h3>
+<p>Vielleicht ist dir aufgefallen, dass bei <code>void update(Engine &amp;e)</code> ein kleines <code>&amp;</code> hinter <code>Engine</code> steht.</p>
+<h4>Was bedeutet das?</h4>
+<ul>
+<li><strong>Ohne <code>&amp;</code></strong>: Der Computer würde eine komplette <strong>Kopie</strong> der Spiele-Engine anfertigen. Das ist wie das Foto einer Fernbedienung – wenn du auf das Foto drückst, passiert am Fernseher gar nichts!</li>
+<li><strong>Mit <code>&amp;</code> (Referenz)</strong>: Wir übergeben dem Spiel das <strong>echte Original</strong>. Wenn das Spiel <code>e.cls()</code> ruft, malt es direkt auf den echten Monitor. Außerdem ist es viel schneller, weil der Computer nichts kopieren muss.</li>
+</ul>
+<hr>
+<h3>🛡️ Anhang C: <code>const</code> &amp; <code>constexpr</code> (Der Schreibschutz)</h3>
+<p>Wenn vor einer Variable <code>const</code> steht:</p>
+<pre><code class="language-cpp">const float maxBallSpeed = 320.0f;</code></pre>
+<p>bedeutet das: <strong>Dieser Wert ist unveränderlich (Konstante)!</strong></p>
+<ul>
+<li>Es ist wie ein <strong>Sicherheitsgurt</strong>: Wenn du später im Code aus Versehen <code>maxBallSpeed = 0</code> schreiben würdest, warnt dich der Compiler sofort mit einem roten Fehler.</li>
+<li><code>constexpr</code> bedeutet, dass der Wert schon beim Kompilieren feststeht (z. B. für Kachelgrößen wie <code>static constexpr int CELL_SIZE = 8;</code>).</li>
+</ul>
+<hr>
+<h3>⏱️ Anhang D: Delta-Time (<code>e.dt()</code>) – Warum das Spiel immer gleich schnell läuft</h3>
+<p>Hast du einen Monitor mit 60 Hz, 120 Hz oder 240 Hz?</p>
+<ul>
+<li>Wenn wir einfach <code>ballX += 3.0f</code> pro Bild rechnen, würde der Ball auf einem 120 Hz Monitor <strong>doppelt so schnell fliegen</strong> wie auf einem 60 Hz Monitor!</li>
+<li>Die Lösung heißt <strong>Delta-Time (<code>e.dt()</code>)</strong>: Das ist die exakte Zeit in Sekunden, die seit dem letzten Bild vergangen ist (z. B. <code>0.0166</code> Sekunden bei 60 FPS).</li>
+<li>Wenn wir rechnen:</li>
+<pre><code class="language-cpp">  ballX += 180.0f * e.dt(); // 180 Pixel pro Sekunde</code></pre>
+</ul>
+<p>bewegt sich der Ball auf jedem Computer der Welt <strong>haargenau gleich schnell</strong>!</p>
+<hr>
+<h3>📐 Anhang E: Mathe-Zauber mit <code>&lt;cmath&gt;</code> (Sinus, Kosinus &amp; Abstand)</h3>
+<p>In <code>&lt;cmath&gt;</code> stecken clevere mathematische Werkzeuge:</p>
+<h4>1. Sinus &amp; Kosinus (<code>std::sin</code>, <code>std::cos</code>)</h4>
+<ul>
+<li><strong>Kreisbewegungen &amp; Explosionen</strong>: Mit <code>cos(winkel)</code> und <code>sin(winkel)</code> kannst du Trümmer perfekt in alle 360 Grad im Kreis wegschleudern!</li>
+<li><strong>Schlangenlinien</strong>: Mit <code>y = startY + sin(zeit <em> 3.0f) </em> 20.0f</code> fliegt ein Raumschiff in einer sanften Wellenlinie über den Bildschirm.</li>
+</ul>
+<h4>2. Der Betrag / Abstand (<code>std::abs</code>)</h4>
+<ul>
+<li><code>std::abs(zahl)</code> macht aus jeder negativen Zahl eine positive (<code>std::abs(-5) = 5</code>).</li>
+<li>Perfekt für Kollisionen: <code>std::abs(playerX - enemyX) &lt; 14.0f</code> prüft blitzschnell, ob zwei Schiffe näher als 14 Pixel beieinander sind!</li>
+</ul>
+<h4>3. Zufallszahlen (<code>rand() % N</code>)</h4>
+<ul>
+<li><code>rand() % 320</code> würfelt eine Zufallszahl zwischen 0 und 319 (perfekt, um Sterne oder Äpfel zufällig zu verteilen).</li>
+</ul>
+<hr>
+<h3>📦 Anhang F: Header-Dateien &amp; <code>#pragma once</code></h3>
+<p>Warum haben unsere Dateien die Endung <code>.hpp</code>?</p>
+<ul>
+<li><code>.hpp</code> steht für <strong>C++ Header</strong>.</li>
+<li>Jedes Spiel (<code>PongGame.hpp</code>, <code>SnakeGame.hpp</code>, <code>StarfighterGame.hpp</code>) wohnt in seiner eigenen Datei.</li>
+<li>In <code>main.cc</code> binden wir sie mit <code>#include &quot;PongGame.hpp&quot;</code> einfach ein wie Bausteine.</li>
+<li><strong><code>#pragma once</code></strong> ganz oben in der Datei sorgt dafür, dass der Computer die Datei niemals versehentlich doppelt liest.</li>
+</ul>
+<hr>
+<h3>🚀 Anhang G: Coole Ideen für deine nächsten Spiele!</h3>
+<p>Hier sind ein paar spannende Herausforderungen, wenn du Lust hast, eigene Spiele zu erfinden:</p>
+<ol>
+<li><strong>🤖 Computer-Gegner für Pong</strong>:</li>
+</ol>
+<p>Lass den rechten Schläger automatisch der Y-Position des Balls folgen:</p>
+<pre><code class="language-cpp">   if (p2Y + 18.0f &lt; ballY) { p2Y += paddleSpeed * e.dt(); }
+   if (p2Y + 18.0f &gt; ballY) { p2Y -= paddleSpeed * e.dt(); }</code></pre>
+<ol>
+<li><strong>🧱 Breakout / Stein-Zerstörer</strong>:</li>
+</ol>
+<p>Platziere oben ein Gitter aus bunten Steinen (<code>struct Brick { float x, y; bool alive; };</code>). Trifft der Ball einen Stein, verschwindet er und gibt Punkte!</p>
+<ol>
+<li><strong>❤️ Schild / Lebensbalken für Starfighter</strong>:</li>
+</ol>
+<p>Lass dein Raumschiff 3 Treffer aushalten und zeichne oben einen grünen Energiebalken mit <code>e.rectfill(20, 10, lebenspunkte * 20, 6, Colors::LightGreen);</code>!</p>
+<ol>
+<li><strong>💾 Highscore auf der Festplatte speichern</strong>:</li>
+</ol>
+<p>Mit C++ Dateibefehlen (<code>std::ofstream</code> / <code>std::ifstream</code>) kannst du den Rekord in eine Textdatei schreiben, damit er nach dem Ausschalten nicht verloren geht!</p>
+<hr>
+<p><strong>Viel Spaß beim Erfinden, Experimentieren und Programmieren! 🚀🕹️</strong></p>
 
 </body>
 </html>
