@@ -286,7 +286,27 @@ void feuerLaser(Engine&amp; e) {
     lasers.push_back({playerX + 7, playerY, -300.0f, true});
 }</code></pre>
 <hr>
-<h3>5. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
+<h3>5. Baupläne für Spiele &amp; Objekte (<code>struct</code>)</h3>
+<p>Ein <code>struct</code> ist wie ein <strong>Bauplan</strong>. Darin packst du Variablen (Eigenschaften) und Funktionen (Aktionen) sauber zusammen:</p>
+<pre><code class="language-cpp">// 1. Ein kleiner Bauplan für einen Stern:
+struct Star {
+    float x;
+    float y;
+    float speed;
+};
+
+// 2. Ein Bauplan für ein ganzes Spiel:
+struct MeinSpiel : Game {
+    float ballX = 0.0f;
+
+    void update(Engine&amp; e) override {
+        // Spiel-Logik hier drin!
+    }
+};</code></pre>
+<blockquote>💡 <strong>Der Geheimtipp: <code>struct</code> vs. <code>class</code></strong>:</blockquote>
+<blockquote>In C++ sind <code>struct</code> und <code>class</code> fast genau dasselbe! Der einzige Unterschied: Bei <code>struct</code> ist standardmäßig alles öffentlich zugänglich. Bei <code>class</code> müsste man überall extra <code>public:</code> davorschreiben. Mit <code>struct</code> spart man sich also lästige Tipparbeit!</blockquote>
+<hr>
+<h3>6. Die <code>std</code> Standard-Bibliothek (Schlaue Werkzeuge)</h3>
 <p>C++ bringt einen Werkzeugkasten namens <code>std::</code> (Standard Library) mit:</p>
 <ul>
 <li><strong><code>std::vector</code> (Die flexible Liste)</strong>:</li>
@@ -308,7 +328,7 @@ void feuerLaser(Engine&amp; e) {
 <p>Hält einen Wert sauber zwischen Minimum und Maximum (damit Schläger nicht aus dem Bildschirm fahren):</p>
 <pre><code class="language-cpp">  playerY = std::clamp(playerY, 18.0f, 200.0f);</code></pre>
 <hr>
-<h3>6. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
+<h3>7. Echtes Hacken: Dein Spiel im Terminal kompilieren!</h3>
 <p>Ein <strong>Compiler</strong> übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.</p>
 <p>Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:</p>
 <pre><code class="language-bash"># 1. Den C++ Compiler &#x27;g++&#x27; aufrufen:
@@ -405,7 +425,7 @@ make bundle   # Baut echte macOS App: MTG.app!</code></pre>
 float ballX = 100.0f;</code></pre>
 <h3>Die Zauberformel für Bewegung</h3>
 <p>Wenn wir in jedem Bild (<code>update</code>) die Zahl ein kleines Stückchen verändern, bewegt sich das Objekt:</p>
-<pre><code class="language-cpp">class MeinSpiel : public Game {
+<pre><code class="language-cpp">struct MeinSpiel : Game {
     float ballX = 0.0f;
 
     void update(Engine&amp; e) override {
@@ -594,7 +614,7 @@ p.vy = shipVy + burstSpeed * sin(angle);
 <hr>
 <h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
 <p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>
-<pre><code class="language-cpp">class MenuGame : public Game {
+<pre><code class="language-cpp">struct MenuGame : Game {
     std::unique_ptr&lt;PongGame&gt; pong;
     std::unique_ptr&lt;SnakeGame&gt; snake;
     std::unique_ptr&lt;StarfighterGame&gt; starfighter;

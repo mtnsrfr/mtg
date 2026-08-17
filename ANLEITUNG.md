@@ -87,7 +87,33 @@ void feuerLaser(Engine& e) {
 
 ---
 
-### 5. Die `std` Standard-Bibliothek (Schlaue Werkzeuge)
+### 5. Baupläne für Spiele & Objekte (`struct`)
+Ein `struct` ist wie ein **Bauplan**. Darin packst du Variablen (Eigenschaften) und Funktionen (Aktionen) sauber zusammen:
+
+```cpp
+// 1. Ein kleiner Bauplan für einen Stern:
+struct Star {
+    float x;
+    float y;
+    float speed;
+};
+
+// 2. Ein Bauplan für ein ganzes Spiel:
+struct MeinSpiel : Game {
+    float ballX = 0.0f;
+
+    void update(Engine& e) override {
+        // Spiel-Logik hier drin!
+    }
+};
+```
+
+> 💡 **Der Geheimtipp: `struct` vs. `class`**:
+> In C++ sind `struct` und `class` fast genau dasselbe! Der einzige Unterschied: Bei `struct` ist standardmäßig alles öffentlich zugänglich. Bei `class` müsste man überall extra `public:` davorschreiben. Mit `struct` spart man sich also lästige Tipparbeit!
+
+---
+
+### 6. Die `std` Standard-Bibliothek (Schlaue Werkzeuge)
 C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
 
 * **`std::vector` (Die flexible Liste)**:
@@ -114,7 +140,7 @@ C++ bringt einen Werkzeugkasten namens `std::` (Standard Library) mit:
 
 ---
 
-### 6. Echtes Hacken: Dein Spiel im Terminal kompilieren!
+### 7. Echtes Hacken: Dein Spiel im Terminal kompilieren!
 Ein **Compiler** übersetzt deinen C++ Code in Maschinensprache, die der Prozessor direkt ausführt.
 
 Du kannst dein Spiel direkt im Terminal (Shell) von Hand kompilieren:
@@ -186,7 +212,7 @@ float ballX = 100.0f;
 ### Die Zauberformel für Bewegung
 Wenn wir in jedem Bild (`update`) die Zahl ein kleines Stückchen verändern, bewegt sich das Objekt:
 ```cpp
-class MeinSpiel : public Game {
+struct MeinSpiel : Game {
     float ballX = 0.0f;
 
     void update(Engine& e) override {
@@ -417,7 +443,7 @@ p.vy = shipVy + burstSpeed * sin(angle);
 Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?
 
 ```cpp
-class MenuGame : public Game {
+struct MenuGame : Game {
     std::unique_ptr<PongGame> pong;
     std::unique_ptr<SnakeGame> snake;
     std::unique_ptr<StarfighterGame> starfighter;

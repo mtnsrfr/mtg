@@ -12,8 +12,7 @@
 // Spieler 2 (Blau, rechts): Pfeil-Hoch = Hoch, Pfeil-Runter = Runter
 // Leertaste (Space):       Spiel starten / Neustarten
 // =============================================================================
-class PongGame : public Game {
-public:
+struct PongGame : Game {
   PongGame() {
     resetGame();
   }

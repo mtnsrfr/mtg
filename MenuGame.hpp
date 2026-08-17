@@ -15,8 +15,7 @@
 // - Taste 3: Starfighter Attack (Weltraum-Shooter)
 // - ESCAPE: Jederzeit zurück ins Hauptmenü!
 // =============================================================================
-class MenuGame : public Game {
-public:
+struct MenuGame : Game {
   MenuGame() {
     pong = std::make_unique<PongGame>();
     snake = std::make_unique<SnakeGame>();

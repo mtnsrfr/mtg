@@ -25,8 +25,7 @@
 // - Spieler 2 (Blau):  Pfeiltasten (Hoch, Links, Runter, Rechts)
 // =============================================================================
 
-class SnakeGame : public Game {
-public:
+struct SnakeGame : Game {
   SnakeGame() {
     resetGame();
   }

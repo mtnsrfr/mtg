@@ -797,11 +797,10 @@ private:
 };
 
 // =============================================================================
-// 5. BASISKLASSE FÜR EIN SPIEL
+// 5. BASIS-STRUKTUR FÜR EIN SPIEL
 // =============================================================================
-// Jedes Spiel erbt von 'Game' und muss nur eine einzige Funktion schreiben: update(Engine& e)
-class Game {
-public:
+// Jedes Spiel basiert auf 'Game' und muss nur eine Funktion schreiben: update(Engine& e)
+struct Game {
   virtual ~Game() = default;
   virtual void update(Engine &e) = 0;
 };

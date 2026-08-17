@@ -22,8 +22,7 @@
 // - LEERTASTE (Space): Laser abfeuern
 // =============================================================================
 
-class StarfighterGame : public Game {
-public:
+struct StarfighterGame : Game {
   StarfighterGame() {
     initStars();
     resetGame();
