@@ -446,6 +446,26 @@ p.vy = shipVy + burstSpeed * sin(angle);
 // Weiß -> Gelb -> Orange -> Rot -> Dunkelgrau
 ```
 
+### 4. Feindliche 3er-Laser-Salve mit Nachladepause
+Der TIE-Attacker feuert in schnellen **3er-Salven** und muss danach 2 bis 3 Sekunden nachladen:
+```cpp
+if (enemyBurstCount < 3) {
+    // Schneller Schuss aus Frontkanonen
+    enemyBurstCount++;
+    enemyShootTimer = 0.16f; // Kurzer Abstand
+} else {
+    // 3 Schüsse gefeuert -> 2-3s Nachladepause!
+    enemyBurstCount = 0;
+    enemyShootTimer = 2.0f + (rand() % 100) / 100.0f;
+}
+```
+
+### 5. Wärmesuchende Raketen (Homing Missiles) mit Partikelschweif
+Der Gegner feuert ferngelenkte Suchraketen ab, die den Spieler jagen:
+* **Vektor-Lenkung**: Die Rakete berechnet den Richtungsvektor zum Spieler (`dx`, `dy`) und lenkt mit sanfter Dreh-Trägheit ein!
+* **Feuriger Triebwerkschweif**: Bei jedem Schritt stößt die Rakete orange-gelbe Flammen- und graue Rauchpartikel nach hinten aus.
+* **Abschussbar!**: Du kannst die Suchrakete mit deinen eigenen Lasern in der Luft zerstören (+2 Bonuspunkte!).
+
 ---
 
 ## 🕹️ Level 9: Die Retro-Konsole ([MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp))

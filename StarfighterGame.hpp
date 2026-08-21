@@ -67,6 +67,19 @@ struct StarfighterGame : Game {
 
   std::vector<Laser> lasers;
 
+  // --- Suchraketen (Homing Missiles mit Partikelschweif) ---
+  struct Missile {
+    float x;
+    float y;
+    float vx;
+    float vy;
+    float life;    // Verbleibende Treibstoff-Dauer in Sekunden
+    float maxLife;
+    bool active;
+  };
+
+  std::vector<Missile> missiles;
+
   // --- Spieler (Starfighter) ---
   float playerX = 152.0f; // X-Position (Mitte)
   float playerY = 190.0f; // Y-Position (unten)
@@ -79,7 +92,9 @@ struct StarfighterGame : Game {
   float enemyY = 35.0f;
   float enemyVx = 90.0f;
   float enemyVy = 0.0f;
-  float enemyShootTimer = 1.0f;
+  int enemyBurstCount = 0;        // Zählt Schüsse in der 3er-Salve (0, 1, 2)
+  float enemyShootTimer = 1.0f;   // Timer für 3er-Salve und 2-3s Nachladepause
+  float enemyMissileTimer = 2.5f; // Timer für den Start von Suchraketen
   bool enemyAlive = true;
   float enemyRespawnTimer = 0.0f;
   float enemyMovePhase = 0.0f;
@@ -119,9 +134,10 @@ struct StarfighterGame : Game {
       break;
     }
 
-    // 4. Laser, Explosionen und Schiffe zeichnen
+    // 4. Laser, Suchraketen, Explosionen und Schiffe zeichnen
     updateAndDrawExplosions(e);
     drawLasers(e);
+    drawMissiles(e);
 
     if (state != State::GameOver || playerAlive) {
       drawPlayer(e);
@@ -145,6 +161,15 @@ struct StarfighterGame : Game {
   void playEnemyShoot(Engine &e) {
     // Dunkler Alien-Plasma-Pew (Note Gs4)
     e.play_tone(Notes::Gs4, 0.05f);
+  }
+
+  void playMissileLaunch(Engine &e) {
+    // Bedrohlicher, aufsteigender Raketenstart-Ton
+    e.play_melody({
+        {Notes::E3, 0.05f},
+        {Notes::G3, 0.07f},
+        {Notes::B3, 0.10f}
+    });
   }
 
   void playExplosion(Engine &e) {
@@ -276,6 +301,24 @@ struct StarfighterGame : Game {
   }
 
   // ===========================================================================
+  // Raketen-Triebwerkschweif (Glut-, Rauch- & Flammen-Partikel)
+  // ===========================================================================
+  void spawnMissileTrail(float x, float y, float vx, float vy) {
+    Particle p;
+    // Partikel leicht hinter der Raketenmitte platzieren
+    p.x = x + ((rand() % 5) - 2);
+    p.y = y + ((rand() % 5) - 2);
+    // Partikel strömen entgegengesetzt zur Flugrichtung nach hinten
+    p.vx = -vx * 0.25f + ((rand() % 30) - 15);
+    p.vy = -vy * 0.25f + ((rand() % 30) - 15);
+    p.maxLife = 0.25f + (rand() % 15) / 100.0f; // 0.25s bis 0.40s Lebensdauer
+    p.life = p.maxLife;
+    p.color = (rand() % 3 == 0) ? Colors::Yellow
+              : (rand() % 2 == 0 ? Colors::Orange : Colors::DarkGray);
+    particles.push_back(p);
+  }
+
+  // ===========================================================================
   // Spiel-Logik & Neustart
   // ===========================================================================
   void resetGame() {
@@ -290,10 +333,13 @@ struct StarfighterGame : Game {
     enemyVx = 90.0f;
     enemyAlive = true;
     enemyRespawnTimer = 0.0f;
-    enemyShootTimer = 0.8f;
+    enemyBurstCount = 0;
+    enemyShootTimer = 1.0f;
+    enemyMissileTimer = 2.5f;
     enemyMovePhase = 0.0f;
 
     lasers.clear();
+    missiles.clear();
     particles.clear();
   }
 
@@ -372,14 +418,40 @@ struct StarfighterGame : Game {
         enemyVx = -std::abs(enemyVx);
       }
 
-      // Gegner schießt periodisch Laser nach unten
+      // 3.1 3er-Salve Laser (3 schnelle Schüsse, dann 2-3 Sekunden Nachladen)
       enemyShootTimer -= dt;
       if (enemyShootTimer <= 0.0f) {
-        enemyShootTimer = 0.75f + (rand() % 40) / 100.0f;
-        playEnemyShoot(e);
-        // Schüsse aus den beiden langen Frontkanonen
-        lasers.push_back({enemyX + 2.0f, enemyY + 14.0f, 220.0f, false});
-        lasers.push_back({enemyX + 13.0f, enemyY + 14.0f, 220.0f, false});
+        if (enemyBurstCount < 3) {
+          playEnemyShoot(e);
+          // Schüsse aus den beiden langen Frontkanonen
+          lasers.push_back({enemyX + 2.0f, enemyY + 14.0f, 230.0f, false});
+          lasers.push_back({enemyX + 13.0f, enemyY + 14.0f, 230.0f, false});
+          enemyBurstCount++;
+          if (enemyBurstCount < 3) {
+            // Schneller Abstand zwischen den 3 Schüssen der Salve
+            enemyShootTimer = 0.16f;
+          } else {
+            // Salve komplett -> 2 bis 3 Sekunden Nachladepause!
+            enemyBurstCount = 0;
+            enemyShootTimer = 2.0f + (rand() % 100) / 100.0f;
+          }
+        }
+      }
+
+      // 3.2 Suchrakete (Homing Missile) starten (alle 3.5 bis 5.0 Sekunden)
+      enemyMissileTimer -= dt;
+      if (enemyMissileTimer <= 0.0f) {
+        enemyMissileTimer = 3.5f + (rand() % 150) / 100.0f;
+        playMissileLaunch(e);
+        Missile m;
+        m.x = enemyX + 8.0f;
+        m.y = enemyY + 14.0f;
+        m.vx = (enemyVx > 0 ? 35.0f : -35.0f);
+        m.vy = 65.0f;
+        m.maxLife = 4.5f; // Jagt den Spieler für 4.5 Sekunden
+        m.life = m.maxLife;
+        m.active = true;
+        missiles.push_back(m);
       }
     } else {
       // Wenn der Gegner zerstört wurde: Nach 1 Sekunde taucht ein neuer auf!
@@ -390,11 +462,110 @@ struct StarfighterGame : Game {
         enemyY = 25.0f;
         // Wird mit höherem Score etwas schneller
         enemyVx = (rand() % 2 == 0 ? 90.0f : -90.0f) * (1.0f + score * 0.03f);
-        enemyShootTimer = 0.6f;
+        enemyBurstCount = 0;
+        enemyShootTimer = 1.0f;
+        enemyMissileTimer = 2.5f;
       }
     }
 
-    // 4. Laser-Geschosse bewegen & Kollisionen prüfen
+    // 4. Suchraketen lenken, bewegen, Partikelschweif zeichnen & Treffer prüfen
+    for (size_t i = 0; i < missiles.size();) {
+      auto &m = missiles[i];
+      m.life -= dt;
+
+      // Rakete erloschen (Treibstoff nach 4.5 Sekunden leer)?
+      if (m.life <= 0.0f || !m.active) {
+        if (m.life <= 0.0f) {
+          spawnExplosion(m.x, m.y, m.vx * 0.3f, m.vy * 0.3f, 25);
+          e.play_tone(Notes::G3, 0.10f);
+        }
+        missiles[i] = missiles.back();
+        missiles.pop_back();
+        continue;
+      }
+
+      // Lenk-Physik: Peilt den Spieler an
+      if (playerAlive) {
+        float targetX = playerX + 8.0f;
+        float targetY = playerY + 8.0f;
+        float dx = targetX - m.x;
+        float dy = targetY - m.y;
+        float dist = std::sqrt(dx * dx + dy * dy);
+
+        if (dist > 1.0f) {
+          // Gewünschte Fluggeschwindigkeit (115 Pixel/s)
+          float desiredVx = (dx / dist) * 115.0f;
+          float desiredVy = (dy / dist) * 115.0f;
+
+          // Wendigkeit / Dreh-Trägheit
+          float steerRate = 3.2f * dt;
+          m.vx += (desiredVx - m.vx) * std::min(1.0f, steerRate);
+          m.vy += (desiredVy - m.vy) * std::min(1.0f, steerRate);
+
+          // Geschwindigkeitsdeckelung
+          float speed = std::sqrt(m.vx * m.vx + m.vy * m.vy);
+          if (speed > 120.0f) {
+            m.vx = (m.vx / speed) * 120.0f;
+            m.vy = (m.vy / speed) * 120.0f;
+          }
+        }
+      }
+
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
+
+      // Feuerschweif & Rauchspuren ausstoßen
+      spawnMissileTrail(m.x, m.y, m.vx, m.vy);
+
+      // Treffer: Trifft die Suchrakete das Spieler-Schiff?
+      if (playerAlive) {
+        if (std::abs(m.x - (playerX + 8.0f)) < 8.0f &&
+            std::abs(m.y - (playerY + 8.0f)) < 8.0f) {
+          playerAlive = false;
+          playExplosion(e);
+          playGameOverSound(e);
+          float effPlayerVy = (curPlayerVy != 0.0f) ? curPlayerVy : -70.0f;
+          spawnExplosion(playerX + 8.0f, playerY + 8.0f, curPlayerVx, effPlayerVy, 55);
+          spawnExplosion(m.x, m.y, m.vx, m.vy, 35);
+          state = State::GameOver;
+          m.active = false;
+          missiles[i] = missiles.back();
+          missiles.pop_back();
+          continue;
+        }
+      }
+
+      // Kann der Spieler die Rakete mit Lasern abschießen?
+      bool missileHit = false;
+      for (size_t li = 0; li < lasers.size(); ++li) {
+        if (lasers[li].fromPlayer) {
+          if (std::abs(lasers[li].x - m.x) < 7.0f &&
+              std::abs(lasers[li].y - m.y) < 7.0f) {
+            missileHit = true;
+            // Laser löschen
+            lasers[li] = lasers.back();
+            lasers.pop_back();
+            break;
+          }
+        }
+      }
+
+      if (missileHit) {
+        // Rakete in der Luft zerstört -> Belohnung & Mini-Explosion!
+        spawnExplosion(m.x, m.y, m.vx * 0.4f, m.vy * 0.4f, 30);
+        playExplosion(e);
+        score += 2; // 2 Bonuspunkte für abgeschossene Rakete!
+        if (score > highscore)
+          highscore = score;
+        missiles[i] = missiles.back();
+        missiles.pop_back();
+        continue;
+      }
+
+      ++i;
+    }
+
+    // 5. Laser-Geschosse bewegen & Kollisionen prüfen
     for (size_t i = 0; i < lasers.size();) {
       auto &l = lasers[i];
       l.y += l.vy * dt;
@@ -581,6 +752,24 @@ struct StarfighterGame : Game {
         // Feind-Laser: Leuchtend Hellgrün & Gelber Kern
         e.line(l.x, l.y, l.x, l.y + 5.0f, Colors::LightGreen);
         e.pset(l.x, l.y + 5.0f, Colors::Yellow);
+      }
+    }
+  }
+
+  // Zeichnet Suchraketen mit rotem Gefechtskopf, weißem Kern & Schubflamme
+  void drawMissiles(Engine &e) {
+    for (const auto &m : missiles) {
+      // 1. Roter Gefechtskopf / Raketenkörper
+      e.circlefill(m.x, m.y, 2.5f, Colors::Red);
+      e.pset(m.x, m.y, Colors::White);
+
+      // 2. Glühender Flammen-Punkt entgegengesetzt zur Flugrichtung
+      float speed = std::sqrt(m.vx * m.vx + m.vy * m.vy);
+      if (speed > 1.0f) {
+        float nx = m.vx / speed;
+        float ny = m.vy / speed;
+        e.pset(m.x - nx * 3.0f, m.y - ny * 3.0f,
+               (rand() % 2 == 0 ? Colors::Yellow : Colors::Orange));
       }
     }
   }

@@ -624,6 +624,24 @@ p.vy = shipVy + burstSpeed * sin(angle);
 
 // 2. Thermischer Farbverlauf über Lebensdauer:
 // Weiß -&gt; Gelb -&gt; Orange -&gt; Rot -&gt; Dunkelgrau</code></pre>
+<h3>4. Feindliche 3er-Laser-Salve mit Nachladepause</h3>
+<p>Der TIE-Attacker feuert in schnellen <strong>3er-Salven</strong> und muss danach 2 bis 3 Sekunden nachladen:</p>
+<pre><code class="language-cpp">if (enemyBurstCount &lt; 3) {
+    // Schneller Schuss aus Frontkanonen
+    enemyBurstCount++;
+    enemyShootTimer = 0.16f; // Kurzer Abstand
+} else {
+    // 3 Schüsse gefeuert -&gt; 2-3s Nachladepause!
+    enemyBurstCount = 0;
+    enemyShootTimer = 2.0f + (rand() % 100) / 100.0f;
+}</code></pre>
+<h3>5. Wärmesuchende Raketen (Homing Missiles) mit Partikelschweif</h3>
+<p>Der Gegner feuert ferngelenkte Suchraketen ab, die den Spieler jagen:</p>
+<ul>
+<li><strong>Vektor-Lenkung</strong>: Die Rakete berechnet den Richtungsvektor zum Spieler (<code>dx</code>, <code>dy</code>) und lenkt mit sanfter Dreh-Trägheit ein!</li>
+<li><strong>Feuriger Triebwerkschweif</strong>: Bei jedem Schritt stößt die Rakete orange-gelbe Flammen- und graue Rauchpartikel nach hinten aus.</li>
+<li><strong>Abschussbar!</strong>: Du kannst die Suchrakete mit deinen eigenen Lasern in der Luft zerstören (+2 Bonuspunkte!).</li>
+</ul>
 <hr>
 <h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
 <p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>
