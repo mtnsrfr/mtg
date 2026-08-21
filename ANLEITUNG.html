@@ -649,6 +649,22 @@ p.vy = shipVy + burstSpeed * sin(angle);
 <li><strong>Optische Effekte</strong>: Die Kanonenrohre am Schiff glühen orange-rot und stoßen kleine Rauchwölkchen aus.</li>
 <li><strong>Taktik</strong>: Wer gezielt Einzelschüsse abgibt und kurz wartet (<code>0.55s</code>), kühlt automatisch ab und überhitzt niemals!</li>
 </ul>
+<h3>7. Feindlicher Schutzschild (Regeneration in 3 Sekunden)</h3>
+<p>Der TIE-Attacker besitzt einen Energie-Schutzschild mit <strong>100 Punkten</strong>:</p>
+<ul>
+<li><strong>Schadensberechnung</strong>: Ein normaler Lasertreffer macht <strong>35 Schaden</strong>. 2 Treffer (70 Schaden) genügen nicht – erst der <strong>3. Volltreffer (105 Schaden)</strong> durchbricht den Schild und zerstört das Schiff!</li>
+<li><strong>Auto-Regeneration mit <code>dt</code></strong>: In 3 Sekunden lädt sich der Schild wieder vollständig auf:</li>
+<pre><code class="language-cpp">  if (enemyShield &lt; enemyMaxShield) {
+      enemyShield += (enemyMaxShield / 3.0f) * dt;
+  }</code></pre>
+</ul>
+<h3>8. Der aufgeladene Mega-Laser (Charged Shot)</h3>
+<p>Wenn du die <strong>Leertaste gedrückt hältst</strong>, lädt sich dein Laser auf:</p>
+<ul>
+<li><strong>Schiff steht still</strong>: Während des Ladevorgangs kannst du dich nicht bewegen (höchstes Risiko!).</li>
+<li><strong>Schussstärke wächst mit <code>dt</code></strong>: Nach genau <strong>1 Sekunde</strong> ist der Laser voll geladen und leuchtet als weiß-gelbe Energie-Kugel an der Schiffsspitze.</li>
+<li><strong>1-Shot-KO</strong>: Wenn du jetzt loslässt, feuert ein riesiger <strong>Mega-Laserstrahl (150 Schaden)</strong> ab, der den Gegner <strong>trotz 100% vollem Schild mit einem einzigen Treffer vaporisiert</strong>!</li>
+</ul>
 <hr>
 <h2>🕹️ Level 9: Die Retro-Konsole (<a href="file:///Users/mtn/code/mtg/MenuGame.hpp">MenuGame.hpp</a>)</h2>
 <p>Wie baut man ein Hauptmenü, um zwischen mehreren Spielen umzuschalten?</p>

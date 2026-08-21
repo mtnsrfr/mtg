@@ -472,6 +472,22 @@ Dauerfeuer ist verboten! Nach **3 schnellen Schüssen** überhitzt die Bordkanon
 * **Optische Effekte**: Die Kanonenrohre am Schiff glühen orange-rot und stoßen kleine Rauchwölkchen aus.
 * **Taktik**: Wer gezielt Einzelschüsse abgibt und kurz wartet (`0.55s`), kühlt automatisch ab und überhitzt niemals!
 
+### 7. Feindlicher Schutzschild (Regeneration in 3 Sekunden)
+Der TIE-Attacker besitzt einen Energie-Schutzschild mit **100 Punkten**:
+* **Schadensberechnung**: Ein normaler Lasertreffer macht **35 Schaden**. 2 Treffer (70 Schaden) genügen nicht – erst der **3. Volltreffer (105 Schaden)** durchbricht den Schild und zerstört das Schiff!
+* **Auto-Regeneration mit `dt`**: In 3 Sekunden lädt sich der Schild wieder vollständig auf:
+  ```cpp
+  if (enemyShield < enemyMaxShield) {
+      enemyShield += (enemyMaxShield / 3.0f) * dt;
+  }
+  ```
+
+### 8. Der aufgeladene Mega-Laser (Charged Shot)
+Wenn du die **Leertaste gedrückt hältst**, lädt sich dein Laser auf:
+* **Schiff steht still**: Während des Ladevorgangs kannst du dich nicht bewegen (höchstes Risiko!).
+* **Schussstärke wächst mit `dt`**: Nach genau **1 Sekunde** ist der Laser voll geladen und leuchtet als weiß-gelbe Energie-Kugel an der Schiffsspitze.
+* **1-Shot-KO**: Wenn du jetzt loslässt, feuert ein riesiger **Mega-Laserstrahl (150 Schaden)** ab, der den Gegner **trotz 100% vollem Schild mit einem einzigen Treffer vaporisiert**!
+
 ---
 
 ## 🕹️ Level 9: Die Retro-Konsole ([MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp))

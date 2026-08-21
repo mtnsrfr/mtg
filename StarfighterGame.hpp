@@ -63,6 +63,8 @@ struct StarfighterGame : Game {
     float y;
     float vy;
     bool fromPlayer;
+    float damage = 35.0f; // Schuss-Schaden (wächst beim Aufladen mit dt!)
+    bool isMega = false;  // Voll aufgeladener Mega-Laser (durchschlägt jeden Schild)
   };
 
   std::vector<Laser> lasers;
@@ -89,12 +91,18 @@ struct StarfighterGame : Game {
   int playerShots = 0;              // Zählt Schüsse in Folge (0, 1, 2, 3)
   float playerOverheatTimer = 0.0f; // Bei Überhitzung: 2 Sekunden Zwangspause!
   float playerCoolTimer = 0.0f;     // Kühlt nach kurzer Feuerpause ab
+  bool playerCharging = false;      // Lädt Mega-Laser auf (Schiff steht still!)
+  float playerChargeTime = 0.0f;    // Ladezeit in Sekunden (voll bei 1.0s)
+  float playerChargePower = 35.0f;  // Schussstärke (wächst kontinuierlich mit dt)
 
   // --- Gegner (Attacker) ---
   float enemyX = 152.0f;
   float enemyY = 35.0f;
   float enemyVx = 90.0f;
   float enemyVy = 0.0f;
+  const float enemyMaxShield = 100.0f;
+  float enemyShield = 100.0f;       // Schutzschild (lädt sich in 3s wieder voll auf)
+  float enemyShieldHitTimer = 0.0f; // Leuchten des Schilds bei Treffer
   int enemyBurstCount = 0;        // Zählt Schüsse in der 3er-Salve (0, 1, 2)
   float enemyShootTimer = 1.0f;   // Timer für 3er-Salve und 2-3s Nachladepause
   float enemyMissileTimer = 2.5f; // Timer für den Start von Suchraketen
@@ -159,6 +167,20 @@ struct StarfighterGame : Game {
   void playPlayerShoot(Engine &e) {
     // Hoher, schneller Laser-Pew (Note As5)
     e.play_tone(Notes::As5, 0.04f);
+  }
+
+  void playMegaLaserShoot(Engine &e) {
+    // Mächtiger, tiefer Mega-Laser-Strahl
+    e.play_melody({
+        {Notes::C4, 0.04f},
+        {Notes::G5, 0.08f},
+        {Notes::C3, 0.18f}
+    });
+  }
+
+  void playShieldHitSound(Engine &e) {
+    // Resonantes Abprallen am Schutzschild
+    e.play_tone(Notes::Ds5, 0.05f);
   }
 
   void playOverheatAlarm(Engine &e) {
@@ -336,6 +358,44 @@ struct StarfighterGame : Game {
   }
 
   // ===========================================================================
+  // Lade-Partikel: Strömen beim Aufladen des Mega-Lasers in das Schiff
+  // ===========================================================================
+  void spawnChargeParticle(float targetX, float targetY, float chargeTime) {
+    Particle p;
+    float angle = (rand() % 360) * (M_PI / 180.0f);
+    float dist = 12.0f + (rand() % 14);
+    p.x = targetX + std::cos(angle) * dist;
+    p.y = targetY + std::sin(angle) * dist;
+    // Partikel fliegen beschleunigt zur Schiffsspitze
+    p.vx = -std::cos(angle) * (30.0f + chargeTime * 40.0f);
+    p.vy = -std::sin(angle) * (30.0f + chargeTime * 40.0f);
+    p.maxLife = 0.18f + (rand() % 10) / 100.0f;
+    p.life = p.maxLife;
+    p.color = (chargeTime >= 1.0f ? Colors::White
+               : (rand() % 2 == 0 ? Colors::Blue : Colors::Yellow));
+    particles.push_back(p);
+  }
+
+  // ===========================================================================
+  // Schild-Funken: Sprühen beim Treffer auf den feindlichen Schutzschild
+  // ===========================================================================
+  void spawnShieldSparks(float x, float y) {
+    for (int i = 0; i < 15; ++i) {
+      Particle p;
+      p.x = x;
+      p.y = y;
+      float angle = (rand() % 360) * (M_PI / 180.0f);
+      float speed = 25.0f + (rand() % 45);
+      p.vx = std::cos(angle) * speed;
+      p.vy = std::sin(angle) * speed;
+      p.maxLife = 0.20f + (rand() % 10) / 100.0f;
+      p.life = p.maxLife;
+      p.color = (rand() % 2 == 0 ? Colors::Blue : Colors::White);
+      particles.push_back(p);
+    }
+  }
+
+  // ===========================================================================
   // Spiel-Logik & Neustart
   // ===========================================================================
   void resetGame() {
@@ -347,10 +407,15 @@ struct StarfighterGame : Game {
     playerShots = 0;
     playerOverheatTimer = 0.0f;
     playerCoolTimer = 0.0f;
+    playerCharging = false;
+    playerChargeTime = 0.0f;
+    playerChargePower = 35.0f;
 
     enemyX = 152.0f;
     enemyY = 35.0f;
     enemyVx = 90.0f;
+    enemyShield = enemyMaxShield;
+    enemyShieldHitTimer = 0.0f;
     enemyAlive = true;
     enemyRespawnTimer = 0.0f;
     enemyBurstCount = 0;
@@ -387,35 +452,40 @@ struct StarfighterGame : Game {
     float dt = e.dt();
 
     // 1. Spieler-Bewegung (W/A/S/D oder Pfeiltasten)
+    // HINWEIS: Wenn der Laser aufgeladen wird (playerCharging), steht das Schiff still!
     float curPlayerVx = 0.0f;
     float curPlayerVy = 0.0f;
 
-    if (e.key(Key::A) || e.key(Key::Left)) {
-      playerX -= playerSpeed * dt;
-      curPlayerVx = -playerSpeed;
-    }
-    if (e.key(Key::D) || e.key(Key::Right)) {
-      playerX += playerSpeed * dt;
-      curPlayerVx = playerSpeed;
-    }
-    if (e.key(Key::W) || e.key(Key::Up)) {
-      playerY -= playerSpeed * dt;
-      curPlayerVy = -playerSpeed;
-    }
-    if (e.key(Key::S) || e.key(Key::Down)) {
-      playerY += playerSpeed * dt;
-      curPlayerVy = playerSpeed;
+    if (!playerCharging) {
+      if (e.key(Key::A) || e.key(Key::Left)) {
+        playerX -= playerSpeed * dt;
+        curPlayerVx = -playerSpeed;
+      }
+      if (e.key(Key::D) || e.key(Key::Right)) {
+        playerX += playerSpeed * dt;
+        curPlayerVx = playerSpeed;
+      }
+      if (e.key(Key::W) || e.key(Key::Up)) {
+        playerY -= playerSpeed * dt;
+        curPlayerVy = -playerSpeed;
+      }
+      if (e.key(Key::S) || e.key(Key::Down)) {
+        playerY += playerSpeed * dt;
+        curPlayerVy = playerSpeed;
+      }
     }
 
     // Spieler im Bildschirm halten (16x16 Raumschiff)
     playerX = std::clamp(playerX, 8.0f, 320.0f - 24.0f);
     playerY = std::clamp(playerY, 30.0f, 240.0f - 24.0f);
 
-    // 2. Spieler-Schuss & Laser-Überhitzung
+    // 2. Spieler-Schuss & Laser-Aufladung (Charged Mega-Shot)
     shootCooldown -= dt;
 
     if (playerOverheatTimer > 0.0f) {
       // Laser ist überhitzt -> 2 Sekunden Zwangspause zum Abkühlen!
+      playerCharging = false;
+      playerChargeTime = 0.0f;
       playerOverheatTimer -= dt;
       if (playerOverheatTimer <= 0.0f) {
         playerOverheatTimer = 0.0f;
@@ -426,34 +496,69 @@ struct StarfighterGame : Game {
         playOverheatClick(e);
       }
     } else {
-      // Wenn der Spieler eine kurze Weile (0.55s) pausiert, kühlt der Laser ab
-      playerCoolTimer -= dt;
-      if (playerCoolTimer <= 0.0f) {
-        playerShots = 0;
-      }
+      if (e.key(Key::Space)) {
+        // Space wird gehalten -> Laser aufladen (Schiff steht still!)
+        playerCharging = true;
+        playerChargeTime += dt;
+        // Schussstärke wächst stetig mit dt (von 35.0 bis 150.0)
+        playerChargePower = 35.0f + std::min(1.0f, playerChargeTime) * 115.0f;
 
-      // Normaler Doppellaser-Schuss
-      if (e.key(Key::Space) && shootCooldown <= 0.0f) {
-        shootCooldown = 0.18f; // Schussrate
-        playerShots++;
-        playerCoolTimer = 0.55f; // Timer für automatische Abkühlung
+        // Lade-Partikel einsaugen
+        spawnChargeParticle(playerX + 8.0f, playerY + 2.0f, playerChargeTime);
 
-        playPlayerShoot(e);
-        // Linker und rechter Flügellaser
-        lasers.push_back({playerX + 2.0f, playerY, -340.0f, true});
-        lasers.push_back({playerX + 13.0f, playerY, -340.0f, true});
+        // Sound-Signal bei voller Ladung
+        if (playerChargeTime >= 1.0f && playerChargeTime - dt < 1.0f) {
+          e.play_tone(Notes::C6, 0.08f);
+        }
+      } else {
+        // Space wurde losgelassen!
+        if (playerCharging) {
+          if (playerChargeTime >= 1.0f) {
+            // VOLL GELADENER MEGA-SCHUSS! (Durchschlägt 100% Schild mit 1 Treffer)
+            playMegaLaserShoot(e);
+            lasers.push_back({playerX + 7.0f, playerY - 4.0f, -420.0f, true, 150.0f, true});
+            spawnExplosion(playerX + 8.0f, playerY, 0.0f, 30.0f, 15);
+          } else if (shootCooldown <= 0.0f) {
+            // Normaler Schuss (oder kurzer Tap)
+            shootCooldown = 0.18f;
+            playerShots++;
+            playerCoolTimer = 0.55f;
 
-        // Nach 3 Schüssen: Laser überhitzt für 2 Sekunden!
-        if (playerShots >= 3) {
-          playerOverheatTimer = 2.0f;
-          playOverheatAlarm(e);
+            playPlayerShoot(e);
+            // Doppellaser mit Grundschaden (35.0f)
+            lasers.push_back({playerX + 2.0f, playerY, -340.0f, true, playerChargePower, false});
+            lasers.push_back({playerX + 13.0f, playerY, -340.0f, true, playerChargePower, false});
+
+            // Nach 3 schnellen Schüssen: Laser überhitzt für 2 Sekunden!
+            if (playerShots >= 3) {
+              playerOverheatTimer = 2.0f;
+              playOverheatAlarm(e);
+            }
+          }
+          playerCharging = false;
+          playerChargeTime = 0.0f;
+          playerChargePower = 35.0f;
+        } else {
+          // Wenn der Spieler nicht schießt, kühlt der Laser langsam ab
+          playerCoolTimer -= dt;
+          if (playerCoolTimer <= 0.0f) {
+            playerShots = 0;
+          }
         }
       }
     }
 
-    // 3. Gegner-KI & Bewegung (Attacker fliegt sanfte Kurven & taucht ab)
+    // 3. Gegner-KI, Schild-Regeneration & Bewegung
     float curEnemyVy = 0.0f;
     if (enemyAlive) {
+      // Schild lädt sich in 3 Sekunden wieder voll auf (33.33% pro Sekunde)
+      if (enemyShield < enemyMaxShield) {
+        enemyShield = std::min(enemyMaxShield, enemyShield + (enemyMaxShield / 3.0f) * dt);
+      }
+      if (enemyShieldHitTimer > 0.0f) {
+        enemyShieldHitTimer -= dt;
+      }
+
       enemyMovePhase += dt * 2.5f;
       enemyX += enemyVx * dt;
       curEnemyVy = std::cos(enemyMovePhase) * 18.0f * 2.5f + 10.0f;
@@ -474,8 +579,8 @@ struct StarfighterGame : Game {
         if (enemyBurstCount < 3) {
           playEnemyShoot(e);
           // Schüsse aus den beiden langen Frontkanonen
-          lasers.push_back({enemyX + 2.0f, enemyY + 14.0f, 230.0f, false});
-          lasers.push_back({enemyX + 13.0f, enemyY + 14.0f, 230.0f, false});
+          lasers.push_back({enemyX + 2.0f, enemyY + 14.0f, 230.0f, false, 35.0f, false});
+          lasers.push_back({enemyX + 13.0f, enemyY + 14.0f, 230.0f, false, 35.0f, false});
           enemyBurstCount++;
           if (enemyBurstCount < 3) {
             // Schneller Abstand zwischen den 3 Schüssen der Salve
@@ -510,6 +615,8 @@ struct StarfighterGame : Game {
         enemyAlive = true;
         enemyX = 20.0f + (rand() % 260);
         enemyY = 25.0f;
+        enemyShield = enemyMaxShield;
+        enemyShieldHitTimer = 0.0f;
         // Wird mit höherem Score etwas schneller
         enemyVx = (rand() % 2 == 0 ? 90.0f : -90.0f) * (1.0f + score * 0.03f);
         enemyBurstCount = 0;
@@ -624,16 +731,38 @@ struct StarfighterGame : Game {
 
       // Spieler-Laser trifft Gegner?
       if (l.fromPlayer && enemyAlive) {
-        if (l.x >= enemyX && l.x <= enemyX + 16.0f &&
-            l.y >= enemyY && l.y <= enemyY + 16.0f) {
+        if (l.x >= enemyX - 2.0f && l.x <= enemyX + 18.0f &&
+            l.y >= enemyY - 2.0f && l.y <= enemyY + 18.0f) {
           hit = true;
-          enemyAlive = false;
-          enemyRespawnTimer = 0.8f;
-          score++;
-          if (score > highscore)
-            highscore = score;
-          playExplosion(e);
-          spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, curEnemyVy, 50);
+          enemyShieldHitTimer = 0.25f; // Schild leuchtet auf!
+
+          if (enemyShield > 0.0f) {
+            enemyShield -= l.damage;
+            if (enemyShield > 0.0f) {
+              // Schild hat Treffer abgewehrt!
+              playShieldHitSound(e);
+              spawnShieldSparks(l.x, l.y);
+            } else {
+              // Schild durchbrochen und Gegner zerstört!
+              enemyShield = 0.0f;
+              enemyAlive = false;
+              enemyRespawnTimer = 0.8f;
+              score += (l.isMega ? 3 : 1);
+              if (score > highscore)
+                highscore = score;
+              playExplosion(e);
+              spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, curEnemyVy, l.isMega ? 75 : 50);
+            }
+          } else {
+            // Gegner hatte kein Schild mehr -> Zerstört!
+            enemyAlive = false;
+            enemyRespawnTimer = 0.8f;
+            score += (l.isMega ? 3 : 1);
+            if (score > highscore)
+              highscore = score;
+            playExplosion(e);
+            spawnExplosion(enemyX + 8.0f, enemyY + 8.0f, enemyVx, curEnemyVy, l.isMega ? 75 : 50);
+          }
         }
       }
 
@@ -760,9 +889,21 @@ struct StarfighterGame : Game {
       p.color = Colors::DarkGray;
       particles.push_back(p);
     }
+
+    // Glühende Energie-Kugel beim Aufladen des Mega-Lasers
+    if (playerCharging) {
+      float radius = 1.5f + playerChargeTime * 3.5f;
+      uint8_t col = (playerChargeTime >= 1.0f
+                         ? (rand() % 2 == 0 ? Colors::White : Colors::Yellow)
+                         : (playerChargeTime >= 0.5f ? Colors::Yellow : Colors::Blue));
+      e.circlefill(playerX + 8.0f, playerY, radius, col);
+      if (playerChargeTime >= 1.0f) {
+        e.circle(playerX + 8.0f, playerY, radius + 2.0f, Colors::White);
+      }
+    }
   }
 
-  // Zeichnet das 16x16 Gegner-Schiff (TIE Attacker mit langen Frontkanonen)
+  // Zeichnet das 16x16 Gegner-Schiff (TIE Attacker mit Schutzschild & Schild-Balken)
   void drawEnemy(Engine &e) {
     // 16x16 Pixelmuster:
     // clang-format off
@@ -805,14 +946,43 @@ struct StarfighterGame : Game {
         }
       }
     }
+
+    // 1. Schutzschild-Balken über dem Gegner
+    e.rect(ex - 2.0f, ey - 6.0f, 20.0f, 3.0f, Colors::DarkGray);
+    int barWidth = static_cast<int>((enemyShield / enemyMaxShield) * 18.0f);
+    if (barWidth > 0) {
+      e.rectfill(ex - 1.0f, ey - 5.0f, static_cast<float>(barWidth), 2.0f, Colors::Blue);
+    }
+
+    // 2. Schutzschild-Effekt um das Schiff
+    if (enemyShield > 0.0f) {
+      if (enemyShieldHitTimer > 0.0f) {
+        // Schild leuchtet bei Treffer grell auf
+        e.circle(ex + 8.0f, ey + 8.0f, 13.0f, (rand() % 2 == 0 ? Colors::White : Colors::Blue));
+        e.circle(ex + 8.0f, ey + 8.0f, 14.0f, Colors::Blue);
+      } else {
+        // Zarte Schutzschild-Klammern an den Seiten
+        e.line(ex - 2.0f, ey + 4.0f, ex - 2.0f, ey + 12.0f, Colors::Blue);
+        e.line(ex + 18.0f, ey + 4.0f, ex + 18.0f, ey + 12.0f, Colors::Blue);
+      }
+    }
   }
 
   void drawLasers(Engine &e) {
     for (const auto &l : lasers) {
       if (l.fromPlayer) {
-        // Spieler-Laser: Leuchtend Blau & Weißer Kern
-        e.line(l.x, l.y, l.x, l.y + 5.0f, Colors::Blue);
-        e.pset(l.x, l.y, Colors::White);
+        if (l.isMega) {
+          // Mega-Laser: Breiter, leuchtender Strahl mit Plasma-Kern
+          e.line(l.x - 2.0f, l.y, l.x - 2.0f, l.y + 12.0f, Colors::Blue);
+          e.line(l.x + 2.0f, l.y, l.x + 2.0f, l.y + 12.0f, Colors::Blue);
+          e.rectfill(l.x - 1.0f, l.y, 3.0f, 14.0f, Colors::Yellow);
+          e.line(l.x, l.y, l.x, l.y + 14.0f, Colors::White);
+          e.circlefill(l.x, l.y, 3.0f, Colors::White);
+        } else {
+          // Spieler-Laser: Leuchtend Blau & Weißer Kern
+          e.line(l.x, l.y, l.x, l.y + 5.0f, Colors::Blue);
+          e.pset(l.x, l.y, Colors::White);
+        }
       } else {
         // Feind-Laser: Leuchtend Hellgrün & Gelber Kern
         e.line(l.x, l.y, l.x, l.y + 5.0f, Colors::LightGreen);
