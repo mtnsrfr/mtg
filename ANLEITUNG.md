@@ -466,6 +466,12 @@ Der Gegner feuert ferngelenkte Suchraketen ab, die den Spieler jagen:
 * **Feuriger Triebwerkschweif**: Bei jedem Schritt stößt die Rakete orange-gelbe Flammen- und graue Rauchpartikel nach hinten aus.
 * **Abschussbar!**: Du kannst die Suchrakete mit deinen eigenen Lasern in der Luft zerstören (+2 Bonuspunkte!).
 
+### 6. Laser-Überhitzung (Wer zu viel schießt, muss pausieren!)
+Dauerfeuer ist verboten! Nach **3 schnellen Schüssen** überhitzt die Bordkanone:
+* **2 Sekunden Zwangspause**: Der Laser ist blockiert und kühlt mit rotem Blinken (`OVERHEAT!`) ab.
+* **Optische Effekte**: Die Kanonenrohre am Schiff glühen orange-rot und stoßen kleine Rauchwölkchen aus.
+* **Taktik**: Wer gezielt Einzelschüsse abgibt und kurz wartet (`0.55s`), kühlt automatisch ab und überhitzt niemals!
+
 ---
 
 ## 🕹️ Level 9: Die Retro-Konsole ([MenuGame.hpp](file:///Users/mtn/code/mtg/MenuGame.hpp))

@@ -86,6 +86,9 @@ struct StarfighterGame : Game {
   const float playerSpeed = 150.0f;
   bool playerAlive = true;
   float shootCooldown = 0.0f;
+  int playerShots = 0;              // Zählt Schüsse in Folge (0, 1, 2, 3)
+  float playerOverheatTimer = 0.0f; // Bei Überhitzung: 2 Sekunden Zwangspause!
+  float playerCoolTimer = 0.0f;     // Kühlt nach kurzer Feuerpause ab
 
   // --- Gegner (Attacker) ---
   float enemyX = 152.0f;
@@ -156,6 +159,20 @@ struct StarfighterGame : Game {
   void playPlayerShoot(Engine &e) {
     // Hoher, schneller Laser-Pew (Note As5)
     e.play_tone(Notes::As5, 0.04f);
+  }
+
+  void playOverheatAlarm(Engine &e) {
+    // Zischender Warn-Sound bei Überhitzung
+    e.play_melody({
+        {Notes::G4, 0.06f},
+        {Notes::Ds4, 0.06f},
+        {Notes::C4, 0.12f}
+    });
+  }
+
+  void playOverheatClick(Engine &e) {
+    // Trockenes Klicken beim Abdrücken mit überhitztem Laser
+    e.play_tone(Notes::C3, 0.03f);
   }
 
   void playEnemyShoot(Engine &e) {
@@ -327,6 +344,9 @@ struct StarfighterGame : Game {
     playerY = 190.0f;
     playerAlive = true;
     shootCooldown = 0.0f;
+    playerShots = 0;
+    playerOverheatTimer = 0.0f;
+    playerCoolTimer = 0.0f;
 
     enemyX = 152.0f;
     enemyY = 35.0f;
@@ -391,14 +411,44 @@ struct StarfighterGame : Game {
     playerX = std::clamp(playerX, 8.0f, 320.0f - 24.0f);
     playerY = std::clamp(playerY, 30.0f, 240.0f - 24.0f);
 
-    // 2. Spieler-Schuss (Doppellaser)
+    // 2. Spieler-Schuss & Laser-Überhitzung
     shootCooldown -= dt;
-    if (e.key(Key::Space) && shootCooldown <= 0.0f) {
-      shootCooldown = 0.18f; // Schussrate
-      playPlayerShoot(e);
-      // Linker und rechter Flügellaser
-      lasers.push_back({playerX + 2.0f, playerY, -340.0f, true});
-      lasers.push_back({playerX + 13.0f, playerY, -340.0f, true});
+
+    if (playerOverheatTimer > 0.0f) {
+      // Laser ist überhitzt -> 2 Sekunden Zwangspause zum Abkühlen!
+      playerOverheatTimer -= dt;
+      if (playerOverheatTimer <= 0.0f) {
+        playerOverheatTimer = 0.0f;
+        playerShots = 0;
+      }
+      // Wenn während der Überhitzung gedrückt wird: Trockenes Klick-Geräusch
+      if (e.pressed(Key::Space)) {
+        playOverheatClick(e);
+      }
+    } else {
+      // Wenn der Spieler eine kurze Weile (0.55s) pausiert, kühlt der Laser ab
+      playerCoolTimer -= dt;
+      if (playerCoolTimer <= 0.0f) {
+        playerShots = 0;
+      }
+
+      // Normaler Doppellaser-Schuss
+      if (e.key(Key::Space) && shootCooldown <= 0.0f) {
+        shootCooldown = 0.18f; // Schussrate
+        playerShots++;
+        playerCoolTimer = 0.55f; // Timer für automatische Abkühlung
+
+        playPlayerShoot(e);
+        // Linker und rechter Flügellaser
+        lasers.push_back({playerX + 2.0f, playerY, -340.0f, true});
+        lasers.push_back({playerX + 13.0f, playerY, -340.0f, true});
+
+        // Nach 3 Schüssen: Laser überhitzt für 2 Sekunden!
+        if (playerShots >= 3) {
+          playerOverheatTimer = 2.0f;
+          playOverheatAlarm(e);
+        }
+      }
     }
 
     // 3. Gegner-KI & Bewegung (Attacker fliegt sanfte Kurven & taucht ab)
@@ -684,9 +734,11 @@ struct StarfighterGame : Game {
           // Cockpit in Cyan/Blau
           if (r >= 2 && r <= 4 && c >= 6 && c <= 9)
             col = Colors::Blue;
-          // Flügelkanonen in Rot
+          // Flügelkanonen in Rot (oder glühend Orange/Rot bei Überhitzung)
           else if ((c <= 1 || c >= 14) && r >= 4 && r <= 10)
-            col = Colors::Red;
+            col = (playerOverheatTimer > 0.0f
+                       ? (rand() % 2 == 0 ? Colors::Orange : Colors::Red)
+                       : Colors::Red);
           // Triebwerksflamme in Orange/Gelb
           else if (r >= 13)
             col = (rand() % 2 == 0 ? Colors::Orange : Colors::Yellow);
@@ -694,6 +746,19 @@ struct StarfighterGame : Game {
           e.pset(px + c, py + r, col);
         }
       }
+    }
+
+    // Rauchpartikel aufsteigen lassen, wenn die Bordkanonen überhitzt sind
+    if (playerOverheatTimer > 0.0f && rand() % 3 == 0) {
+      Particle p;
+      p.x = (rand() % 2 == 0 ? playerX + 1.0f : playerX + 15.0f);
+      p.y = playerY + 4.0f;
+      p.vx = ((rand() % 20) - 10);
+      p.vy = -25.0f - (rand() % 20);
+      p.maxLife = 0.22f;
+      p.life = p.maxLife;
+      p.color = Colors::DarkGray;
+      particles.push_back(p);
     }
   }
 
@@ -779,6 +844,27 @@ struct StarfighterGame : Game {
     e.draw_text(16, 8, "SCORE:", Colors::White, 1);
     e.draw_digit(68, 6, score / 10, Colors::Yellow, 2);
     e.draw_digit(78, 6, score % 10, Colors::Yellow, 2);
+
+    // Laser-Überhitzungsanzeige / Energie-Balken in der Mitte
+    if (playerOverheatTimer > 0.0f) {
+      bool blink = (int(e.time() * 6.0f) % 2) == 0;
+      if (blink) {
+        e.draw_text(118, 8, "OVERHEAT!", Colors::Red, 1);
+      } else {
+        e.draw_text(118, 8, "COOLDOWN", Colors::Orange, 1);
+      }
+    } else {
+      e.draw_text(108, 8, "LASER:", Colors::White, 1);
+      // 3 Energie-Balken für die 3 Schüsse vor Überhitzung
+      for (int i = 0; i < 3; ++i) {
+        uint8_t col = Colors::DarkGray;
+        if (i < (3 - playerShots)) {
+          col = (playerShots == 0 ? Colors::LightGreen
+                 : (playerShots == 1 ? Colors::Yellow : Colors::Orange));
+        }
+        e.rectfill(150 + i * 8, 8, 5, 7, col);
+      }
+    }
 
     e.draw_text(200, 8, "HIGH:", Colors::White, 1);
     e.draw_digit(244, 6, highscore / 10, Colors::Red, 2);
