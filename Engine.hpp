@@ -36,6 +36,7 @@ enum class Key {
   Num1 = static_cast<int>(sf::Keyboard::Key::Num1),
   Num2 = static_cast<int>(sf::Keyboard::Key::Num2),
   Num3 = static_cast<int>(sf::Keyboard::Key::Num3),
+  Num4 = static_cast<int>(sf::Keyboard::Key::Num4),
 };
 
 // =============================================================================
@@ -55,6 +56,13 @@ constexpr uint8_t LightGreen = 6; // Hellgrün (Netz & Mittelkreis)
 constexpr uint8_t Orange = 7;     // Orange
 constexpr uint8_t DarkGray = 8;   // Dunkelgrau
 constexpr uint8_t LightGray = 9;  // Hellgrau
+constexpr uint8_t Pink = 10;      // Rosa / Pink
+constexpr uint8_t Purple = 11;    // Lila / Violett
+constexpr uint8_t Cyan = 12;      // Türkis / Cyan
+constexpr uint8_t SkyBlue = 13;   // Himmelblau
+constexpr uint8_t DarkPurple = 14;// Nacht-Lila
+constexpr uint8_t Gold = 15;      // Gold / Sternengelb
+constexpr uint8_t Magenta = 16;   // Magenta
 } // namespace Colors
 
 constexpr int PALETTE_SIZE = 256;
@@ -149,7 +157,10 @@ struct Tone {
 
 class SoundEngine {
 public:
-  SoundEngine() { sound = std::make_unique<sf::Sound>(soundBuffer); }
+  SoundEngine() {
+    sound = std::make_unique<sf::Sound>(soundBuffer);
+    bgmSound = std::make_unique<sf::Sound>(bgmBuffer);
+  }
 
   // Spielt einen einzelnen Ton mit Frequenz und Dauer ab
   void playTone(double freq, float duration = 0.1f) {
@@ -191,6 +202,36 @@ public:
     noteTimer = 0.0f;
   }
 
+  // Hintergrundmusik (Loop) abspielen
+  void playBgm(const std::vector<int16_t> &samples, unsigned sampleRate = 44100, bool loop = true) {
+    if (samples.empty())
+      return;
+    if (bgmBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate,
+                                 {sf::SoundChannel::Mono})) {
+      bgmSound->setBuffer(bgmBuffer);
+      bgmSound->setLooping(loop);
+      bgmSound->play();
+    }
+  }
+
+  void stopBgm() {
+    if (bgmSound) {
+      bgmSound->stop();
+    }
+  }
+
+  void pauseBgm() {
+    if (bgmSound) {
+      bgmSound->pause();
+    }
+  }
+
+  void resumeBgm() {
+    if (bgmSound && bgmSound->getStatus() == sf::Sound::Status::Paused) {
+      bgmSound->play();
+    }
+  }
+
   // Aktualisiert die Melodie-Warteschlange (wird vom Motor gesteuert)
   void update(float dt) {
     if (queueIndex < melodyQueue.size()) {
@@ -210,6 +251,9 @@ private:
 
   sf::SoundBuffer soundBuffer;
   std::unique_ptr<sf::Sound> sound;
+
+  sf::SoundBuffer bgmBuffer;
+  std::unique_ptr<sf::Sound> bgmSound;
 };
 
 // =============================================================================
@@ -537,6 +581,14 @@ public:
   // Spielt eine Notenabfolge (Melodie) ab
   void play_melody(std::initializer_list<Tone> tones) { sound.playMelody(tones); }
 
+  // Hintergrundmusik (Loop)
+  void play_bgm(const std::vector<int16_t> &samples, unsigned sampleRate = 44100, bool loop = true) {
+    sound.playBgm(samples, sampleRate, loop);
+  }
+  void stop_bgm() { sound.stopBgm(); }
+  void pause_bgm() { sound.pauseBgm(); }
+  void resume_bgm() { sound.resumeBgm(); }
+
   // --- Interne Engine-Methoden ---
   const std::vector<uint8_t> &getBuffer() const { return framebuffer; }
   const std::array<sf::Color, PALETTE_SIZE> &getPalette() const { return palette; }
@@ -585,8 +637,15 @@ private:
     palette[Colors::Orange] = sf::Color(255, 140, 30);
     palette[Colors::DarkGray] = sf::Color(40, 40, 40);
     palette[Colors::LightGray] = sf::Color(180, 180, 180);
+    palette[Colors::Pink] = sf::Color(255, 105, 180);
+    palette[Colors::Purple] = sf::Color(160, 50, 240);
+    palette[Colors::Cyan] = sf::Color(0, 235, 255);
+    palette[Colors::SkyBlue] = sf::Color(90, 180, 255);
+    palette[Colors::DarkPurple] = sf::Color(25, 10, 45);
+    palette[Colors::Gold] = sf::Color(255, 215, 0);
+    palette[Colors::Magenta] = sf::Color(240, 40, 160);
 
-    for (int i = 10; i < PALETTE_SIZE; ++i) {
+    for (int i = 17; i < PALETTE_SIZE; ++i) {
       palette[i] = sf::Color(i, i, i);
     }
   }

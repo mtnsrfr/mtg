@@ -20,8 +20,15 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
    * Directional momentum particle explosions with thermal color decay (White $\rightarrow$ Yellow $\rightarrow$ Orange $\rightarrow$ Red $\rightarrow$ Dark Gray).
    * *Controls*: Movement (`W`/`A`/`S`/`D` or `Arrow keys`), Shoot (`Space`).
 
-4. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
-   * Switch between games instantly with keys `1`, `2`, `3`.
+4. **🦄 The Unicorn (`UnicornGame.hpp`)**:
+   * Fast-paced retro runner (Mario Starman / Geometry Dash inspired pace).
+   * Choose your unicorn color: **Blue**, **White**, or **Pink**.
+   * Touch ground rainbow arches to collect magic points and watch them fade out in rainbow sparkles.
+   * Dodge falling shooting stars (*Sternschnuppen*) or jump on top of them (*Mario stomp*) to trigger Starfighter-style thermal particle explosions and bounce higher!
+   * *Controls*: Jump / Double Jump (`Space` / `W` / `Up`), Color Choice (`1`/`2`/`3` or `Arrow keys`).
+
+5. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
+   * Switch between games instantly with keys `1`, `2`, `3`, `4`.
    * Return to the menu at any time by pressing `Escape`.
 
 ---
