@@ -35,7 +35,8 @@ struct UnicornGame : Game {
   enum class State {
     ColorSelect,
     Playing,
-    GameOver
+    GameOver,
+    Victory
   };
 
   enum class UnicornColor {
@@ -104,6 +105,12 @@ struct UnicornGame : Game {
   State state = State::ColorSelect;
   UnicornColor chosenColor = UnicornColor::White;
 
+  // --- Level-System (Level 1: Blumenwiese, Level 2: Nachthimmel) ---
+  int currentLevel = 1;
+  float levelTimer = 0.0f;
+  const float levelDuration = 20.0f; // 20 Sekunden pro Level bis zum Sieg!
+  float levelBannerTimer = 0.0f;
+
   // --- Einhorn-Physik & Boden ---
   const float playerX = 48.0f;
   const float groundY = 200.0f; // Exakte Y-Linie der Bodenoberfläche
@@ -165,8 +172,12 @@ struct UnicornGame : Game {
   // 4. HAUPTSCHLEIFE (Wird 60-mal pro Sekunde aufgerufen)
   // ===========================================================================
   void update(Engine &e) override {
-    // 1. Hintergrund zeichnen (Zauberhafter Nachthimmel & Parallaxe)
-    drawBackground(e);
+    // 1. Hintergrund zeichnen (Level 1: Blumenwiese & Sonne, Level 2: Nachthimmel & Mond)
+    if (currentLevel == 1) {
+      drawMeadowBackground(e);
+    } else {
+      drawNightBackground(e);
+    }
 
     // 2. Je nach Zustand ausführen
     switch (state) {
@@ -178,6 +189,9 @@ struct UnicornGame : Game {
       break;
     case State::GameOver:
       updateGameOver(e);
+      break;
+    case State::Victory:
+      updateVictory(e);
       break;
     }
 
@@ -238,6 +252,10 @@ struct UnicornGame : Game {
     distanceTraveled = 0.0f;
     rainbowSpawnTimer = 1.4f;
     meteorSpawnTimer = 2.2f;
+
+    currentLevel = 1;
+    levelTimer = 0.0f;
+    levelBannerTimer = 2.5f;
 
     score = 0;
     rainbowsCollected = 0;
@@ -495,6 +513,27 @@ struct UnicornGame : Game {
     });
   }
 
+  void playLevelUpSound(Engine &e) {
+    e.play_melody({
+        {Notes::C5, 0.06f},
+        {Notes::E5, 0.06f},
+        {Notes::G5, 0.06f},
+        {Notes::B5, 0.06f},
+        {Notes::C6, 0.22f}
+    });
+  }
+
+  void playVictorySound(Engine &e) {
+    e.play_melody({
+        {Notes::C5, 0.08f},
+        {Notes::E5, 0.08f},
+        {Notes::G5, 0.08f},
+        {Notes::C6, 0.12f},
+        {Notes::G5, 0.08f},
+        {Notes::C6, 0.35f}
+    });
+  }
+
   // ===========================================================================
   // 7. PARTIKEL-SYSTEME (Sternenstaub, Explosionen, Einhorn-Magie)
   // ===========================================================================
@@ -665,9 +704,103 @@ struct UnicornGame : Game {
   }
 
   // ===========================================================================
-  // 8. HINTERGRUND-RENDERING (Mond, Sterne, Wolken & Boden)
+  // 8. HINTERGRUND-RENDERING (Level 1: Blumenwiese, Level 2: Nachthimmel)
   // ===========================================================================
-  void drawBackground(Engine &e) {
+  // --- LEVEL 1: STRAHLENDER SONNENTAG & BLAUE BLUMENWIESE ---
+  void drawMeadowBackground(Engine &e) {
+    float dt = e.dt();
+
+    // 1. Himmel (Himmelblau mit sanftem Cyan-Übergang zum Horizont)
+    e.rectfill(0, 0, 320, 130, Colors::SkyBlue);
+    e.rectfill(0, 130, 320, static_cast<int>(groundY) - 130, Colors::Cyan);
+
+    // 2. Sanfte grüne Hügel im Hintergrund (Parallaxe-Bewegung)
+    float hillOffset = distanceTraveled * 0.45f;
+    for (int x = 0; x < 320; ++x) {
+      float h1 = 168.0f + 14.0f * std::sin((x + hillOffset) * 0.014f);
+      e.line(x, static_cast<int>(h1), x, static_cast<int>(groundY), Colors::DarkGreen);
+      float h2 = 180.0f + 10.0f * std::sin((x + hillOffset * 1.5f + 75.0f) * 0.022f);
+      e.line(x, static_cast<int>(h2), x, static_cast<int>(groundY), Colors::LightGreen);
+    }
+
+    // 3. Strahlende Sonne mit rotierenden/pulsierenden Sonnenstrahlen & Gesicht
+    float sunX = 265.0f;
+    float sunY = 38.0f;
+
+    // Sonnenstrahlen
+    for (int a = 0; a < 8; ++a) {
+      float angle = a * (3.14159265f / 4.0f) + animTimer * 0.75f;
+      float r1 = 17.0f;
+      float r2 = 23.0f + 2.5f * std::sin(animTimer * 4.0f + a * 1.5f);
+      e.line(static_cast<int>(sunX + std::cos(angle) * r1),
+             static_cast<int>(sunY + std::sin(angle) * r1),
+             static_cast<int>(sunX + std::cos(angle) * r2),
+             static_cast<int>(sunY + std::sin(angle) * r2),
+             (a % 2 == 0) ? Colors::Gold : Colors::Yellow);
+    }
+
+    // Sonnenkörper & Glanz
+    e.circlefill(sunX, sunY, 18.0f, Colors::Gold);
+    e.circlefill(sunX, sunY, 15.0f, Colors::Yellow);
+    e.circlefill(sunX - 3.0f, sunY - 3.0f, 4.0f, Colors::White);
+
+    // Retro-Gesicht der Sonne
+    e.pset(static_cast<int>(sunX - 4), static_cast<int>(sunY - 1), Colors::Black);
+    e.pset(static_cast<int>(sunX + 4), static_cast<int>(sunY - 1), Colors::Black);
+    e.line(static_cast<int>(sunX - 3), static_cast<int>(sunY + 4),
+           static_cast<int>(sunX + 3), static_cast<int>(sunY + 4), Colors::Orange);
+
+    // 4. Weisse Schönwetter-Wolken
+    for (auto &c : clouds) {
+      if (state == State::Playing) {
+        c.x -= c.speed * (currentScrollSpeed / baseScrollSpeed) * dt;
+        if (c.x + c.width < 0.0f) {
+          c.x = 320.0f + rand() % 50;
+          c.y = static_cast<float>(18 + rand() % 65);
+        }
+      }
+      e.circlefill(c.x + 8.0f, c.y, 8.0f, Colors::White);
+      e.circlefill(c.x + 18.0f, c.y - 3.0f, 10.0f, Colors::White);
+      e.circlefill(c.x + 28.0f, c.y, 7.0f, Colors::White);
+      e.circlefill(c.x + 18.0f, c.y + 2.0f, 6.0f, Colors::LightGray);
+      e.rectfill(c.x + 4.0f, c.y, c.width - 8.0f, 6.0f, Colors::White);
+    }
+
+    // 5. Saftig grüne Wiese (Boden ab groundY = 200)
+    e.rectfill(0, groundY, 320, 240 - groundY, Colors::DarkGreen);
+    e.rectfill(0, groundY, 320, 3, Colors::LightGreen);
+    e.rectfill(0, groundY + 3, 320, 2, Colors::DarkGreen);
+
+    // Bunte Blumen & Blüten auf der Wiese
+    int flowerOffset = static_cast<int>(distanceTraveled * 1.5f) % 24;
+    for (int fx = -flowerOffset; fx < 320; fx += 24) {
+      int flowerType = std::abs((fx + static_cast<int>(distanceTraveled * 1.5f)) / 24) % 4;
+      // Stängel & Blatt
+      e.rectfill(fx + 5, groundY - 6, 2, 7, Colors::DarkGreen);
+      e.pset(fx + 4, groundY - 3, Colors::LightGreen);
+      // Blüte je nach Typ
+      if (flowerType == 0) {
+        // Rote Mohnblume
+        e.rectfill(fx + 4, groundY - 9, 4, 4, Colors::Red);
+        e.pset(fx + 5, groundY - 8, Colors::Pink);
+      } else if (flowerType == 1) {
+        // Gelbe Butterblume
+        e.circlefill(fx + 6, groundY - 8, 2.5f, Colors::Yellow);
+        e.pset(fx + 6, groundY - 8, Colors::White);
+      } else if (flowerType == 2) {
+        // Rosa Glockenblume
+        e.rectfill(fx + 4, groundY - 9, 4, 4, Colors::Pink);
+        e.pset(fx + 5, groundY - 8, Colors::Gold);
+      } else {
+        // Weisse Margerite
+        e.circlefill(fx + 6, groundY - 8, 2.5f, Colors::White);
+        e.pset(fx + 6, groundY - 8, Colors::Gold);
+      }
+    }
+  }
+
+  // --- LEVEL 2: ZAUBERHAFTER NACHTHIMMEL & MOND ---
+  void drawNightBackground(Engine &e) {
     float dt = e.dt();
 
     // 1. Himmel
@@ -928,15 +1061,17 @@ struct UnicornGame : Game {
     float dt = e.dt();
     animTimer += dt;
 
-    e.draw_text(68, 20, "THE UNICORN", Colors::Gold, 2);
-    e.draw_text(54, 46, "DAS MAGISCHE RETRO-ABENTEUER", Colors::White, 1);
+    e.draw_text(68, 18, "THE UNICORN", Colors::Gold, 2);
+    e.draw_text(54, 42, "DAS MAGISCHE RETRO-ABENTEUER", Colors::White, 1);
 
-    e.rect(20, 62, 280, 56, Colors::DarkGray);
-    e.draw_text(26, 68, "- REGENBOGEN : VON OBEN DRAUFSPRINGEN!", Colors::Yellow, 1);
-    e.draw_text(26, 80, "  (TRAMPOLIN-SPRUNG! VON VORNE = CRASH)", Colors::Pink, 1);
-    e.draw_text(26, 94, "- TEMPO      : WIRD IMMER SCHNELLER!", Colors::SkyBlue, 1);
+    e.rect(20, 56, 280, 66, Colors::DarkGray);
+    e.draw_text(26, 62, "- 2 LEVEL    : 1. BLUMENWIESE -> 2. NACHT (JE 20s)", Colors::LightGreen, 1);
+    e.draw_text(26, 74, "- REGENBOGEN : VON OBEN DRAUF = TRAMPOLIN!", Colors::Yellow, 1);
+    e.draw_text(26, 86, "- METEORE    : AUSWEICHEN ODER MARIO-STOMPEN!", Colors::Pink, 1);
+    e.draw_text(26, 98, "- ZIEL       : BEIDE LEVEL SCHAFFEN ZUM SIEG!", Colors::Cyan, 1);
+    e.draw_text(26, 110,"  (TRAMPOLIN-SPRUNG! VON VORNE = CRASH)", Colors::LightGray, 1);
 
-    e.draw_text(70, 126, "WAEHLE DEIN EINHORN:", Colors::White, 1);
+    e.draw_text(70, 128, "WAEHLE DEIN EINHORN:", Colors::White, 1);
 
     // 1. Blau
     bool isBlue = (chosenColor == UnicornColor::Blue);
@@ -986,7 +1121,7 @@ struct UnicornGame : Game {
   }
 
   // ===========================================================================
-  // 13. ZUSTAND: PLAYING (Aktives Spiel)
+  // 13. ZUSTAND: PLAYING (Aktives Spiel & Level-Fortschritt)
   // ===========================================================================
   void updatePlaying(Engine &e) {
     float dt = e.dt();
@@ -995,6 +1130,33 @@ struct UnicornGame : Game {
     if (!isBgmPlaying) {
       e.play_bgm(bgmSamples, 44100, true);
       isBgmPlaying = true;
+    }
+
+    // --- LEVEL-TIMER & FORTSCHRITT ---
+    levelTimer += dt;
+    if (levelBannerTimer > 0.0f) {
+      levelBannerTimer -= dt;
+    }
+
+    // Level 1 -> Level 2 Übergang nach 20 Sekunden
+    if (currentLevel == 1 && levelTimer >= levelDuration) {
+      currentLevel = 2;
+      levelTimer = 0.0f;
+      levelBannerTimer = 3.0f;
+      playLevelUpSound(e);
+      spawnRainbowSparkles(playerX, playerY, 120.0f, 65);
+    }
+    // Level 2 -> SIEG / YOU WIN nach weiteren 20 Sekunden
+    else if (currentLevel == 2 && levelTimer >= levelDuration) {
+      e.stop_bgm();
+      isBgmPlaying = false;
+      playVictorySound(e);
+      score += 2000; // Glorreicher Sieg-Bonus!
+      if (score > highscore) {
+        highscore = score;
+      }
+      state = State::Victory;
+      return;
     }
 
     // KONTINUIERLICHE BESCHLEUNIGUNG (Immer schneller & herausfordernder!)
@@ -1204,24 +1366,26 @@ struct UnicornGame : Game {
     float dt = e.dt();
     animTimer += dt;
 
-    e.rectfill(40, 35, 240, 160, Colors::Black);
-    e.rect(40, 35, 240, 160, Colors::Pink);
-    e.rect(42, 37, 236, 156, Colors::DarkPurple);
+    e.rectfill(40, 30, 240, 175, Colors::Black);
+    e.rect(40, 30, 240, 175, Colors::Pink);
+    e.rect(42, 32, 236, 171, Colors::DarkPurple);
 
-    e.draw_text(94, 48, "GAME OVER", Colors::Red, 2);
+    e.draw_text(94, 42, "GAME OVER", Colors::Red, 2);
 
-    e.draw_text(60, 80, "PUNKTE       : " + std::to_string(score), Colors::Gold, 1);
-    e.draw_text(60, 95, "HIGHSCORE    : " + std::to_string(highscore), Colors::White, 1);
-    e.draw_text(60, 110, "REGENBOGEN   : " + std::to_string(rainbowsCollected), Colors::Cyan, 1);
-    e.draw_text(60, 125, "STERNE STOMP : " + std::to_string(meteorsStomped), Colors::Pink, 1);
+    std::string lvlStr = (currentLevel == 1) ? "LEVEL 1 (WIESE)" : "LEVEL 2 (NACHT)";
+    e.draw_text(60, 72, "ERREICHT     : " + lvlStr, Colors::Yellow, 1);
+    e.draw_text(60, 88, "PUNKTE       : " + std::to_string(score), Colors::Gold, 1);
+    e.draw_text(60, 104, "HIGHSCORE    : " + std::to_string(highscore), Colors::White, 1);
+    e.draw_text(60, 120, "REGENBOGEN   : " + std::to_string(rainbowsCollected), Colors::Cyan, 1);
+    e.draw_text(60, 136, "STERNE STOMP : " + std::to_string(meteorsStomped), Colors::Pink, 1);
 
-    e.draw_text(54, 145, "FARBE WECHSELN: 1, 2 ODER 3", Colors::LightGray, 1);
+    e.draw_text(54, 154, "FARBE WECHSELN: 1, 2 ODER 3", Colors::LightGray, 1);
 
     bool blink = (static_cast<int>(animTimer * 2.5f) % 2) == 0;
     if (blink) {
-      e.draw_text(58, 165, "LEERTASTE: NOCHMAL SPIELEN", Colors::Yellow, 1);
+      e.draw_text(58, 172, "LEERTASTE: NOCHMAL SPIELEN", Colors::Yellow, 1);
     }
-    e.draw_text(62, 178, "ESCAPE   : HAUPTMENUE", Colors::LightGray, 1);
+    e.draw_text(62, 188, "ESCAPE   : HAUPTMENUE", Colors::LightGray, 1);
 
     if (e.pressed(Key::Num1)) {
       chosenColor = UnicornColor::Blue;
@@ -1244,22 +1408,108 @@ struct UnicornGame : Game {
   }
 
   // ===========================================================================
-  // 15. UI-ANZEIGE (WÄHREND DES SPIELENS)
+  // 15. ZUSTAND: VICTORY / SIEG (BEIDE LEVEL MEISTERHAFT GESCHAFFT!)
+  // ===========================================================================
+  void updateVictory(Engine &e) {
+    float dt = e.dt();
+    animTimer += dt;
+
+    // Feierlicher Konfetti- & Sternenstaubregen
+    if (rand() % 3 == 0) {
+      spawnRainbowSparkles(static_cast<float>(rand() % 320), 0.0f, 30.0f, 4);
+    }
+
+    // Sieg-Fenster
+    e.rectfill(30, 22, 260, 195, Colors::Black);
+    e.rect(30, 22, 260, 195, Colors::Gold);
+    e.rect(32, 24, 256, 191, Colors::DarkPurple);
+
+    e.draw_text(68, 32, "YOU WIN! SIEG!", Colors::Gold, 2);
+    e.draw_text(42, 58, "EINHORN-CHAMPION DER GALAXIE!", Colors::Yellow, 1);
+
+    e.draw_text(46, 76, "LEVEL 1 (WIESE)  : GESCHAFFT!", Colors::LightGreen, 1);
+    e.draw_text(46, 90, "LEVEL 2 (NACHT)  : GESCHAFFT!", Colors::Cyan, 1);
+    e.draw_text(46, 106, "SIEG-BONUS       : +2000 PUNKTE", Colors::Gold, 1);
+    e.draw_text(46, 120, "GESAMT-SCORE     : " + std::to_string(score), Colors::White, 1);
+    e.draw_text(46, 134, "HIGHSCORE        : " + std::to_string(highscore), Colors::Gold, 1);
+    e.draw_text(46, 148, "REGENBOGEN       : " + std::to_string(rainbowsCollected), Colors::Cyan, 1);
+    e.draw_text(46, 162, "STERNE STOMP     : " + std::to_string(meteorsStomped), Colors::Pink, 1);
+
+    // Feierndes tanzendes Einhorn
+    float danceY = 176.0f - std::abs(std::sin(animTimer * 6.0f)) * 14.0f;
+    drawUnicorn(e, 246, danceY, chosenColor, false, animTimer);
+
+    bool blink = (static_cast<int>(animTimer * 2.5f) % 2) == 0;
+    if (blink) {
+      e.draw_text(48, 184, "LEERTASTE: NOCHMAL SPIELEN", Colors::Yellow, 1);
+    }
+    e.draw_text(52, 198, "ESCAPE   : HAUPTMENUE", Colors::LightGray, 1);
+
+    if (e.pressed(Key::Num1)) {
+      chosenColor = UnicornColor::Blue;
+      e.play_tone(Notes::C5, 0.08f);
+    } else if (e.pressed(Key::Num2)) {
+      chosenColor = UnicornColor::White;
+      e.play_tone(Notes::E5, 0.08f);
+    } else if (e.pressed(Key::Num3)) {
+      chosenColor = UnicornColor::Pink;
+      e.play_tone(Notes::G5, 0.08f);
+    }
+
+    if (e.pressed(Key::Space) || e.pressed(Key::Enter)) {
+      playStartFanfare(e);
+      resetGame();
+      e.play_bgm(bgmSamples, 44100, true);
+      isBgmPlaying = true;
+      state = State::Playing;
+    }
+  }
+
+  // ===========================================================================
+  // 16. UI-ANZEIGE (WÄHREND DES SPIELENS)
   // ===========================================================================
   void drawPlayingUI(Engine &e) {
-    e.rectfill(0, 0, 320, 14, Colors::DarkPurple);
-    e.line(0, 14, 320, 14, Colors::Purple);
+    e.rectfill(0, 0, 320, 16, Colors::DarkPurple);
+    e.line(0, 16, 320, 16, Colors::Purple);
 
     // Score
     e.draw_text(6, 4, "SCORE:" + std::to_string(score), Colors::Gold, 1);
 
+    // Level-Anzeige
+    if (currentLevel == 1) {
+      e.draw_text(86, 4, "LV1:WIESE", Colors::LightGreen, 1);
+    } else {
+      e.draw_text(86, 4, "LV2:NACHT", Colors::Cyan, 1);
+    }
+
+    // Mini Level-Fortschrittsbalken (20 Sekunden Ziel)
+    const int barW = 32;
+    int progressW = std::min(barW, static_cast<int>((levelTimer / levelDuration) * barW));
+    e.rect(144, 4, barW, 8, Colors::LightGray);
+    e.rectfill(145, 5, progressW, 6, currentLevel == 1 ? Colors::LightGreen : Colors::Cyan);
+
     // Dynamische Tempo-Anzeige (z.B. 1.2x)
     int speedInt = static_cast<int>((currentScrollSpeed / baseScrollSpeed) * 10.0f);
     std::string speedStr = std::to_string(speedInt / 10) + "." + std::to_string(speedInt % 10) + "X";
-    e.draw_text(108, 4, speedStr, Colors::Yellow, 1);
+    e.draw_text(182, 4, speedStr, Colors::Yellow, 1);
 
     // Regenbogen & Stomps
-    e.draw_text(160, 4, "RAINBOW:" + std::to_string(rainbowsCollected), Colors::Cyan, 1);
-    e.draw_text(248, 4, "STOMP:" + std::to_string(meteorsStomped), Colors::Pink, 1);
+    e.draw_text(216, 4, "R:" + std::to_string(rainbowsCollected), Colors::Cyan, 1);
+    e.draw_text(268, 4, "S:" + std::to_string(meteorsStomped), Colors::Pink, 1);
+
+    // Level-Übergangs- / Start-Banner
+    if (levelBannerTimer > 0.0f) {
+      if (currentLevel == 1) {
+        e.rectfill(45, 65, 230, 42, Colors::Black);
+        e.rect(45, 65, 230, 42, Colors::LightGreen);
+        e.draw_text(68, 72, "LEVEL 1: BLUMENWIESE!", Colors::Yellow, 1);
+        e.draw_text(56, 88, "UEBERLEBE 20 SEKUNDEN!", Colors::White, 1);
+      } else if (currentLevel == 2) {
+        e.rectfill(45, 65, 230, 42, Colors::Black);
+        e.rect(45, 65, 230, 42, Colors::Cyan);
+        e.draw_text(64, 72, "LEVEL 2: NACHTHIMMEL!", Colors::Cyan, 1);
+        e.draw_text(58, 88, "FINALER 20s HIGH-SPEED!", Colors::Gold, 1);
+      }
+    }
   }
 };
