@@ -37,13 +37,18 @@ enum class Key {
   Num2 = static_cast<int>(sf::Keyboard::Key::Num2),
   Num3 = static_cast<int>(sf::Keyboard::Key::Num3),
   Num4 = static_cast<int>(sf::Keyboard::Key::Num4),
+  Num5 = static_cast<int>(sf::Keyboard::Key::Num5),
+  Num6 = static_cast<int>(sf::Keyboard::Key::Num6),
+  R = static_cast<int>(sf::Keyboard::Key::R),
 };
 
 // =============================================================================
-// 2. FARBPALETTE (Retro-Farben)
+// 2. FARBPALETTE & COLOR RAMPS (Mode 13h Retro-Palettensystem)
 // =============================================================================
-// Diese Farbnummern kannst du für alle Zeichenbefehle verwenden:
-// z.B.: e.cls(Colors::DarkGreen) oder e.rectfill(..., Colors::Red)
+// Diese Farbnummern und Farbverläufe kannst du für alle Zeichenbefehle verwenden:
+// - Einzelne Farben: e.cls(Colors::DarkGreen) oder e.rectfill(..., Colors::Red)
+// - Farbverläufe: Ramps::Fire[15] (Weißglut) bis Ramps::Fire[0] (Rauch)
+// - Sanftes Sampling: Ramps::Fire.sample(lifePct) oder Ramps::Red.sample(hpPct)
 // =============================================================================
 namespace Colors {
 constexpr uint8_t Black = 0;      // Schwarz
@@ -64,6 +69,84 @@ constexpr uint8_t DarkPurple = 14;// Nacht-Lila
 constexpr uint8_t Gold = 15;      // Gold / Sternengelb
 constexpr uint8_t Magenta = 16;   // Magenta
 } // namespace Colors
+
+// --- Farbbänder & Helligkeitsverläufe (Ramps) ---
+template <size_t N>
+struct ColorRamp {
+  std::array<uint8_t, N> indices;
+
+  // Direkter Indexzugriff: ramp[step] (0 = dunkelster Schatten, N-1 = hellster Glanz)
+  constexpr uint8_t operator[](size_t step) const {
+    return indices[step < N ? step : N - 1];
+  }
+
+  // Fließendes Sampling von 0.0f bis 1.0f: ramp.sample(0.75f)
+  constexpr uint8_t sample(float t) const {
+    float clamped = (t < 0.0f) ? 0.0f : (t > 1.0f ? 1.0f : t);
+    size_t idx = static_cast<size_t>(clamped * (N - 1) + 0.5f);
+    return indices[idx < N ? idx : N - 1];
+  }
+
+  constexpr size_t size() const { return N; }
+  constexpr uint8_t front() const { return indices[0]; }
+  constexpr uint8_t back() const { return indices[N - 1]; }
+};
+
+using ColorRamp8 = ColorRamp<8>;
+using ColorRamp16 = ColorRamp<16>;
+
+constexpr ColorRamp16 makeRamp16(uint8_t start) {
+  return ColorRamp16{{
+      static_cast<uint8_t>(start + 0),  static_cast<uint8_t>(start + 1),
+      static_cast<uint8_t>(start + 2),  static_cast<uint8_t>(start + 3),
+      static_cast<uint8_t>(start + 4),  static_cast<uint8_t>(start + 5),
+      static_cast<uint8_t>(start + 6),  static_cast<uint8_t>(start + 7),
+      static_cast<uint8_t>(start + 8),  static_cast<uint8_t>(start + 9),
+      static_cast<uint8_t>(start + 10), static_cast<uint8_t>(start + 11),
+      static_cast<uint8_t>(start + 12), static_cast<uint8_t>(start + 13),
+      static_cast<uint8_t>(start + 14), static_cast<uint8_t>(start + 15)
+  }};
+}
+
+constexpr ColorRamp8 makeRamp8(uint8_t start) {
+  return ColorRamp8{{
+      static_cast<uint8_t>(start + 0), static_cast<uint8_t>(start + 1),
+      static_cast<uint8_t>(start + 2), static_cast<uint8_t>(start + 3),
+      static_cast<uint8_t>(start + 4), static_cast<uint8_t>(start + 5),
+      static_cast<uint8_t>(start + 6), static_cast<uint8_t>(start + 7)
+  }};
+}
+
+namespace Ramps {
+  // 16-Stufen Graustufen (0 = Schwarz -> 15 = Reines Weiß)
+  constexpr ColorRamp16 Grays = makeRamp16(32);
+
+  // 16-Stufen Thermische Explosion & Feuer (0 = Rauch -> 7 = Rot -> 11 = Gelb -> 15 = Weißglut)
+  constexpr ColorRamp16 Fire = makeRamp16(48);
+  constexpr ColorRamp16 Explosion = Fire;
+
+  // 8-Stufen Natur- & Erdtöne (Perfekt für Gelände, Felsen, Sand & Höhlen)
+  namespace Earth {
+    constexpr ColorRamp8 Soil = makeRamp8(64); // Dunkle Erde & Humus
+    constexpr ColorRamp8 Clay = makeRamp8(72); // Lehm, Schlamm & Terracotta
+    constexpr ColorRamp8 Sand = makeRamp8(80); // Sandstein & Wüstensand
+    constexpr ColorRamp8 Moss = makeRamp8(88); // Waldmoos, Laub & Flechten
+  }
+
+  // 16-Stufen Regenbogen-Farben (0-3 Schatten -> 4-11 Gesättigte Farbe -> 12-15 Weißglanz)
+  constexpr ColorRamp16 Red     = makeRamp16(96);
+  constexpr ColorRamp16 Orange  = makeRamp16(112);
+  constexpr ColorRamp16 Gold    = makeRamp16(128);
+  constexpr ColorRamp16 Yellow  = Gold;
+  constexpr ColorRamp16 Lime    = makeRamp16(144);
+  constexpr ColorRamp16 Green   = makeRamp16(160);
+  constexpr ColorRamp16 Cyan    = makeRamp16(176);
+  constexpr ColorRamp16 SkyBlue = makeRamp16(192);
+  constexpr ColorRamp16 Blue    = makeRamp16(208);
+  constexpr ColorRamp16 Purple  = makeRamp16(224);
+  constexpr ColorRamp16 Pink    = makeRamp16(240);
+  constexpr ColorRamp16 Magenta = Pink;
+}
 
 constexpr int PALETTE_SIZE = 256;
 
@@ -265,6 +348,38 @@ public:
       : screenWidth(w), screenHeight(h), framebuffer(w * h, Colors::DarkGreen) {
     initPalette();
   }
+
+  // --- Zufallsgenerator & Rausch-Funktionen (RNG & Spatial Noise) ---
+  // Liefert eine Zufallszahl von 0 bis max - 1 (oder [min, max])
+  int rnd(int max) {
+    if (max <= 0) return 0;
+    rngState = (rngState * 1664525u + 1013904223u);
+    return static_cast<int>(rngState % static_cast<uint32_t>(max));
+  }
+
+  int rnd(int min, int max) {
+    if (min >= max) return min;
+    return min + rnd(max - min + 1);
+  }
+
+  // Liefert eine Zufallskommazahl von 0.0f bis 1.0f (oder [min, max])
+  float rndf() {
+    rngState = (rngState * 1664525u + 1013904223u);
+    return static_cast<float>(rngState & 0x00FFFFFF) / 16777216.0f;
+  }
+
+  float rndf(float min, float max) {
+    return min + rndf() * (max - min);
+  }
+
+  // 2D Spatial Hash Noise (Kachelfreies, hochqualitatives Weißrauschen von 0.0f bis 1.0f)
+  static float noise(int x, int y, uint32_t seed = 1337) {
+    uint32_t h = static_cast<uint32_t>(x) * 374761393u + static_cast<uint32_t>(y) * 668265263u + seed * 374761u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    return static_cast<float>((h ^ (h >> 16)) & 0x00FFFFFF) / 16777216.0f;
+  }
+
+  void srand_seed(uint32_t s) { rngState = s ? s : 123456789u; }
 
   // --- Bildschirm-Maße & Zeit ---
   int width() const { return screenWidth; }   // Bildschirmbreite (320 Pixel)
@@ -625,8 +740,10 @@ private:
 
   std::unordered_map<sf::Keyboard::Key, bool> keyState;
   std::unordered_map<sf::Keyboard::Key, bool> keyPressedState;
+  uint32_t rngState = 123456789u;
 
   void initPalette() {
+    // --- 1. Klassische 17 Standard-Farben (0 - 16, 100% abwärtskompatibel) ---
     palette[Colors::Black] = sf::Color(0, 0, 0);
     palette[Colors::DarkGreen] = sf::Color(18, 90, 36);
     palette[Colors::Red] = sf::Color(240, 60, 60);
@@ -645,9 +762,128 @@ private:
     palette[Colors::Gold] = sf::Color(255, 215, 0);
     palette[Colors::Magenta] = sf::Color(240, 40, 160);
 
-    for (int i = 17; i < PALETTE_SIZE; ++i) {
-      palette[i] = sf::Color(i, i, i);
+    // --- 2. Retro UI & Akzent-Farben (17 - 31) ---
+    static const sf::Color uiAccents[15] = {
+      sf::Color(12, 18, 32),    // 17: Mitternachtsblau
+      sf::Color(45, 55, 68),    // 18: Dunkelstahl
+      sf::Color(120, 135, 150), // 19: Hellstahl
+      sf::Color(255, 245, 220), // 20: Warmes Cremeweiß
+      sf::Color(115, 18, 28),   // 21: Dunkles Karmin
+      sf::Color(190, 75, 25),   // 22: Rostorange
+      sf::Color(130, 240, 175), // 23: Minzgrün
+      sf::Color(70, 15, 95),    // 24: Nachtviolett
+      sf::Color(170, 255, 40),  // 25: Neon-Limette
+      sf::Color(200, 175, 245), // 26: Pastell-Lavendel
+      sf::Color(185, 115, 65),  // 27: Kupfer
+      sf::Color(140, 90, 45),   // 28: Bronze
+      sf::Color(215, 220, 230), // 29: Silber
+      sf::Color(5, 5, 10),      // 30: Tiefschwarz
+      sf::Color(255, 255, 255)  // 31: Reines Weiß
+    };
+    for (int i = 0; i < 15; ++i) {
+      palette[17 + i] = uiAccents[i];
     }
+
+    // --- 3. 16-Stufen Graustufen-Ramp (32 - 47: Schwarz bis Reines Weiß) ---
+    for (int i = 0; i < 16; ++i) {
+      uint8_t v = static_cast<uint8_t>((i * 255) / 15);
+      palette[32 + i] = sf::Color(v, v, v);
+    }
+
+    // --- 4. 16-Stufen Thermische Explosion & Feuer (48 - 63) ---
+    static const sf::Color fireColors[16] = {
+      sf::Color(20, 16, 18),    // 48: Rauch / Holzkohle
+      sf::Color(48, 14, 20),    // 49: Tiefes Glutrot
+      sf::Color(82, 12, 18),    // 50: Dunkles Karminrot
+      sf::Color(128, 16, 16),   // 51: Weinrot
+      sf::Color(172, 22, 14),   // 52: Sattes Dunkelrot
+      sf::Color(215, 30, 12),   // 53: Rubinrot
+      sf::Color(245, 48, 10),   // 54: Reines Feuerrot
+      sf::Color(255, 82, 10),   // 55: Rotorange
+      sf::Color(255, 118, 12),  // 56: Kräftiges Orange
+      sf::Color(255, 152, 16),  // 57: Helles Orange
+      sf::Color(255, 188, 20),  // 58: Flammengold
+      sf::Color(255, 218, 28),  // 59: Sonnengelb
+      sf::Color(255, 238, 64),  // 60: Helles Zitronengelb
+      sf::Color(255, 248, 130), // 61: Gelbweiß
+      sf::Color(255, 252, 200), // 62: Weißgelbes Glühen
+      sf::Color(255, 255, 255)  // 63: Reines weißes Blendlicht
+    };
+    for (int i = 0; i < 16; ++i) {
+      palette[48 + i] = fireColors[i];
+    }
+
+    // --- 5. 32 Natur- & Erdtöne (64 - 95: 4 Ramps à 8 Stufen) ---
+    // A. Erde & dunkler Humus (64 - 71)
+    static const sf::Color soilColors[8] = {
+      sf::Color(28, 16, 10), sf::Color(46, 26, 16), sf::Color(68, 40, 24), sf::Color(90, 54, 32),
+      sf::Color(112, 70, 42), sf::Color(135, 86, 52), sf::Color(158, 104, 64), sf::Color(182, 124, 78)
+    };
+    for (int i = 0; i < 8; ++i) palette[64 + i] = soilColors[i];
+
+    // B. Lehm, Schlamm & Terracotta (72 - 79)
+    static const sf::Color clayColors[8] = {
+      sf::Color(65, 22, 14), sf::Color(92, 34, 22), sf::Color(120, 46, 30), sf::Color(148, 60, 40),
+      sf::Color(175, 76, 52), sf::Color(200, 96, 66), sf::Color(222, 122, 88), sf::Color(242, 152, 118)
+    };
+    for (int i = 0; i < 8; ++i) palette[72 + i] = clayColors[i];
+
+    // C. Sandstein & Wüstensand (80 - 87)
+    static const sf::Color sandColors[8] = {
+      sf::Color(86, 72, 42), sf::Color(112, 94, 56), sf::Color(140, 118, 72), sf::Color(170, 144, 90),
+      sf::Color(198, 170, 110), sf::Color(222, 194, 132), sf::Color(242, 218, 158), sf::Color(255, 240, 188)
+    };
+    for (int i = 0; i < 8; ++i) palette[80 + i] = sandColors[i];
+
+    // D. Waldmoos, Laub & Flechten (88 - 95)
+    static const sf::Color mossColors[8] = {
+      sf::Color(16, 34, 18), sf::Color(28, 54, 30), sf::Color(42, 78, 42), sf::Color(60, 104, 54),
+      sf::Color(82, 130, 68), sf::Color(108, 158, 82), sf::Color(138, 185, 102), sf::Color(178, 218, 132)
+    };
+    for (int i = 0; i < 8; ++i) palette[88 + i] = mossColors[i];
+
+    // --- 6. 10 Regenbogen-Farbbänder (96 - 255: 10 Hues à 16 Stufen) ---
+    // Erzeugt sanfte 3-Punkt-Kurven: [Schatten (0-3) -> Farbe (4-11) -> Weißglanz (12-15)]
+    auto buildRamp16 = [this](uint8_t startIdx, sf::Color baseRgb) {
+      for (int step = 0; step < 16; ++step) {
+        float t = step / 15.0f;
+        uint8_t r, g, b;
+        if (t <= 0.55f) {
+          // Schatten (0.12f) bis Grundfarbe
+          float subT = t / 0.55f;
+          float factor = 0.12f + 0.88f * subT;
+          r = static_cast<uint8_t>(baseRgb.r * factor);
+          g = static_cast<uint8_t>(baseRgb.g * factor);
+          b = static_cast<uint8_t>(baseRgb.b * factor);
+        } else {
+          // Grundfarbe bis Weißglut
+          float subT = (t - 0.55f) / 0.45f;
+          r = static_cast<uint8_t>(baseRgb.r + (255 - baseRgb.r) * subT);
+          g = static_cast<uint8_t>(baseRgb.g + (255 - baseRgb.g) * subT);
+          b = static_cast<uint8_t>(baseRgb.b + (255 - baseRgb.b) * subT);
+        }
+        palette[startIdx + step] = sf::Color(r, g, b);
+      }
+    };
+
+    buildRamp16(96,  sf::Color(240, 35, 35));   // 1. Red
+    buildRamp16(112, sf::Color(255, 120, 15));  // 2. Orange
+    buildRamp16(128, sf::Color(255, 210, 20));  // 3. Gold / Yellow
+    buildRamp16(144, sf::Color(140, 230, 25));  // 4. Lime
+    buildRamp16(160, sf::Color(30, 190, 60));   // 5. Green
+    buildRamp16(176, sf::Color(0, 225, 245));   // 6. Cyan / Aqua
+    buildRamp16(192, sf::Color(55, 150, 255));  // 7. Sky Blue
+    buildRamp16(208, sf::Color(35, 65, 240));   // 8. Deep Blue
+    buildRamp16(224, sf::Color(150, 45, 235));  // 9. Purple / Violet
+    buildRamp16(240, sf::Color(245, 50, 165));  // 10. Pink / Magenta
+  }
+
+  void set_palette_color(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+    palette[index] = sf::Color(r, g, b);
+  }
+
+  sf::Color get_palette_color(uint8_t index) const {
+    return palette[index];
   }
 
   // 3x5 Pixel-Muster für alle Buchstaben von A bis Z

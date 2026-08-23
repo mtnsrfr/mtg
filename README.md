@@ -21,14 +21,32 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
    * *Controls*: Movement (`W`/`A`/`S`/`D` or `Arrow keys`), Shoot (`Space`).
 
 4. **🦄 The Unicorn (`UnicornGame.hpp`)**:
-   * Fast-paced retro runner (Mario Starman / Geometry Dash inspired pace).
+   * Multi-level retro runner (Level 1 Sunny Meadow $\rightarrow$ Level 2 Magic Night Sky $\rightarrow$ Victory!).
    * Choose your unicorn color: **Blue**, **White**, or **Pink**.
-   * Touch ground rainbow arches to collect magic points and watch them fade out in rainbow sparkles.
-   * Dodge falling shooting stars (*Sternschnuppen*) or jump on top of them (*Mario stomp*) to trigger Starfighter-style thermal particle explosions and bounce higher!
-   * *Controls*: Jump / Double Jump (`Space` / `W` / `Up`), Color Choice (`1`/`2`/`3` or `Arrow keys`).
+   * Touch ground rainbow arches for trampoline boosts and stomp falling meteors.
+   * *Controls*: Jump / Double Jump (`Space` / `W` / `Up`), Color Choice (`1`/`2`/`3`).
 
-5. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
-   * Switch between games instantly with keys `1`, `2`, `3`, `4`.
+5. **💥 Tank Duel: Retro Artillery (`TankGame.hpp`)**:
+   * Turn-based 2-player tank artillery combat with destructible procedural terrain.
+   * Cellular automata terrain generation simulation (Rock lines $\rightarrow$ Grey Noise $\rightarrow$ Dirt avalanche $\rightarrow$ Grass smoothing).
+   * Ballistic physics with angle control shown in both **Degrees** and **Radians** ($0^\circ \sim 180^\circ$, starting at $45^\circ$ and $135^\circ$), power adjustments (`0` to `99`, starting at `50`), and crater-forming explosions.
+   * *Controls*: Angle (`Left`/`Right`), Power (`Up`/`Down`), Fire (`Space`/`Enter`), New Terrain (`R`).
+
+6. **⚡ Darios Spiel: Elemental Pixel Brawl (`DarioGame.hpp`)**:
+   * Dedicated 2-player local PvP arena fighting game with 5 unique elemental champions:
+     * 🎸 **Musik-Kämpfer (Dario)**: E-Gitarre, Drachen-Klangwelle, rote Haare, schwarze Augenringe.
+     * ❄️ **Eis-Kämpfer**: Blau-Weiß, Eiskristalle am Körper und Arm.
+     * 🔥 **Feuer-Kämpfer**: Lodernde Feuerfrisur, Feuer am Arm, Inferno-Feuerbälle.
+     * ⚡ **Blitz-Kämpfer**: Strahlende Blitz-Augen, elektrisierende Funken, Donnerkeil.
+     * 💧 **Wasser-Kämpfer**: Blaue Haare/Augen, Ninja-Maske, Tsunami-Hydro-Welle.
+   * Rolling 2D heightmap terrain with one-way floating battle platforms.
+   * Best of 3 rounds format.
+   * *Controls (4 keys per player)*:
+     * Player 1: `W` (Jump), `A`/`D` (Move), `Away+S` (Block Shield), `Towards+S` (Superpower Attack).
+     * Player 2: `Up` (Jump), `Left`/`Right` (Move), `Away+Down` (Block Shield), `Towards+Down` (Superpower Attack).
+
+7. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
+   * Switch between games instantly with keys `1`, `2`, `3`, `4`, `5`, and `6`.
    * Return to the menu at any time by pressing `Escape`.
 
 ---

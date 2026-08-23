@@ -5,6 +5,8 @@
 #include "SnakeGame.hpp"
 #include "StarfighterGame.hpp"
 #include "UnicornGame.hpp"
+#include "TankGame.hpp"
+#include "DarioGame.hpp"
 #include <memory>
 
 // =============================================================================
@@ -15,6 +17,8 @@
 // - Taste 2: 2-Spieler Schlangen-Duell (Snake Battle)
 // - Taste 3: Starfighter Attack (Weltraum-Shooter)
 // - Taste 4: The Unicorn (Magischer Retro-Runner)
+// - Taste 5: Tank Duel (Artillerie-Panzerduell)
+// - Taste 6: Darios Spiel (Elementar-Kampfarena)
 // - ESCAPE: Jederzeit zurück ins Hauptmenü!
 // =============================================================================
 struct MenuGame : Game {
@@ -26,7 +30,9 @@ struct MenuGame : Game {
     Pong,
     Snake,
     Starfighter,
-    Unicorn
+    Unicorn,
+    Tank,
+    Dario
   };
 
   CurrentGame currentGame = CurrentGame::Menu;
@@ -34,6 +40,8 @@ struct MenuGame : Game {
   std::unique_ptr<SnakeGame> snake;
   std::unique_ptr<StarfighterGame> starfighter;
   std::unique_ptr<UnicornGame> unicorn;
+  std::unique_ptr<TankGame> tank;
+  std::unique_ptr<DarioGame> dario;
 
   // ===========================================================================
   // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
@@ -43,6 +51,8 @@ struct MenuGame : Game {
     snake = std::make_unique<SnakeGame>();
     starfighter = std::make_unique<StarfighterGame>();
     unicorn = std::make_unique<UnicornGame>();
+    tank = std::make_unique<TankGame>();
+    dario = std::make_unique<DarioGame>();
   }
 
   // ===========================================================================
@@ -73,6 +83,12 @@ struct MenuGame : Game {
     case CurrentGame::Unicorn:
       unicorn->update(e);
       break;
+    case CurrentGame::Tank:
+      tank->update(e);
+      break;
+    case CurrentGame::Dario:
+      dario->update(e);
+      break;
     }
   }
 
@@ -80,41 +96,51 @@ struct MenuGame : Game {
     e.cls(Colors::DarkGreen);
 
     // Deko-Rahmen
-    e.rect(8, 8, 304, 224, Colors::White);
-    e.rect(10, 10, 300, 220, Colors::LightGreen);
+    e.rect(8, 6, 304, 228, Colors::White);
+    e.rect(10, 8, 300, 224, Colors::LightGreen);
 
     // Titel
-    e.draw_text(48, 16, "MTG RETRO-SPIELEBOX", Colors::Yellow, 2);
-    e.line(26, 36, 294, 36, Colors::White);
+    e.draw_text(48, 11, "MTG RETRO-SPIELEBOX", Colors::Yellow, 2);
+    e.line(26, 28, 294, 28, Colors::White);
 
     // Spiele-Auswahl
     bool blink = (int(e.time() * 2.5f) % 2) == 0;
 
     // Spiel 1: Pong
-    e.rectfill(32, 44, 256, 26, Colors::DarkGray);
-    e.rect(32, 44, 256, 26, Colors::Red);
-    e.draw_text(46, 52, "DRUECKE 1 : 2-SPIELER PONG", Colors::White, 1);
+    e.rectfill(28, 32, 264, 18, Colors::DarkGray);
+    e.rect(28, 32, 264, 18, Colors::Red);
+    e.draw_text(40, 37, "DRUECKE 1 : 2-SPIELER PONG", Colors::White, 1);
 
     // Spiel 2: Snake
-    e.rectfill(32, 74, 256, 26, Colors::DarkGray);
-    e.rect(32, 74, 256, 26, Colors::Yellow);
-    e.draw_text(46, 82, "DRUECKE 2 : SCHLANGEN-DUELL", Colors::White, 1);
+    e.rectfill(28, 53, 264, 18, Colors::DarkGray);
+    e.rect(28, 53, 264, 18, Colors::Yellow);
+    e.draw_text(40, 58, "DRUECKE 2 : SCHLANGEN-DUELL", Colors::White, 1);
 
     // Spiel 3: Starfighter
-    e.rectfill(32, 104, 256, 26, Colors::DarkGray);
-    e.rect(32, 104, 256, 26, Colors::Blue);
-    e.draw_text(46, 112, "DRUECKE 3 : STARFIGHTER ATTACK", Colors::White, 1);
+    e.rectfill(28, 74, 264, 18, Colors::DarkGray);
+    e.rect(28, 74, 264, 18, Colors::Blue);
+    e.draw_text(40, 79, "DRUECKE 3 : STARFIGHTER ATTACK", Colors::White, 1);
 
     // Spiel 4: The Unicorn
-    e.rectfill(32, 134, 256, 26, Colors::DarkGray);
-    e.rect(32, 134, 256, 26, Colors::Pink);
-    e.draw_text(46, 142, "DRUECKE 4 : THE UNICORN", Colors::Gold, 1);
+    e.rectfill(28, 95, 264, 18, Colors::DarkGray);
+    e.rect(28, 95, 264, 18, Colors::Pink);
+    e.draw_text(40, 100, "DRUECKE 4 : THE UNICORN", Colors::Gold, 1);
+
+    // Spiel 5: Tank Duel
+    e.rectfill(28, 116, 264, 18, Colors::DarkGray);
+    e.rect(28, 116, 264, 18, Colors::Cyan);
+    e.draw_text(40, 121, "DRUECKE 5 : TANK DUEL (ARTILLERY)", Colors::Cyan, 1);
+
+    // Spiel 6: Darios Spiel (Elemental Brawl)
+    e.rectfill(28, 137, 264, 18, Colors::DarkGray);
+    e.rect(28, 137, 264, 18, Colors::Gold);
+    e.draw_text(40, 142, "DRUECKE 6 : DARIOS SPIEL (ELEMENTAL BRAWL)", Colors::Gold, 1);
 
     // Menü-Hinweis
     if (blink) {
-      e.draw_text(58, 172, "WAEHLE DEIN SPIEL (1, 2, 3 ODER 4)", Colors::Yellow, 1);
+      e.draw_text(42, 168, "WAEHLE DEIN SPIEL (1, 2, 3, 4, 5 ODER 6)", Colors::Yellow, 1);
     }
-    e.draw_text(44, 196, "TIPP: MIT ESCAPE ZURUECK INS MENUE", Colors::LightGray, 1);
+    e.draw_text(44, 188, "TIPP: MIT ESCAPE ZURUECK INS MENUE", Colors::LightGray, 1);
 
     // Tasteneingabe zur Spielauswahl
     if (e.pressed(Key::Num1)) {
@@ -133,6 +159,14 @@ struct MenuGame : Game {
       e.play_tone(Notes::C6, 0.12f);
       unicorn = std::make_unique<UnicornGame>(); // Frisch starten
       currentGame = CurrentGame::Unicorn;
+    } else if (e.pressed(Key::Num5)) {
+      e.play_tone(Notes::E6, 0.12f);
+      tank = std::make_unique<TankGame>(); // Frisch starten
+      currentGame = CurrentGame::Tank;
+    } else if (e.pressed(Key::Num6)) {
+      e.play_tone(Notes::G6, 0.12f);
+      dario = std::make_unique<DarioGame>(); // Frisch starten
+      currentGame = CurrentGame::Dario;
     }
   }
 };

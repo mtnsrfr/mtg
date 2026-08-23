@@ -112,7 +112,12 @@ struct UnicornGame : Game {
   float levelBannerTimer = 0.0f;
 
   // --- Einhorn-Physik & Boden ---
-  const float playerX = 48.0f;
+  const float basePlayerX = 50.0f;
+  float playerX = 50.0f;
+  float playerVx = 0.0f;
+  const float minPlayerX = 20.0f;
+  const float maxPlayerX = 115.0f;
+
   const float groundY = 200.0f; // Exakte Y-Linie der Bodenoberfläche
   const float unicornWidth = 24.0f;
   const float unicornHeight = 22.0f;
@@ -241,6 +246,8 @@ struct UnicornGame : Game {
   }
 
   void resetGame() {
+    playerX = basePlayerX;
+    playerVx = 0.0f;
     playerY = groundY - unicornHeight;
     playerVy = 0.0f;
     isOnGround = true;
@@ -1067,8 +1074,8 @@ struct UnicornGame : Game {
     e.rect(20, 56, 280, 66, Colors::DarkGray);
     e.draw_text(26, 62, "- 2 LEVEL    : 1. BLUMENWIESE -> 2. NACHT (JE 20s)", Colors::LightGreen, 1);
     e.draw_text(26, 74, "- REGENBOGEN : VON OBEN DRAUF = TRAMPOLIN!", Colors::Yellow, 1);
-    e.draw_text(26, 86, "- METEORE    : AUSWEICHEN ODER MARIO-STOMPEN!", Colors::Pink, 1);
-    e.draw_text(26, 98, "- ZIEL       : BEIDE LEVEL SCHAFFEN ZUM SIEG!", Colors::Cyan, 1);
+    e.draw_text(26, 86, "- STERNSCHNUPPEN: FALLEN IN LEVEL 2 (AUSWEICHEN/STOMP)!", Colors::Pink, 1);
+    e.draw_text(26, 98, "- LINKS/RECHTS: A/D ODER PFEILE = BOOST VOR/ZURUECK!", Colors::Cyan, 1);
     e.draw_text(26, 110,"  (TRAMPOLIN-SPRUNG! VON VORNE = CRASH)", Colors::LightGray, 1);
 
     e.draw_text(70, 128, "WAEHLE DEIN EINHORN:", Colors::White, 1);
@@ -1170,7 +1177,7 @@ struct UnicornGame : Game {
 
     float speedScale = currentScrollSpeed / baseScrollSpeed;
 
-    // --- 1. Einhorn-Steuerung & Physik ---
+    // --- 1. Einhorn-Steuerung (Springen, Links/Rechts bewegen & Boosts) ---
     bool jumpPressed = e.pressed(Key::Space) || e.pressed(Key::W) || e.pressed(Key::Up);
 
     if (jumpPressed) {
@@ -1187,6 +1194,42 @@ struct UnicornGame : Game {
         spawnRainbowSparkles(playerX, playerY + unicornHeight, unicornWidth, 14);
       }
     }
+
+    // --- HORIZONTALE BEWEGUNG & MULTI-TAPPEN BOOSTE (A/D oder Pfeile Links/Rechts) ---
+    bool leftHeld = e.key(Key::A) || e.key(Key::Left);
+    bool rightHeld = e.key(Key::D) || e.key(Key::Right);
+    bool leftTap = e.pressed(Key::A) || e.pressed(Key::Left);
+    bool rightTap = e.pressed(Key::D) || e.pressed(Key::Right);
+
+    // Sanfte Bewegung beim Halten der Tasten
+    if (leftHeld && !rightHeld) {
+      playerVx = -85.0f;
+    } else if (rightHeld && !leftHeld) {
+      playerVx = 85.0f;
+    }
+
+    // Schneller Boost bei jedem Tastendruck (mehrmals drücken = schneller Vorwärts-/Rückwärts-Schub!)
+    if (leftTap) {
+      playerX -= 14.0f;
+      playerVx = -130.0f;
+      spawnRainbowSparkles(playerX + unicornWidth, playerY + unicornHeight * 0.5f, 6.0f, 6);
+    }
+    if (rightTap) {
+      playerX += 14.0f;
+      playerVx = 130.0f;
+      spawnRainbowSparkles(playerX, playerY + unicornHeight * 0.5f, 6.0f, 6);
+    }
+
+    // Wenn man aufhört zu drücken -> Zieht das Einhorn sanft in die Normalposition (basePlayerX = 50) zurück!
+    if (!leftHeld && !rightHeld) {
+      playerX += (basePlayerX - playerX) * 4.2f * dt;
+      playerVx *= 0.82f;
+    } else {
+      playerX += playerVx * dt;
+    }
+
+    // Begrenzung (Einhorn bleibt auf der vorderen Hälfte des Bildschirms)
+    playerX = std::clamp(playerX, minPlayerX, maxPlayerX);
 
     playerVy += gravity * dt;
     playerY += playerVy * dt;
@@ -1288,19 +1331,21 @@ struct UnicornGame : Game {
       }
     }
 
-    // --- 3. Sternschnuppen (Meteore) spawnen & bewegen ---
-    meteorSpawnTimer -= dt;
-    if (meteorSpawnTimer <= 0.0f) {
-      ShootingStar m;
-      m.x = 240.0f + (rand() % 90);
-      m.y = -10.0f;
-      m.vx = -currentScrollSpeed * (0.85f + (rand() % 35) / 100.0f);
-      m.vy = (120.0f + (rand() % 60)) * speedScale;
-      m.size = 12.0f;
-      m.active = true;
-      meteors.push_back(m);
+    // --- 3. Sternschnuppen (Meteore): Fallen ERST im zweiten Teil (Level 2: Nachthimmel) ---
+    if (currentLevel >= 2) {
+      meteorSpawnTimer -= dt;
+      if (meteorSpawnTimer <= 0.0f) {
+        ShootingStar m;
+        m.x = 240.0f + (rand() % 90);
+        m.y = -10.0f;
+        m.vx = -currentScrollSpeed * (0.85f + (rand() % 35) / 100.0f);
+        m.vy = (120.0f + (rand() % 60)) * speedScale;
+        m.size = 12.0f;
+        m.active = true;
+        meteors.push_back(m);
 
-      meteorSpawnTimer = (2.2f + (rand() % 130) / 100.0f) / speedScale;
+        meteorSpawnTimer = (1.8f + (rand() % 110) / 100.0f) / speedScale;
+      }
     }
 
     for (size_t i = 0; i < meteors.size();) {
