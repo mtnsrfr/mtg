@@ -94,6 +94,14 @@ public:
     int owner;
   };
 
+  struct WaterPuddle {
+    float x;
+    float y;
+    float life;
+    float maxLife;
+    int owner;
+  };
+
   struct Supernova {
     float x, y;
     float life;
@@ -133,6 +141,7 @@ public:
     int forwardTapCount = 0;
     bool prevMoveTowards = false;
     bool prevUp = false;
+    float slowTimer = 0.0f;      // Verlangsamung im Wasser (Wasser-Schockwelle)
   };
 
   // ===========================================================================
@@ -144,6 +153,7 @@ public:
   std::vector<Particle> particles;
   std::vector<FloatingPlatform> platforms;
   std::vector<GroundFire> groundFires;
+  std::vector<WaterPuddle> waterPuddles;
   std::vector<Supernova> supernovas;
 
   int p1Cursor = 0;
@@ -259,6 +269,7 @@ public:
     players[0].forwardTapCount = 0;
     players[0].prevMoveTowards = false;
     players[0].prevUp = false;
+    players[0].slowTimer = 0.0f;
 
     players[1].maxHp = (players[1].fighter == FighterType::Music) ? 120 : 100;
     players[1].hp = players[1].maxHp;
@@ -277,10 +288,12 @@ public:
     players[1].forwardTapCount = 0;
     players[1].prevMoveTowards = false;
     players[1].prevUp = false;
+    players[1].slowTimer = 0.0f;
 
     projectiles.clear();
     particles.clear();
     groundFires.clear();
+    waterPuddles.clear();
     supernovas.clear();
     roundStateTimer = 0.0f;
     state = State::RoundIntro;
@@ -410,9 +423,10 @@ public:
       players[1].facing = 1;
     }
 
-    // 5. Projektile, brennenden Boden & Supernovas aktualisieren
+    // 5. Projektile, brennenden Boden, Wasserpfützen & Supernovas aktualisieren
     updateProjectiles(e, dt);
     updateGroundFires(e, dt);
+    updateWaterPuddles(e, dt);
     updateSupernovas(dt);
 
     // 6. Rundenende prüfen (K.O.)
@@ -453,6 +467,9 @@ public:
     }
     if (p.blockCooldown > 0.0f) {
       p.blockCooldown -= e.dt();
+    }
+    if (p.slowTimer > 0.0f) {
+      p.slowTimer -= e.dt();
     }
 
     // Ermittle relative Richtungen bezogen auf die Blickrichtung zum Gegner
@@ -590,8 +607,9 @@ public:
     }
 
     if (jumpPressed) {
+      float jForce = (p.slowTimer > 0.0f) ? -165.0f : -215.0f;
       if (p.isGrounded || p.onPlatform) {
-        p.vy = -215.0f;
+        p.vy = jForce;
         p.isGrounded = false;
         p.onPlatform = false;
         p.canDoubleJump = true;
@@ -604,7 +622,7 @@ public:
         playJumpSound(e);
         spawnDoubleJumpSparkle(p.x - p.facing * 5.0f, p.y - 8.0f, Ramps::Gold[14]);
       } else if (p.canDoubleJump) {
-        p.vy = -185.0f;
+        p.vy = (p.slowTimer > 0.0f) ? -150.0f : -185.0f;
         p.canDoubleJump = false;
         playJumpSound(e);
         spawnDoubleJumpSparkle(p.x, p.y, def.mainColor);
@@ -613,6 +631,9 @@ public:
 
     // --- E. LAUFEN / FLIEGEN LINKS & RECHTS ---
     float moveSpd = def.speed;
+    if (p.slowTimer > 0.0f) {
+      moveSpd *= 0.45f; // Stark verlangsamt im Wasser!
+    }
     if (left && !right) {
       p.vx = -moveSpd;
     } else if (right && !left) {
@@ -826,6 +847,11 @@ public:
         proj.x += proj.vx * dt;
         proj.y = getGroundHeight(proj.x) - 4.0f;
         spawnGroundWaveParticles(proj);
+
+        // 💧 WASSER-SCHOCKWELLE hinterlässt eine Spur aus verlangsamenden Wasserpfützen!
+        if (proj.type == FighterType::Water) {
+          spawnWaterPuddle(proj.x, proj.owner);
+        }
       } else {
         proj.x += proj.vx * dt;
         proj.y += proj.vy * dt;
@@ -895,6 +921,11 @@ public:
           playFireExplosionSound(e);
           screenShake = 0.70f;
           igniteGroundEverywhere(proj.x, proj.owner);
+        } else if (proj.type == FighterType::Water) {
+          // 💧 WASSER-AUFPRALL: Hinterlässt glitzernde Wasserpfützen am Boden!
+          spawnWaterPuddle(proj.x, proj.owner);
+          spawnWaterPuddle(proj.x - 7.0f, proj.owner);
+          spawnWaterPuddle(proj.x + 7.0f, proj.owner);
         }
 
         if (target.isBlocking) {
@@ -989,6 +1020,99 @@ public:
     }
   }
 
+  // --- WASSER-PFÜTZEN (Hinterlassen von der Wasser-Schockwelle, verlangsamen Gegner!) ---
+  void spawnWaterPuddle(float x, int owner) {
+    if (x < 12.0f || x > 308.0f) return;
+    for (auto &wp : waterPuddles) {
+      if (std::abs(wp.x - x) < 6.0f) {
+        wp.life = wp.maxLife; // Pfütze auffrischen
+        return;
+      }
+    }
+    WaterPuddle wp;
+    wp.x = x;
+    wp.y = getGroundHeight(x);
+    wp.maxLife = 5.0f; // Bleibt 5 Sekunden lang als Pfütze auf dem Boden!
+    wp.life = wp.maxLife;
+    wp.owner = owner;
+    waterPuddles.push_back(wp);
+  }
+
+  void spawnWaterDroplets(float x, float y) {
+    for (int i = 0; i < 4; ++i) {
+      Particle p;
+      p.x = x + (rand() % 6 - 3);
+      p.y = y - 1.0f;
+      p.vx = (rand() % 24 - 12);
+      p.vy = -15.0f - (rand() % 20);
+      p.maxLife = 0.18f;
+      p.life = p.maxLife;
+      p.size = 1.0f;
+      p.color = (i % 2 == 0) ? Ramps::Cyan[12] : Colors::White;
+      particles.push_back(p);
+    }
+  }
+
+  void updateWaterPuddles(Engine &e, float dt) {
+    for (size_t i = 0; i < waterPuddles.size();) {
+      auto &wp = waterPuddles[i];
+      wp.life -= dt;
+      if (wp.life <= 0.0f) {
+        waterPuddles[i] = waterPuddles.back();
+        waterPuddles.pop_back();
+        continue;
+      }
+
+      // Sanfte Wasser-Gischt & Bläschen
+      if (e.rnd(8) == 0) {
+        Particle p;
+        p.x = wp.x + (rand() % 6 - 3);
+        p.y = wp.y - 1.0f;
+        p.vx = (rand() % 8 - 4);
+        p.vy = -8.0f - (rand() % 14);
+        p.maxLife = 0.24f;
+        p.life = p.maxLife;
+        p.size = 1.0f;
+        p.color = (rand() % 2 == 0) ? Ramps::Cyan[12] : Colors::White;
+        particles.push_back(p);
+      }
+
+      // Prüfung: Berührt der gegnerische Spieler das Wasser am Boden -> VERLANGSAMUNG (Slow Down)!
+      int targetId = 1 - wp.owner;
+      Player &target = players[targetId];
+      float dist = std::abs(target.x - wp.x);
+      float targetGroundY = getGroundHeight(target.x);
+      bool targetOnGround = (target.y >= targetGroundY - 7.0f);
+
+      if (dist <= 8.0f && targetOnGround) {
+        target.slowTimer = 0.40f; // Verlangsamt den Gegner, solange er im Wasser steht/läuft!
+        if (std::abs(target.vx) > 5.0f && e.rnd(3) == 0) {
+          spawnWaterDroplets(target.x, target.y);
+        }
+      }
+
+      ++i;
+    }
+  }
+
+  void renderWaterPuddles(Engine &e) {
+    for (const auto &wp : waterPuddles) {
+      int wx = static_cast<int>(wp.x);
+      int wy = static_cast<int>(wp.y);
+
+      // Wasser-Schicht (glitzernde Pfütze am Boden)
+      e.rectfill(wx - 4, wy - 1, 9, 2, Ramps::Blue[7]);
+      e.line(wx - 3, wy, wx + 3, wy, Ramps::Cyan[11]);
+
+      // Sanft glitzernde Wellenkräuselung an der Oberfläche
+      int ripple = static_cast<int>(std::sin(globalTimer * 8.0f + wp.x * 0.5f) * 2.0f);
+      e.pset(wx + ripple, wy - 1, Ramps::Cyan[14]);
+      if (static_cast<int>(globalTimer * 6.0f + wp.x) % 3 == 0) {
+        e.pset(wx - 2, wy - 1, Colors::White);
+      }
+    }
+  }
+
   // ===========================================================================
   // 9. RUNDEN- & MATCHENDE
   // ===========================================================================
@@ -1045,9 +1169,10 @@ public:
     // 2. Schwebende Plattformen
     renderPlatforms(e);
 
-    // 3. Hügeliges 2D Terrain & überall brennender Boden
+    // 3. Hügeliges 2D Terrain, brennender Boden & verlangsamende Wasserpfützen
     renderTerrain(e);
     renderGroundFires(e);
+    renderWaterPuddles(e);
 
     // 4. Beide Kämpfer zeichnen
     renderFighter(e, players[0]);
@@ -1343,6 +1468,12 @@ public:
       e.line(px - 5, py - 16, px - 8 * f, py - 14, Ramps::Cyan[12]); // Wehendes Band
       break;
     }
+    }
+
+    // Verlangsamungs-Anzeige (Wasserspritzer um die Füße bei Slowdown)
+    if (p.slowTimer > 0.0f) {
+      e.line(px - 4, py, px + 4, py, Ramps::Cyan[12]);
+      e.pset(px + (static_cast<int>(globalTimer * 14.0f) % 7 - 3), py - 2, Colors::White);
     }
   }
 

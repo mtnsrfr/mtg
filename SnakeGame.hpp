@@ -18,7 +18,7 @@
 //   -> Sie zerplatzt und hinterlässt alle ihre Äpfel auf dem Spielfeld!
 //   -> Der Gegner kann die Äpfel schnell fressen und riesig werden!
 //   -> Die Schlange startet sofort wieder klein in ihrer Ecke.
-// - Wer zuerst 12 Punkte erreicht, gewinnt das Spiel!
+// - Wer zuerst 100 Punkte erreicht, gewinnt das Spiel!
 //
 // Steuerung:
 // - Spieler 1 (Gelb):  W (Hoch), A (Links), S (Runter), D (Rechts)
@@ -33,7 +33,7 @@ struct SnakeGame : Game {
   enum class State {
     Title,   // Startbildschirm ("Leertaste drücken")
     Playing, // Match läuft
-    Victory  // Ein Spieler hat 12 Punkte erreicht
+    Victory  // Ein Spieler hat 100 Punkte erreicht
   };
 
   // Richtungen für die Schlangenbewegung
@@ -85,7 +85,7 @@ struct SnakeGame : Game {
 
   // Liste aller Äpfel auf dem Feld
   std::vector<Cell> apples;
-  const int targetScore = 12; // Wer zuerst 12 Punkte hat, gewinnt!
+  const int targetScore = 100; // Wer zuerst 100 Punkte hat, gewinnt!
 
   // Takt-Timer: Schlangen bewegen sich alle 0.11 Sekunden um 1 Feld
   float moveTimer = 0.0f;
@@ -293,7 +293,7 @@ struct SnakeGame : Game {
     bool blink = (int(e.time() * 2.5f) % 2) == 0;
 
     e.draw_text(68, 60, "SNAKE BATTLE 2-PLAYER", Colors::Yellow, 2);
-    e.draw_text(60, 95, "SAMMLE 12 AEPFEL ZUM SIEG!", Colors::White, 1);
+    e.draw_text(60, 95, "SAMMLE 100 AEPFEL ZUM SIEG!", Colors::White, 1);
 
     e.draw_text(26, 160, "P1 (GELB): W / A / S / D", Colors::Yellow, 1);
     e.draw_text(184, 160, "P2 (BLAU): PFEILTASTEN", Colors::Blue, 1);
@@ -490,17 +490,29 @@ struct SnakeGame : Game {
 
   void drawScores(Engine &e) {
     // Spieler 1 Spielstand (Gelb, links oben)
-    e.draw_text(24, 6, "P1 (GELB):", Colors::Yellow, 1);
-    e.draw_digit(100, 4, p1.score / 10, Colors::Yellow, 2);
-    e.draw_digit(110, 4, p1.score % 10, Colors::Yellow, 2);
+    e.draw_text(20, 6, "P1 (GELB):", Colors::Yellow, 1);
+    if (p1.score >= 100) {
+      e.draw_digit(92, 4, p1.score / 100, Colors::Yellow, 2);
+      e.draw_digit(102, 4, (p1.score / 10) % 10, Colors::Yellow, 2);
+      e.draw_digit(112, 4, p1.score % 10, Colors::Yellow, 2);
+    } else {
+      e.draw_digit(98, 4, p1.score / 10, Colors::Yellow, 2);
+      e.draw_digit(108, 4, p1.score % 10, Colors::Yellow, 2);
+    }
 
     // Zielpunktzahl in der Mitte
-    e.draw_text(138, 6, "/ 12", Colors::White, 1);
+    e.draw_text(136, 6, "/ 100", Colors::White, 1);
 
     // Spieler 2 Spielstand (Blau, rechts oben)
-    e.draw_text(210, 6, "P2 (BLAU):", Colors::Blue, 1);
-    e.draw_digit(286, 4, p2.score / 10, Colors::Blue, 2);
-    e.draw_digit(296, 4, p2.score % 10, Colors::Blue, 2);
+    e.draw_text(208, 6, "P2 (BLAU):", Colors::Blue, 1);
+    if (p2.score >= 100) {
+      e.draw_digit(280, 4, p2.score / 100, Colors::Blue, 2);
+      e.draw_digit(290, 4, (p2.score / 10) % 10, Colors::Blue, 2);
+      e.draw_digit(300, 4, p2.score % 10, Colors::Blue, 2);
+    } else {
+      e.draw_digit(286, 4, p2.score / 10, Colors::Blue, 2);
+      e.draw_digit(296, 4, p2.score % 10, Colors::Blue, 2);
+    }
   }
 
   void drawApples(Engine &e) {
