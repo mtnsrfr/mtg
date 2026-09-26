@@ -25,73 +25,115 @@
 //   * Echtes Auto-zu-Auto Rammen & Abprallen mit Funken und Trägheitsübertrag!
 //   * Reifenstapel, Leitplanken & Streckenbarrieren mit Aufprall-Physik!
 // - Sound & Musik:
-//   * Prozedural generierte rockige E-Gitarren BGM mit Drums, Bass & Powerchords!
-//   * Dynamischer Motor-Sound (Drehzahl & Nitro-Pfeifen) in Echtzeit!
+//   * Authentisches Akustik-Gitarren Strumming (Rhythmisches Akkord-Schrammeln)!
+//   * Dezentes, warmes Motor-Grollen in Echtzeit!
 // - 3 Runden bis zum Champion-Sieg!
 // =============================================================================
 
-// Prozeduraler Rock-Soundtrack Generator (Gitarren-Powerchords, Bass, Drums & Lead-Riffs)
-inline std::vector<int16_t> generateRockBgm() {
+// Prozeduraler Akustik-Gitarren-Soundtrack mit authentischem Strumming (Akkord-Schrammeln)
+inline std::vector<int16_t> generateGuitarStrummingBgm() {
   const unsigned sampleRate = 44100;
-  const float tempoBpm = 142.0f;
-  const float beatDuration = 60.0f / tempoBpm; // ~0.4225 s
-  const float barDuration = beatDuration * 4.0f; // ~1.690 s
+  const float tempoBpm = 118.0f; // Gemütliches, treibendes Akustik-Tempo
+  const float beatDuration = 60.0f / tempoBpm; // ~0.508s
+  const float barDuration = beatDuration * 4.0f; // ~2.034s
   const int numBars = 8;
-  const float totalDuration = barDuration * numBars; // ~13.52 s
+  const float totalDuration = barDuration * numBars; // ~16.27s
   const unsigned totalSamples = static_cast<unsigned>(sampleRate * totalDuration);
 
   std::vector<int16_t> buffer(totalSamples, 0);
   const double twoPi = 2.0 * M_PI;
 
-  // Powerchord Harmonien: E5 (Bar 0-1), G5 (Bar 2-3), A5 (Bar 4-5), C5 (Bar 6), D5 (Bar 7)
-  struct PowerChord {
-    double root;
-    double fifth;
-    double octave;
-  };
-  PowerChord chordList[8] = {
-    {Notes::E3, Notes::B3, Notes::E4}, // Bar 0: E5
-    {Notes::E3, Notes::B3, Notes::E4}, // Bar 1: E5
-    {Notes::G3, Notes::D4, Notes::G4}, // Bar 2: G5
-    {Notes::G3, Notes::D4, Notes::G4}, // Bar 3: G5
-    {Notes::A3, Notes::E4, Notes::A4}, // Bar 4: A5
-    {Notes::A3, Notes::E4, Notes::A4}, // Bar 5: A5
-    {Notes::C4, Notes::G4, Notes::C5}, // Bar 6: C5
-    {Notes::D4, Notes::A4, Notes::D5}  // Bar 7: D5
+  // 6 Gitarrensaiten pro Akkord (Acoustic Strumming Voicings)
+  struct GuitarChord {
+    std::array<double, 6> freqs;
   };
 
-  // Lead-Gitarren Melodie (64 Achtelnoten)
-  double leadMelody[64] = {
-    // Bars 0-1: E-Moll Rock Riff
-    Notes::E5, Notes::E5, Notes::G5, Notes::A5,
-    Notes::B5, Notes::A5, Notes::G5, Notes::E5,
-    Notes::D5, Notes::E5, Notes::G5, Notes::E5,
-    Notes::A5, Notes::G5, Notes::E5, Notes::D5,
-    // Bars 2-3: G-Dur Blast
-    Notes::G5, Notes::B5, Notes::D6, Notes::B5,
-    Notes::A5, Notes::G5, Notes::E5, Notes::G5,
-    Notes::B5, Notes::D6, Notes::E6, Notes::D6,
-    Notes::B5, Notes::A5, Notes::G5, Notes::A5,
-    // Bars 4-5: A-Power High Rise
-    Notes::A5, Notes::C6, Notes::E6, Notes::C6,
-    Notes::B5, Notes::A5, Notes::G5, Notes::A5,
-    Notes::C6, Notes::D6, Notes::E6, Notes::G6,
-    Notes::E6, Notes::D6, Notes::C6, Notes::A5,
-    // Bars 6-7: Climax & Turnaround
-    Notes::C6, Notes::E6, Notes::G6, Notes::E6,
-    Notes::D6, Notes::Fs6, Notes::A6, Notes::Fs6,
-    Notes::E6, Notes::B5, Notes::G5, Notes::Fs5,
-    Notes::E5, Notes::G5, Notes::B5, Notes::D6
+  // Harmoniefolge: Em -> G -> C -> D -> Em -> C -> G -> D
+  std::array<GuitarChord, 8> chords = {{
+    // Bar 0: E-Moll (Em: E2, B2, E3, G3, B3, E4)
+    {{Notes::E2, Notes::B2, Notes::E3, Notes::G3, Notes::B3, Notes::E4}},
+    // Bar 1: G-Dur (G: G2, B2, D3, G3, B3, G4)
+    {{Notes::G2, Notes::B2, Notes::D3, Notes::G3, Notes::B3, Notes::G4}},
+    // Bar 2: C-Dur (C: C3, E3, G3, C4, E4, G4)
+    {{Notes::C3, Notes::E3, Notes::G3, Notes::C4, Notes::E4, Notes::G4}},
+    // Bar 3: D-Dur (D: D3, A3, D4, Fs4, A4, D5)
+    {{Notes::D3, Notes::A3, Notes::D4, Notes::Fs4, Notes::A4, Notes::D5}},
+    // Bar 4: E-Moll (Em)
+    {{Notes::E2, Notes::B2, Notes::E3, Notes::G3, Notes::B3, Notes::E4}},
+    // Bar 5: C-Dur (C)
+    {{Notes::C3, Notes::E3, Notes::G3, Notes::C4, Notes::E4, Notes::G4}},
+    // Bar 6: G-Dur (G)
+    {{Notes::G2, Notes::B2, Notes::D3, Notes::G3, Notes::B3, Notes::G4}},
+    // Bar 7: D-Dur (D)
+    {{Notes::D3, Notes::A3, Notes::D4, Notes::Fs4, Notes::A4, Notes::D5}}
+  }};
+
+  // Strum-Pattern innerhalb eines Taktes (Beat-Position, Down/Up, Lautstärke)
+  struct StrumEvent {
+    float beatOffset; // Position im Takt (0.0 bis 4.0)
+    bool isDown;      // true = Downstroke, false = Upstroke
+    float volume;
   };
 
-  // Rausch-Tabelle für Becken, Snare & Gitarren-Dreck
-  std::vector<float> noise(sampleRate, 0.0f);
-  uint32_t rng = 123456789;
-  for (size_t i = 0; i < noise.size(); ++i) {
-    rng = rng * 1664525u + 1013904223u;
-    noise[i] = (static_cast<float>(rng) / 4294967295.0f) * 2.0f - 1.0f;
+  std::vector<StrumEvent> strumPattern = {
+    {0.00f, true,  1.00f}, // Beat 1: Starker Downstrum
+    {1.00f, true,  0.80f}, // Beat 2: Downstrum
+    {1.50f, false, 0.70f}, // Beat 2+: Upstrum
+    {2.50f, false, 0.75f}, // Beat 3+: Upstrum
+    {3.00f, true,  0.85f}, // Beat 4: Downstrum
+    {3.50f, false, 0.70f}  // Beat 4+: Upstrum
+  };
+
+  // Liste aller Saitenanschläge
+  struct Pluck {
+    unsigned startSample;
+    double freq;
+    float gain;
+  };
+  std::vector<Pluck> plucks;
+  plucks.reserve(numBars * strumPattern.size() * 6 + 100);
+
+  for (int bar = 0; bar < numBars; ++bar) {
+    float barStartTime = bar * barDuration;
+    const auto &chord = chords[bar];
+
+    for (const auto &strum : strumPattern) {
+      float strumTime = barStartTime + strum.beatOffset * beatDuration;
+
+      for (int s = 0; s < 6; ++s) {
+        float stringDelay = strum.isDown ? (s * 0.0065f) : ((5 - s) * 0.0045f);
+        float pluckTime = strumTime + stringDelay;
+        if (pluckTime >= totalDuration) continue;
+
+        unsigned sampleIdx = static_cast<unsigned>(pluckTime * sampleRate);
+        float stringGain = strum.volume * (strum.isDown ? (1.0f - s * 0.05f) : (0.7f + s * 0.06f));
+
+        plucks.push_back({sampleIdx, chord.freqs[s], stringGain});
+      }
+    }
   }
 
+  // Akustik-Mix Puffer (Fließkomma)
+  std::vector<float> mixBuffer(totalSamples, 0.0f);
+
+  // Plucks synthetisieren (Akustische Saiten-Physik mit Oberton-Dämpfung)
+  for (const auto &p : plucks) {
+    unsigned start = p.startSample;
+    unsigned maxLen = static_cast<unsigned>(sampleRate * 1.8f);
+    unsigned end = std::min(totalSamples, start + maxLen);
+
+    for (unsigned i = start; i < end; ++i) {
+      double t = static_cast<double>(i - start) / sampleRate;
+      double env = std::exp(-t * 3.6);
+      double wave = std::sin(twoPi * p.freq * t)
+                  + 0.50 * std::sin(twoPi * p.freq * 2.0 * t) * std::exp(-t * 2.5)
+                  + 0.25 * std::sin(twoPi * p.freq * 3.0 * t) * std::exp(-t * 5.0)
+                  + 0.10 * std::sin(twoPi * p.freq * 4.0 * t) * std::exp(-t * 8.0);
+      mixBuffer[i] += static_cast<float>(0.075 * p.gain * wave * env);
+    }
+  }
+
+  // Dezenten Bass & leichten Shaker hinzufügen
   for (unsigned i = 0; i < totalSamples; ++i) {
     double t = static_cast<double>(i) / sampleRate;
     int currentBar = static_cast<int>(t / barDuration) % numBars;
@@ -99,74 +141,28 @@ inline std::vector<int16_t> generateRockBgm() {
     int currentBeat = static_cast<int>(barTime / beatDuration);
     float beatTime = std::fmod(barTime, beatDuration);
 
-    double totalMix = 0.0;
-
-    // --- 1. DRUMS ---
-    // Bass Drum (Beats 0, 2 + 16tel Akzent)
-    bool isKick = (currentBeat == 0 && beatTime < 0.17f) || 
-                  (currentBeat == 2 && beatTime < 0.17f) ||
-                  (currentBeat == 1 && beatTime > beatDuration * 0.75f && (beatTime - beatDuration * 0.75f) < 0.13f);
-    if (isKick) {
-      float kTime = (currentBeat == 1) ? (beatTime - beatDuration * 0.75f) : beatTime;
-      float kEnv = std::max(0.0f, 1.0f - kTime / 0.17f);
-      double kFreq = 145.0 * std::exp(-kTime * 24.0) + 42.0;
-      double kickWave = std::sin(twoPi * kFreq * kTime);
-      totalMix += 0.36 * kickWave * kEnv;
+    // Warmer Akustik-Bass auf Beat 0 und 2
+    if ((currentBeat == 0 || currentBeat == 2) && beatTime < 0.38f) {
+      double bFreq = chords[currentBar].freqs[0] * 0.5;
+      float bEnv = std::exp(-beatTime * 5.5f);
+      double bWave = std::sin(twoPi * bFreq * beatTime) + 0.25 * std::sin(twoPi * bFreq * 2.0 * beatTime);
+      mixBuffer[i] += static_cast<float>(0.13 * bWave * bEnv);
     }
 
-    // Snare Drum (Beats 1 und 3)
-    if ((currentBeat == 1 || currentBeat == 3) && beatTime < 0.20f) {
-      float sEnv = std::max(0.0f, 1.0f - beatTime / 0.20f);
-      double sTone = std::sin(twoPi * (210.0 - beatTime * 450.0) * beatTime);
-      float sNoise = noise[i % noise.size()];
-      double snareWave = 0.4 * sTone + 0.6 * sNoise;
-      totalMix += 0.30 * snareWave * sEnv;
-    }
-
-    // Hi-Hat (Achtel-Noten)
+    // Leichter Percussion-Shaker auf Achtelnoten
     float eighthTime = std::fmod(beatTime, beatDuration * 0.5f);
-    if (eighthTime < 0.045f) {
-      float hEnv = std::max(0.0f, 1.0f - eighthTime / 0.045f);
-      float hNoise = noise[(i * 3) % noise.size()];
-      totalMix += 0.13 * hNoise * hEnv;
+    if (eighthTime < 0.035f) {
+      float sEnv = 1.0f - eighthTime / 0.035f;
+      float noise = ((rand() % 1000) / 500.0f - 1.0f);
+      mixBuffer[i] += 0.020f * noise * sEnv;
     }
+  }
 
-    // Crash Cymbal (Bar 0 & 4)
-    if ((currentBar == 0 || currentBar == 4) && barTime < 1.0f) {
-      float cEnv = std::max(0.0f, 1.0f - barTime / 1.0f);
-      float cNoise = noise[(i * 7) % noise.size()];
-      totalMix += 0.16 * cNoise * cEnv * cEnv;
-    }
-
-    // --- 2. BASS GUITAR ---
-    const PowerChord &ch = chordList[currentBar];
-    double bassFreq = ch.root * 0.5;
-    float sixteenthTime = std::fmod(beatTime, beatDuration * 0.25f);
-    float bEnv = std::max(0.0f, 1.0f - sixteenthTime / (beatDuration * 0.24f));
-    double bassWave = std::sin(twoPi * bassFreq * t) + 0.5 * std::sin(twoPi * bassFreq * 2.0 * t);
-    totalMix += 0.22 * std::tanh(bassWave * 1.6) * bEnv;
-
-    // --- 3. DISTORTED POWER CHORDS (Rhythmus-Gitarre) ---
-    double chordRaw = std::sin(twoPi * ch.root * t) + 
-                      0.85 * std::sin(twoPi * ch.fifth * t) + 
-                      0.65 * std::sin(twoPi * ch.octave * t);
-    float gEnv = 0.65f + 0.35f * std::max(0.0f, 1.0f - sixteenthTime / (beatDuration * 0.22f));
-    double gDist = std::tanh(chordRaw * 2.7);
-    totalMix += 0.27 * gDist * gEnv;
-
-    // --- 4. LEAD ROCK GUITAR ---
-    int noteIdx = static_cast<int>(t / (beatDuration * 0.5f)) % 64;
-    double leadFreq = leadMelody[noteIdx];
-    float leadNoteTime = std::fmod(t, beatDuration * 0.5f);
-    float lEnv = std::max(0.0f, 1.0f - leadNoteTime / (beatDuration * 0.48f));
-    double vib = 1.0 + 0.012 * std::sin(twoPi * 6.0 * t);
-    double lRaw = std::sin(twoPi * leadFreq * vib * t) + 0.4 * std::sin(twoPi * leadFreq * 2.0 * vib * t);
-    double lDist = std::tanh(lRaw * 3.0);
-    totalMix += 0.25 * lDist * lEnv;
-
-    // Master-Limiter
-    double master = std::tanh(totalMix * 1.25);
-    buffer[i] = static_cast<int16_t>(24000.0 * master);
+  // Master Normalisierung & Sanftes Soft-Clipping (Null Verzerrung, warmer Klang)
+  for (unsigned i = 0; i < totalSamples; ++i) {
+    double val = mixBuffer[i];
+    double soft = std::tanh(val * 1.15);
+    buffer[i] = static_cast<int16_t>(26000.0 * soft);
   }
 
   return buffer;
@@ -282,10 +278,6 @@ public:
 
   void initTrack() {
     // 22 Wegpunkte für einen echten Corner-to-Corner GP Kurs:
-    // Start-Ziel (Rechts) -> Scharfe 90-Grad Kurve Rechts-Oben -> Topspeed Gerade Oben ->
-    // Scharfe 90-Grad Kurve Links-Oben -> Bergab-Passage Links -> Infield Haarnadel ->
-    // Schnelle S-Schikane (The Snake) -> Scharfe 90-Grad Kurve Links-Unten ->
-    // High-Speed Gerade Unten -> Scharfe 90-Grad Zielkurve Rechts-Unten!
     trackNodes[0]  = {284.0f, 175.0f}; // Start / Finish Line
     trackNodes[1]  = {284.0f, 110.0f}; // Hauptgerade Mitte
     trackNodes[2]  = {284.0f,  52.0f}; // Bremspunkt Gerade 1
@@ -431,9 +423,9 @@ public:
   void update(Engine &e) override {
     float dt = e.dt();
 
-    // Start Rock BGM beim ersten Frame
+    // Start Akustik-Gitarren BGM beim ersten Frame
     if (!bgmStarted) {
-      static std::vector<int16_t> bgmSamples = generateRockBgm();
+      static std::vector<int16_t> bgmSamples = generateGuitarStrummingBgm();
       e.play_bgm(bgmSamples, 44100, true);
       bgmStarted = true;
     }
@@ -459,7 +451,7 @@ public:
   }
 
   // ===========================================================================
-  // 5. MOTOR-SOUND SYSTEM (Echtzeit Pitch & Lautstärke)
+  // 5. MOTOR-SOUND SYSTEM (Dezentes, warmes Motor-Grollen)
   // ===========================================================================
   void updateEngineSound(Engine &e) {
     if (state == State::Finished) {
@@ -467,17 +459,16 @@ public:
       return;
     }
 
-    // Maximale Drehzahl beider Fahrzeuge ermitteln
     float maxSpd = std::max(std::abs(cars[0].speed), std::abs(cars[1].speed));
     bool anyBoost = cars[0].boostActive || cars[1].boostActive;
 
     float normSpeed = std::clamp(maxSpd / 140.0f, 0.0f, 1.0f);
-    float pitch = 0.65f + normSpeed * 1.15f;
-    float volume = 0.35f + normSpeed * 0.45f;
+    float pitch = 0.65f + normSpeed * 0.90f;
+    float volume = 0.08f + normSpeed * 0.18f; // Dezente, angenehme Lautstärke
 
     if (anyBoost) {
-      pitch = 2.40f; // Roaring Turbo Pitch!
-      volume = 0.95f;
+      pitch = 1.65f;
+      volume = 0.38f;
     }
 
     e.set_engine_sound(pitch, volume);
@@ -593,7 +584,6 @@ public:
       if (c.slowTimer > 0.0f) {
         c.slowTimer -= dt;
         if (c.slowTimer < 0.0f) c.slowTimer = 0.0f;
-        // Rauch & Funken vom getroffenen Motor
         if (rand() % 2 == 0) {
           spawnSlowSparks(c.x, c.y);
         }
@@ -771,7 +761,6 @@ public:
     float dist = std::sqrt(dx * dx + dy * dy);
 
     if (dist <= targetCp.radius) {
-      // Checkpoint erfolgreich passiert!
       c.nextCheckpoint = (c.nextCheckpoint + 1) % NUM_CHECKPOINTS;
 
       // Wenn CP 0 erreicht wurde -> 1 Runde abgeschlossen!
@@ -878,7 +867,6 @@ public:
         continue;
       }
 
-      // Zielpeilung zum gegnerischen Auto
       int targetId = 1 - r.owner;
       const Car &target = cars[targetId];
 
@@ -890,11 +878,9 @@ public:
         float desiredAngle = std::atan2(dy, dx);
         float angleDiff = desiredAngle - r.angle;
 
-        // Winkel normalisieren (-PI bis +PI)
         while (angleDiff > 3.14159265f) angleDiff -= 2.0f * 3.14159265f;
         while (angleDiff < -3.14159265f) angleDiff += 2.0f * 3.14159265f;
 
-        // Raketen-Wendigkeit
         float turnSpeed = 4.4f * dt;
         r.angle += std::clamp(angleDiff, -turnSpeed, turnSpeed);
 
@@ -906,7 +892,6 @@ public:
       r.x += r.vx * dt;
       r.y += r.vy * dt;
 
-      // Rauchschweif hinter der Rakete
       spawnRocketTrail(r.x, r.y, r.vx, r.vy);
 
       // Barrieren-Treffer
@@ -1114,10 +1099,9 @@ public:
   // 15. RENDERING & GRAFIK
   // ===========================================================================
   void render(Engine &e) {
-    // 1. Hintergrund (Grüne Rasenfläche)
+    // 1. Hintergrund (Grüne Rasenfläche mit Dezem Schachbrettmuster)
     e.cls(Colors::DarkGreen);
 
-    // Rasen-Textur-Muster
     for (int y = 0; y < 240; y += 12) {
       for (int x = 0; x < 320; x += 12) {
         if (((x / 12) + (y / 12)) % 2 == 0) {
@@ -1126,7 +1110,7 @@ public:
       }
     }
 
-    // 2. Asphalt-Strecke & Curbs zeichnen
+    // 2. 3-Pass Asphalt-Strecke mit Randsteinen (Curbs nur am Außenrand)
     renderTrack(e);
 
     // 3. Reifenspuren
@@ -1169,10 +1153,11 @@ public:
     }
   }
 
-  // Zeichnet die durchgehende Asphaltstrecke mit Randsteinen
+  // Zeichnet die durchgehende Asphaltstrecke sauber in 3 Schritten
   void renderTrack(Engine &e) {
     const int STEPS_PER_SEGMENT = 18;
 
+    // PASS 1: Randsteine / Curbs (Rot/Weiß gestreift) als breite Basis
     for (int i = 0; i < NUM_TRACK_NODES; ++i) {
       int next = (i + 1) % NUM_TRACK_NODES;
       float x1 = trackNodes[i].x;
@@ -1185,17 +1170,43 @@ public:
         float cx = x1 + t * (x2 - x1);
         float cy = y1 + t * (y2 - y1);
 
-        // Randsteine (Rot/Weiß gestreift)
-        uint8_t curbColor = ((i * STEPS_PER_SEGMENT + s) / 3 % 2 == 0) ? Colors::Red : Colors::White;
-        e.circfill(cx, cy, TRACK_HALF_WIDTH + 3.0f, curbColor);
+        uint8_t curbColor = (((i * STEPS_PER_SEGMENT + s) / 3) % 2 == 0) ? Colors::Red : Colors::White;
+        e.circlefill(cx, cy, TRACK_HALF_WIDTH + 2.5f, curbColor);
+      }
+    }
 
-        // Asphalt-Fahrbahn (Dunkelgrau)
-        e.circfill(cx, cy, TRACK_HALF_WIDTH, Colors::DarkGray);
+    // PASS 2: Dunkelgrauer Asphalt (liegt ÜBER den Curbs, sodass Curbs nur an den Rändern sichtbar sind)
+    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
+      int next = (i + 1) % NUM_TRACK_NODES;
+      float x1 = trackNodes[i].x;
+      float y1 = trackNodes[i].y;
+      float x2 = trackNodes[next].x;
+      float y2 = trackNodes[next].y;
 
-        // Fahrbahn-Textur (Leichte Asphalt-Linien)
-        if (s % 4 == 0) {
-          e.circfill(cx, cy, TRACK_HALF_WIDTH - 2.0f, Colors::LightGray);
-          e.circfill(cx, cy, TRACK_HALF_WIDTH - 3.5f, Colors::DarkGray);
+      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
+        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
+        float cx = x1 + t * (x2 - x1);
+        float cy = y1 + t * (y2 - y1);
+
+        e.circlefill(cx, cy, TRACK_HALF_WIDTH, Colors::DarkGray);
+      }
+    }
+
+    // PASS 3: Gestrichelte weiße Mittellinie
+    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
+      int next = (i + 1) % NUM_TRACK_NODES;
+      float x1 = trackNodes[i].x;
+      float y1 = trackNodes[i].y;
+      float x2 = trackNodes[next].x;
+      float y2 = trackNodes[next].y;
+
+      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
+        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
+        float cx = x1 + t * (x2 - x1);
+        float cy = y1 + t * (y2 - y1);
+
+        if (((i * STEPS_PER_SEGMENT + s) / 4) % 2 == 0) {
+          e.circlefill(cx, cy, 0.8f, Colors::White);
         }
       }
     }
@@ -1219,11 +1230,10 @@ public:
 
   void renderBarriers(Engine &e) {
     for (const auto &b : barriers) {
-      // Äußere Reifenwulst
-      e.circfill(b.x, b.y, b.radius, Colors::Black);
-      e.circfill(b.x, b.y, b.radius - 2.0f, b.color1);
-      e.circfill(b.x, b.y, b.radius - 4.5f, b.color2);
-      e.circfill(b.x, b.y, 2.0f, Colors::Black);
+      e.circlefill(b.x, b.y, b.radius, Colors::Black);
+      e.circlefill(b.x, b.y, b.radius - 2.0f, b.color1);
+      e.circlefill(b.x, b.y, b.radius - 4.5f, b.color2);
+      e.circlefill(b.x, b.y, 2.0f, Colors::Black);
     }
   }
 
@@ -1232,14 +1242,12 @@ public:
     float cosA = std::cos(c.angle);
     float sinA = std::sin(c.angle);
 
-    // Körperfarbe & Akzent
     uint8_t bodyColor = (c.id == 0) ? Colors::Red : Colors::Blue;
     uint8_t trimColor = (c.id == 0) ? Colors::Gold : Colors::Cyan;
     if (c.boostActive) {
       trimColor = Colors::White; // Glühen im Boost
     }
 
-    // Auto-Mittelpunkt
     float cx = c.x;
     float cy = c.y;
 

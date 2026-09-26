@@ -303,25 +303,23 @@ public:
     const unsigned totalSamples = static_cast<unsigned>(sampleRate * 0.30f); // 0.30s nahtloser Loop
     std::vector<int16_t> samples(totalSamples);
     const double twoPi = 2.0 * M_PI;
-    const double baseFreq = 70.0; // 70 Hz Basisfrequenz (Leerlauf)
+    const double baseFreq = 55.0; // 55 Hz weicher Bass-Puls
 
     for (unsigned i = 0; i < totalSamples; ++i) {
       double t = static_cast<double>(i) / sampleRate;
-      // Zylinder-Zündimpulse + Sägezahn-Kompression
+      // Weiche Sinus- und Dreiecks-Schwingung
       double pulse = std::sin(twoPi * baseFreq * t) 
-                   + 0.65 * std::sin(twoPi * baseFreq * 2.0 * t) 
-                   + 0.40 * std::sin(twoPi * baseFreq * 3.0 * t)
-                   + 0.25 * std::sin(twoPi * baseFreq * 4.0 * t);
-      double saw = 2.0 * (std::fmod(t * baseFreq, 1.0) - 0.5);
-      double raw = 0.6 * pulse + 0.4 * saw;
-      double sat = std::tanh(raw * 1.7);
+                   + 0.35 * std::sin(twoPi * baseFreq * 2.0 * t) 
+                   + 0.15 * std::sin(twoPi * baseFreq * 3.0 * t);
+      double tri = 2.0 * std::abs(2.0 * (std::fmod(t * baseFreq, 1.0) - 0.5)) - 1.0;
+      double raw = 0.75 * pulse + 0.25 * tri;
 
       // Loop-Kanten sanft ausblenden
       double win = 1.0;
       if (i < 200) win = static_cast<double>(i) / 200.0;
       else if (i > totalSamples - 200) win = static_cast<double>(totalSamples - i) / 200.0;
 
-      samples[i] = static_cast<int16_t>(20000.0 * sat * win);
+      samples[i] = static_cast<int16_t>(14000.0 * raw * win);
     }
 
     if (engineBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate,
