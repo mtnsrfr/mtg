@@ -243,8 +243,12 @@ struct Tone {
 
 class SoundEngine {
 public:
+  static constexpr size_t SFX_POOL_SIZE = 4;
+
   SoundEngine() {
-    sound = std::make_unique<sf::Sound>(soundBuffer);
+    for (size_t i = 0; i < SFX_POOL_SIZE; ++i) {
+      sounds[i] = std::make_unique<sf::Sound>(soundBuffers[i]);
+    }
     bgmSound = std::make_unique<sf::Sound>(bgmBuffer);
   }
 
@@ -268,10 +272,14 @@ public:
       samples[i] = static_cast<int16_t>(26000.0 * env * wave);
     }
 
-    if (soundBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate,
-                                   {sf::SoundChannel::Mono})) {
-      sound->setBuffer(soundBuffer);
-      sound->play();
+    size_t idx = poolIndex;
+    poolIndex = (poolIndex + 1) % SFX_POOL_SIZE;
+    if (soundBuffers[idx].loadFromSamples(samples.data(), samples.size(), 1, sampleRate,
+                                         {sf::SoundChannel::Mono})) {
+      sounds[idx]->setBuffer(soundBuffers[idx]);
+      sounds[idx]->setPitch(1.0f);
+      sounds[idx]->setVolume(100.0f);
+      sounds[idx]->play();
     }
   }
 
@@ -286,6 +294,68 @@ public:
     melodyQueue.assign(tones.begin(), tones.end());
     queueIndex = 0;
     noteTimer = 0.0f;
+  }
+
+  // --- MOTOR-SOUND (Echtzeit-Drehzahl und Lautstärke) ---
+  void initEngineSound() {
+    if (engineInitialized) return;
+    const unsigned sampleRate = 44100;
+    const unsigned totalSamples = static_cast<unsigned>(sampleRate * 0.30f); // 0.30s nahtloser Loop
+    std::vector<int16_t> samples(totalSamples);
+    const double twoPi = 2.0 * M_PI;
+    const double baseFreq = 70.0; // 70 Hz Basisfrequenz (Leerlauf)
+
+    for (unsigned i = 0; i < totalSamples; ++i) {
+      double t = static_cast<double>(i) / sampleRate;
+      // Zylinder-Zündimpulse + Sägezahn-Kompression
+      double pulse = std::sin(twoPi * baseFreq * t) 
+                   + 0.65 * std::sin(twoPi * baseFreq * 2.0 * t) 
+                   + 0.40 * std::sin(twoPi * baseFreq * 3.0 * t)
+                   + 0.25 * std::sin(twoPi * baseFreq * 4.0 * t);
+      double saw = 2.0 * (std::fmod(t * baseFreq, 1.0) - 0.5);
+      double raw = 0.6 * pulse + 0.4 * saw;
+      double sat = std::tanh(raw * 1.7);
+
+      // Loop-Kanten sanft ausblenden
+      double win = 1.0;
+      if (i < 200) win = static_cast<double>(i) / 200.0;
+      else if (i > totalSamples - 200) win = static_cast<double>(totalSamples - i) / 200.0;
+
+      samples[i] = static_cast<int16_t>(20000.0 * sat * win);
+    }
+
+    if (engineBuffer.loadFromSamples(samples.data(), samples.size(), 1, sampleRate,
+                                    {sf::SoundChannel::Mono})) {
+      engineSound = std::make_unique<sf::Sound>(engineBuffer);
+      engineSound->setLooping(true);
+      engineInitialized = true;
+    }
+  }
+
+  void setEngineAudio(float pitch, float volume) {
+    if (!engineInitialized) {
+      initEngineSound();
+    }
+    if (!engineSound) return;
+
+    if (volume <= 0.001f) {
+      if (engineSound->getStatus() == sf::Sound::Status::Playing) {
+        engineSound->stop();
+      }
+      return;
+    }
+
+    engineSound->setPitch(std::clamp(pitch, 0.45f, 3.5f));
+    engineSound->setVolume(std::clamp(volume * 100.0f, 0.0f, 100.0f));
+    if (engineSound->getStatus() != sf::Sound::Status::Playing) {
+      engineSound->play();
+    }
+  }
+
+  void stopEngineAudio() {
+    if (engineSound) {
+      engineSound->stop();
+    }
   }
 
   // Hintergrundmusik (Loop) abspielen
@@ -335,8 +405,13 @@ private:
   size_t queueIndex = 0;
   float noteTimer = 0.0f;
 
-  sf::SoundBuffer soundBuffer;
-  std::unique_ptr<sf::Sound> sound;
+  std::array<sf::SoundBuffer, SFX_POOL_SIZE> soundBuffers;
+  std::array<std::unique_ptr<sf::Sound>, SFX_POOL_SIZE> sounds;
+  size_t poolIndex = 0;
+
+  sf::SoundBuffer engineBuffer;
+  std::unique_ptr<sf::Sound> engineSound;
+  bool engineInitialized = false;
 
   sf::SoundBuffer bgmBuffer;
   std::unique_ptr<sf::Sound> bgmSound;
@@ -550,6 +625,10 @@ public:
     }
   }
 
+  // Alias-Methoden (Retro-Kurzschreibweise)
+  void circ(float cx, float cy, float r, uint8_t color) { circle(cx, cy, r, color); }
+  void circfill(float cx, float cy, float r, uint8_t color) { circlefill(cx, cy, r, color); }
+
   // Eine Ziffer (0-9) zeichnen (scale = Größe)
   void draw_digit(float x, float y, int digit, uint8_t color, int scale = 2) {
     // Hier ist das 3x5 Pixel-Muster für jede Ziffer:
@@ -706,6 +785,16 @@ public:
   void stop_bgm() { sound.stopBgm(); }
   void pause_bgm() { sound.pauseBgm(); }
   void resume_bgm() { sound.resumeBgm(); }
+
+  // Motor-Sound (RPM Pitch & Lautstärke)
+  void set_engine_sound(float pitch, float volume) { sound.setEngineAudio(pitch, volume); }
+  void stop_engine_sound() { sound.stopEngineAudio(); }
+
+  // Alle Audio-Kanäle stoppen
+  void stop_all_audio() {
+    sound.stopBgm();
+    sound.stopEngineAudio();
+  }
 
   // --- Interne Engine-Methoden ---
   const std::vector<uint8_t> &getBuffer() const { return framebuffer; }

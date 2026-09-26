@@ -67,7 +67,7 @@ struct MenuGame : Game {
     // Wenn Escape gedrückt wird: Immer zurück ins Menü!
     if (e.pressed(Key::Escape) && currentGame != CurrentGame::Menu) {
       currentGame = CurrentGame::Menu;
-      e.stop_bgm();
+      e.stop_all_audio();
       e.play_tone(Notes::A4, 0.08f);
     }
 

@@ -21,8 +21,156 @@
 //   * Spieler 2: UP (Gas), DOWN (Bremse/Rückwärts), LEFT / RIGHT (Lenken)
 //                UP doppelt tippen = TURBO BOOST für 2s (5s Cooldown)
 //                SHIFT RECHTS = Zielsuchende Rakete (bremst Gegner für 2s auf 50% Speed!)
+// - Kollisionen:
+//   * Echtes Auto-zu-Auto Rammen & Abprallen mit Funken und Trägheitsübertrag!
+//   * Reifenstapel, Leitplanken & Streckenbarrieren mit Aufprall-Physik!
+// - Sound & Musik:
+//   * Prozedural generierte rockige E-Gitarren BGM mit Drums, Bass & Powerchords!
+//   * Dynamischer Motor-Sound (Drehzahl & Nitro-Pfeifen) in Echtzeit!
 // - 3 Runden bis zum Champion-Sieg!
 // =============================================================================
+
+// Prozeduraler Rock-Soundtrack Generator (Gitarren-Powerchords, Bass, Drums & Lead-Riffs)
+inline std::vector<int16_t> generateRockBgm() {
+  const unsigned sampleRate = 44100;
+  const float tempoBpm = 142.0f;
+  const float beatDuration = 60.0f / tempoBpm; // ~0.4225 s
+  const float barDuration = beatDuration * 4.0f; // ~1.690 s
+  const int numBars = 8;
+  const float totalDuration = barDuration * numBars; // ~13.52 s
+  const unsigned totalSamples = static_cast<unsigned>(sampleRate * totalDuration);
+
+  std::vector<int16_t> buffer(totalSamples, 0);
+  const double twoPi = 2.0 * M_PI;
+
+  // Powerchord Harmonien: E5 (Bar 0-1), G5 (Bar 2-3), A5 (Bar 4-5), C5 (Bar 6), D5 (Bar 7)
+  struct PowerChord {
+    double root;
+    double fifth;
+    double octave;
+  };
+  PowerChord chordList[8] = {
+    {Notes::E3, Notes::B3, Notes::E4}, // Bar 0: E5
+    {Notes::E3, Notes::B3, Notes::E4}, // Bar 1: E5
+    {Notes::G3, Notes::D4, Notes::G4}, // Bar 2: G5
+    {Notes::G3, Notes::D4, Notes::G4}, // Bar 3: G5
+    {Notes::A3, Notes::E4, Notes::A4}, // Bar 4: A5
+    {Notes::A3, Notes::E4, Notes::A4}, // Bar 5: A5
+    {Notes::C4, Notes::G4, Notes::C5}, // Bar 6: C5
+    {Notes::D4, Notes::A4, Notes::D5}  // Bar 7: D5
+  };
+
+  // Lead-Gitarren Melodie (64 Achtelnoten)
+  double leadMelody[64] = {
+    // Bars 0-1: E-Moll Rock Riff
+    Notes::E5, Notes::E5, Notes::G5, Notes::A5,
+    Notes::B5, Notes::A5, Notes::G5, Notes::E5,
+    Notes::D5, Notes::E5, Notes::G5, Notes::E5,
+    Notes::A5, Notes::G5, Notes::E5, Notes::D5,
+    // Bars 2-3: G-Dur Blast
+    Notes::G5, Notes::B5, Notes::D6, Notes::B5,
+    Notes::A5, Notes::G5, Notes::E5, Notes::G5,
+    Notes::B5, Notes::D6, Notes::E6, Notes::D6,
+    Notes::B5, Notes::A5, Notes::G5, Notes::A5,
+    // Bars 4-5: A-Power High Rise
+    Notes::A5, Notes::C6, Notes::E6, Notes::C6,
+    Notes::B5, Notes::A5, Notes::G5, Notes::A5,
+    Notes::C6, Notes::D6, Notes::E6, Notes::G6,
+    Notes::E6, Notes::D6, Notes::C6, Notes::A5,
+    // Bars 6-7: Climax & Turnaround
+    Notes::C6, Notes::E6, Notes::G6, Notes::E6,
+    Notes::D6, Notes::Fs6, Notes::A6, Notes::Fs6,
+    Notes::E6, Notes::B5, Notes::G5, Notes::Fs5,
+    Notes::E5, Notes::G5, Notes::B5, Notes::D6
+  };
+
+  // Rausch-Tabelle für Becken, Snare & Gitarren-Dreck
+  std::vector<float> noise(sampleRate, 0.0f);
+  uint32_t rng = 123456789;
+  for (size_t i = 0; i < noise.size(); ++i) {
+    rng = rng * 1664525u + 1013904223u;
+    noise[i] = (static_cast<float>(rng) / 4294967295.0f) * 2.0f - 1.0f;
+  }
+
+  for (unsigned i = 0; i < totalSamples; ++i) {
+    double t = static_cast<double>(i) / sampleRate;
+    int currentBar = static_cast<int>(t / barDuration) % numBars;
+    float barTime = std::fmod(t, barDuration);
+    int currentBeat = static_cast<int>(barTime / beatDuration);
+    float beatTime = std::fmod(barTime, beatDuration);
+
+    double totalMix = 0.0;
+
+    // --- 1. DRUMS ---
+    // Bass Drum (Beats 0, 2 + 16tel Akzent)
+    bool isKick = (currentBeat == 0 && beatTime < 0.17f) || 
+                  (currentBeat == 2 && beatTime < 0.17f) ||
+                  (currentBeat == 1 && beatTime > beatDuration * 0.75f && (beatTime - beatDuration * 0.75f) < 0.13f);
+    if (isKick) {
+      float kTime = (currentBeat == 1) ? (beatTime - beatDuration * 0.75f) : beatTime;
+      float kEnv = std::max(0.0f, 1.0f - kTime / 0.17f);
+      double kFreq = 145.0 * std::exp(-kTime * 24.0) + 42.0;
+      double kickWave = std::sin(twoPi * kFreq * kTime);
+      totalMix += 0.36 * kickWave * kEnv;
+    }
+
+    // Snare Drum (Beats 1 und 3)
+    if ((currentBeat == 1 || currentBeat == 3) && beatTime < 0.20f) {
+      float sEnv = std::max(0.0f, 1.0f - beatTime / 0.20f);
+      double sTone = std::sin(twoPi * (210.0 - beatTime * 450.0) * beatTime);
+      float sNoise = noise[i % noise.size()];
+      double snareWave = 0.4 * sTone + 0.6 * sNoise;
+      totalMix += 0.30 * snareWave * sEnv;
+    }
+
+    // Hi-Hat (Achtel-Noten)
+    float eighthTime = std::fmod(beatTime, beatDuration * 0.5f);
+    if (eighthTime < 0.045f) {
+      float hEnv = std::max(0.0f, 1.0f - eighthTime / 0.045f);
+      float hNoise = noise[(i * 3) % noise.size()];
+      totalMix += 0.13 * hNoise * hEnv;
+    }
+
+    // Crash Cymbal (Bar 0 & 4)
+    if ((currentBar == 0 || currentBar == 4) && barTime < 1.0f) {
+      float cEnv = std::max(0.0f, 1.0f - barTime / 1.0f);
+      float cNoise = noise[(i * 7) % noise.size()];
+      totalMix += 0.16 * cNoise * cEnv * cEnv;
+    }
+
+    // --- 2. BASS GUITAR ---
+    const PowerChord &ch = chordList[currentBar];
+    double bassFreq = ch.root * 0.5;
+    float sixteenthTime = std::fmod(beatTime, beatDuration * 0.25f);
+    float bEnv = std::max(0.0f, 1.0f - sixteenthTime / (beatDuration * 0.24f));
+    double bassWave = std::sin(twoPi * bassFreq * t) + 0.5 * std::sin(twoPi * bassFreq * 2.0 * t);
+    totalMix += 0.22 * std::tanh(bassWave * 1.6) * bEnv;
+
+    // --- 3. DISTORTED POWER CHORDS (Rhythmus-Gitarre) ---
+    double chordRaw = std::sin(twoPi * ch.root * t) + 
+                      0.85 * std::sin(twoPi * ch.fifth * t) + 
+                      0.65 * std::sin(twoPi * ch.octave * t);
+    float gEnv = 0.65f + 0.35f * std::max(0.0f, 1.0f - sixteenthTime / (beatDuration * 0.22f));
+    double gDist = std::tanh(chordRaw * 2.7);
+    totalMix += 0.27 * gDist * gEnv;
+
+    // --- 4. LEAD ROCK GUITAR ---
+    int noteIdx = static_cast<int>(t / (beatDuration * 0.5f)) % 64;
+    double leadFreq = leadMelody[noteIdx];
+    float leadNoteTime = std::fmod(t, beatDuration * 0.5f);
+    float lEnv = std::max(0.0f, 1.0f - leadNoteTime / (beatDuration * 0.48f));
+    double vib = 1.0 + 0.012 * std::sin(twoPi * 6.0 * t);
+    double lRaw = std::sin(twoPi * leadFreq * vib * t) + 0.4 * std::sin(twoPi * leadFreq * 2.0 * vib * t);
+    double lDist = std::tanh(lRaw * 3.0);
+    totalMix += 0.25 * lDist * lEnv;
+
+    // Master-Limiter
+    double master = std::tanh(totalMix * 1.25);
+    buffer[i] = static_cast<int16_t>(24000.0 * master);
+  }
+
+  return buffer;
+}
 
 struct RacerGame : Game {
 public:
@@ -52,6 +200,13 @@ public:
     float angle;
     float life;
     bool active;
+  };
+
+  struct Barrier {
+    float x, y;
+    float radius;
+    uint8_t color1;
+    uint8_t color2;
   };
 
   struct Car {
@@ -91,20 +246,22 @@ public:
   std::vector<Particle> particles;
   std::vector<SkidMark> skidMarks;
   std::vector<Rocket> rockets;
+  std::vector<Barrier> barriers;
 
   float raceTimer = 0.0f;
   float countdownTimer = 3.5f;
   int winner = -1; // 0 = P1, 1 = P2
   const int TOTAL_LAPS = 3;
+  bool bgmStarted = false;
 
   // Rennstrecken-Geometrie (Closed Loop Spline Waypoints)
   struct TrackPoint {
     float x, y;
   };
 
-  static const int NUM_TRACK_NODES = 16;
+  static const int NUM_TRACK_NODES = 22;
   std::array<TrackPoint, NUM_TRACK_NODES> trackNodes;
-  const float TRACK_HALF_WIDTH = 18.0f; // Streckenbreite = 36 Pixel (genug Platz für 2 Autos)
+  const float TRACK_HALF_WIDTH = 17.0f; // Streckenbreite = 34 Pixel
 
   // 8 Checkpoint-Tore entlang der Strecke
   static const int NUM_CHECKPOINTS = 8;
@@ -119,38 +276,65 @@ public:
   // ===========================================================================
   RacerGame() {
     initTrack();
+    initBarriers();
     resetRace();
   }
 
   void initTrack() {
-    // 16 Wegpunkte für einen abwechslungsreichen, flüssigen Rundkurs
-    // Rechts: High-Speed Start-Ziel Gerade -> Oben: Schneller Schwung -> Links: Haarnadel -> Mitte: S-Schikane
-    trackNodes[0]  = {268.0f, 175.0f}; // Start / Finish Line
-    trackNodes[1]  = {268.0f, 120.0f}; // Gerade 1
-    trackNodes[2]  = {268.0f,  75.0f}; // Ende Gerade
-    trackNodes[3]  = {250.0f,  40.0f}; // Kurve 1 Rechts-Oben
-    trackNodes[4]  = {200.0f,  30.0f}; // Obere High-Speed Passage
-    trackNodes[5]  = {145.0f,  32.0f};
-    trackNodes[6]  = { 90.0f,  42.0f}; // Kurve 2 Links-Oben
-    trackNodes[7]  = { 46.0f,  70.0f}; // Bergab-Passage Links
-    trackNodes[8]  = { 38.0f, 120.0f};
-    trackNodes[9]  = { 48.0f, 175.0f}; // Haarnadel-Eingang
-    trackNodes[10] = { 85.0f, 208.0f}; // Haarnadel-Scheitelpunkt
-    trackNodes[11] = {135.0f, 205.0f}; // Ausgang Haarnadel
-    trackNodes[12] = {165.0f, 168.0f}; // Schikane Einlenkpunkt (Zentrum)
-    trackNodes[13] = {198.0f, 136.0f}; // S-Kurve Scheitel
-    trackNodes[14] = {230.0f, 158.0f}; // Schikane Ausgang
-    trackNodes[15] = {252.0f, 205.0f}; // Letzte Kurve vor Start/Ziel
+    // 22 Wegpunkte für einen echten Corner-to-Corner GP Kurs:
+    // Start-Ziel (Rechts) -> Scharfe 90-Grad Kurve Rechts-Oben -> Topspeed Gerade Oben ->
+    // Scharfe 90-Grad Kurve Links-Oben -> Bergab-Passage Links -> Infield Haarnadel ->
+    // Schnelle S-Schikane (The Snake) -> Scharfe 90-Grad Kurve Links-Unten ->
+    // High-Speed Gerade Unten -> Scharfe 90-Grad Zielkurve Rechts-Unten!
+    trackNodes[0]  = {284.0f, 175.0f}; // Start / Finish Line
+    trackNodes[1]  = {284.0f, 110.0f}; // Hauptgerade Mitte
+    trackNodes[2]  = {284.0f,  52.0f}; // Bremspunkt Gerade 1
+    trackNodes[3]  = {276.0f,  30.0f}; // Scheitelpunkt K1 (Scharfe 90° Kurve Rechts-Oben)
+    trackNodes[4]  = {245.0f,  24.0f}; // Ausgang K1
+    trackNodes[5]  = {160.0f,  24.0f}; // High-Speed Gerade Oben
+    trackNodes[6]  = { 75.0f,  24.0f}; // Bremspunkt K2
+    trackNodes[7]  = { 34.0f,  28.0f}; // Scheitelpunkt K2 (Scharfe 90° Kurve Links-Oben)
+    trackNodes[8]  = { 26.0f,  58.0f}; // Ausgang K2
+    trackNodes[9]  = { 26.0f, 115.0f}; // Gerade Links
+    trackNodes[10] = { 28.0f, 155.0f}; // Einlenkpunkt Infield-Haarnadel
+    trackNodes[11] = { 65.0f, 168.0f}; // Scheitelpunkt Haarnadel K3
+    trackNodes[12] = {100.0f, 138.0f}; // Ausgang Haarnadel
+    trackNodes[13] = {132.0f, 102.0f}; // S-Schikane Scheitel 1 (Rechts)
+    trackNodes[14] = {172.0f, 126.0f}; // S-Schikane Scheitel 2 (Links)
+    trackNodes[15] = {150.0f, 175.0f}; // Ausgang Schikane
+    trackNodes[16] = {105.0f, 205.0f}; // Übergang zur Südkurve
+    trackNodes[17] = { 46.0f, 218.0f}; // Scheitelpunkt K4 (Scharfe Kurve Links-Unten)
+    trackNodes[18] = {100.0f, 222.0f}; // Eingang Südgerade
+    trackNodes[19] = {185.0f, 222.0f}; // High-Speed Südgerade
+    trackNodes[20] = {250.0f, 222.0f}; // Bremspunkt Zielkurve
+    trackNodes[21] = {278.0f, 212.0f}; // Scheitelpunkt K5 (Scharfe 90° Zielkurve)
 
     // 8 Checkpoints an Schlüsselstellen
-    checkpoints[0] = {268.0f, 175.0f, 26.0f}; // Start / Ziel Tor
-    checkpoints[1] = {268.0f,  90.0f, 26.0f}; // Ende Gerade 1
-    checkpoints[2] = {210.0f,  31.0f, 26.0f}; // Obere Passage
-    checkpoints[3] = { 70.0f,  52.0f, 26.0f}; // Links Oben
-    checkpoints[4] = { 40.0f, 140.0f, 26.0f}; // Haarnadel Vorbereitung
-    checkpoints[5] = {105.0f, 208.0f, 26.0f}; // Haarnadel Scheitel
-    checkpoints[6] = {180.0f, 150.0f, 26.0f}; // Schikane Mitte
-    checkpoints[7] = {245.0f, 195.0f, 26.0f}; // Zielkurve
+    checkpoints[0] = {284.0f, 175.0f, 28.0f}; // Start / Ziel Tor
+    checkpoints[1] = {284.0f,  75.0f, 28.0f}; // Hauptgerade
+    checkpoints[2] = {160.0f,  24.0f, 28.0f}; // Gerade Oben
+    checkpoints[3] = { 26.0f,  85.0f, 28.0f}; // Gerade Links
+    checkpoints[4] = { 65.0f, 168.0f, 28.0f}; // Infield Haarnadel
+    checkpoints[5] = {152.0f, 114.0f, 28.0f}; // S-Schikane
+    checkpoints[6] = { 46.0f, 218.0f, 28.0f}; // Kurve Links-Unten
+    checkpoints[7] = {185.0f, 222.0f, 28.0f}; // Südgerade
+  }
+
+  void initBarriers() {
+    barriers.clear();
+    // Reifenstapel & Hindernisse an den Kurvenscheiteln (verhindern unbefugtes Abkürzen!)
+    barriers.push_back({256.0f,  48.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 1
+    barriers.push_back({308.0f,  14.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 1
+    barriers.push_back({ 54.0f,  52.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 2
+    barriers.push_back({ 12.0f,  14.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 2
+    barriers.push_back({ 50.0f, 134.0f, 8.0f, Colors::Red, Colors::White}); // Innen Haarnadel K3
+    barriers.push_back({152.0f,  76.0f, 8.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 1
+    barriers.push_back({148.0f, 148.0f, 8.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 2
+    barriers.push_back({ 72.0f, 198.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 4
+    barriers.push_back({ 14.0f, 228.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 4
+    barriers.push_back({256.0f, 196.0f, 8.0f, Colors::Red, Colors::White}); // Innen Zielkurve
+    barriers.push_back({308.0f, 228.0f, 9.0f, Colors::Red, Colors::White}); // Außen Zielkurve
+    barriers.push_back({210.0f,  75.0f, 13.0f, Colors::DarkPurple, Colors::Cyan}); // Infield Monument
   }
 
   void resetRace() {
@@ -158,10 +342,11 @@ public:
     countdownTimer = 3.5f;
     raceTimer = 0.0f;
     winner = -1;
+    bgmStarted = false;
 
     // Spieler 1 (Rot / Gold): Startplatz Links
     cars[0].id = 0;
-    cars[0].x = 260.0f;
+    cars[0].x = 277.0f;
     cars[0].y = 188.0f;
     cars[0].vx = 0.0f;
     cars[0].vy = 0.0f;
@@ -183,11 +368,11 @@ public:
 
     // Spieler 2 (Blau / Cyan): Startplatz Rechts (leicht versetzt)
     cars[1].id = 1;
-    cars[1].x = 276.0f;
+    cars[1].x = 291.0f;
     cars[1].y = 196.0f;
     cars[1].vx = 0.0f;
     cars[1].vy = 0.0f;
-    cars[1].angle = -3.14159265f * 0.5f;
+    cars[1].angle = -3.14159265f * 0.5f; // Schaut nach oben (-90 Grad)
     cars[1].speed = 0.0f;
     cars[1].boostActive = false;
     cars[1].boostTimer = 0.0f;
@@ -246,6 +431,19 @@ public:
   void update(Engine &e) override {
     float dt = e.dt();
 
+    // Start Rock BGM beim ersten Frame
+    if (!bgmStarted) {
+      static std::vector<int16_t> bgmSamples = generateRockBgm();
+      e.play_bgm(bgmSamples, 44100, true);
+      bgmStarted = true;
+    }
+
+    // Neustart-Taste R
+    if (e.pressed(Key::R)) {
+      resetRace();
+      e.play_tone(Notes::A5, 0.1f);
+    }
+
     // Szene aktualisieren
     updateCountdown(e, dt);
     updateCars(e, dt);
@@ -253,12 +451,40 @@ public:
     updateParticles(dt);
     updateSkidMarks(dt);
 
+    // Motor-Audio in Echtzeit steuern
+    updateEngineSound(e);
+
     // Zeichnen
     render(e);
   }
 
   // ===========================================================================
-  // 5. COUNTDOWN & START-AMPEL
+  // 5. MOTOR-SOUND SYSTEM (Echtzeit Pitch & Lautstärke)
+  // ===========================================================================
+  void updateEngineSound(Engine &e) {
+    if (state == State::Finished) {
+      e.stop_engine_sound();
+      return;
+    }
+
+    // Maximale Drehzahl beider Fahrzeuge ermitteln
+    float maxSpd = std::max(std::abs(cars[0].speed), std::abs(cars[1].speed));
+    bool anyBoost = cars[0].boostActive || cars[1].boostActive;
+
+    float normSpeed = std::clamp(maxSpd / 140.0f, 0.0f, 1.0f);
+    float pitch = 0.65f + normSpeed * 1.15f;
+    float volume = 0.35f + normSpeed * 0.45f;
+
+    if (anyBoost) {
+      pitch = 2.40f; // Roaring Turbo Pitch!
+      volume = 0.95f;
+    }
+
+    e.set_engine_sound(pitch, volume);
+  }
+
+  // ===========================================================================
+  // 6. COUNTDOWN & START-AMPEL
   // ===========================================================================
   void updateCountdown(Engine &e, float dt) {
     if (state == State::Countdown) {
@@ -282,7 +508,7 @@ public:
   }
 
   // ===========================================================================
-  // 6. FAHRZEUG-PHYSIK & STEUERUNG
+  // 7. FAHRZEUG-PHYSIK & STEUERUNG
   // ===========================================================================
   void updateCars(Engine &e, float dt) {
     for (int i = 0; i < 2; ++i) {
@@ -378,14 +604,13 @@ public:
       c.onGrass = (distToTrack > TRACK_HALF_WIDTH);
 
       // Maximale Höchstgeschwindigkeit & Beschleunigung berechnen
-      float topSpeed = 138.0f; // Normaler Topspeed auf Asphalt
-      float accelRate = 120.0f;
+      float topSpeed = 140.0f; // Normaler Topspeed auf Asphalt
+      float accelRate = 125.0f;
       float frictionRate = 50.0f;
 
       if (c.boostActive) {
-        topSpeed = 225.0f; // 🚀 MEGA BOOST (+63% Speed!)
-        accelRate = 260.0f;
-        // Nitro-Flammen aus dem Auspuff stoßen
+        topSpeed = 228.0f; // 🚀 MEGA BOOST (+63% Speed!)
+        accelRate = 270.0f;
         spawnBoostFlames(c.x, c.y, c.angle);
       }
 
@@ -425,19 +650,19 @@ public:
 
       // 4. Lenkung (Präzise Arcade-Lenkphysik)
       if (std::abs(c.speed) > 2.0f) {
-        float steerSpeed = 3.6f;
-        if (c.boostActive) steerSpeed = 2.8f; // Bei Boost etwas stabiler
+        float steerSpeed = 3.8f;
+        if (c.boostActive) steerSpeed = 2.9f;
         float dir = (c.speed >= 0.0f) ? 1.0f : -1.0f;
 
         if (steerLeft) {
           c.angle -= steerSpeed * dt * dir;
-          if (std::abs(c.speed) > 90.0f && !c.onGrass) {
+          if (std::abs(c.speed) > 85.0f && !c.onGrass) {
             spawnSkidMark(c.x, c.y);
           }
         }
         if (steerRight) {
           c.angle += steerSpeed * dt * dir;
-          if (std::abs(c.speed) > 90.0f && !c.onGrass) {
+          if (std::abs(c.speed) > 85.0f && !c.onGrass) {
             spawnSkidMark(c.x, c.y);
           }
         }
@@ -449,20 +674,95 @@ public:
       c.x += c.vx * dt;
       c.y += c.vy * dt;
 
-      // Bildschirm-Randbegrenzung
-      c.x = std::clamp(c.x, 10.0f, 310.0f);
-      c.y = std::clamp(c.y, 10.0f, 230.0f);
+      // Leitplanken- & Streckenrand-Kollision (Screen Border Bounce)
+      checkWallCollisions(c, e);
 
-      // 6. Checkpoint & Runden-Prüfung
+      // Checkpoint & Runden-Prüfung
       checkCheckpoint(c, e);
     }
 
-    // 7. Auto-Auto Kollision (Gegenseitiges Wegrammen)
+    // 8. Hindernis- & Reifenstapel-Kollision
+    checkBarrierCollisions(e);
+
+    // 9. Auto-Auto Kollision (Echtes Physik-Rammen & Abprallen)
     checkCarCollision(e);
   }
 
   // ===========================================================================
-  // 7. CHECKPOINT- & RUNDEN-SYSTEM
+  // 8. LEITPLANKEN- & WAND-KOLLISIONEN
+  // ===========================================================================
+  void checkWallCollisions(Car &c, Engine &e) {
+    const float minX = 10.0f;
+    const float maxX = 310.0f;
+    const float minY = 10.0f;
+    const float maxY = 230.0f;
+
+    bool hit = false;
+    if (c.x < minX) {
+      c.x = minX;
+      c.speed *= -0.4f;
+      c.angle = 3.14159f - c.angle;
+      hit = true;
+    } else if (c.x > maxX) {
+      c.x = maxX;
+      c.speed *= -0.4f;
+      c.angle = 3.14159f - c.angle;
+      hit = true;
+    }
+
+    if (c.y < minY) {
+      c.y = minY;
+      c.speed *= -0.4f;
+      c.angle = -c.angle;
+      hit = true;
+    } else if (c.y > maxY) {
+      c.y = maxY;
+      c.speed *= -0.4f;
+      c.angle = -c.angle;
+      hit = true;
+    }
+
+    if (hit) {
+      spawnCrashSparks(c.x, c.y);
+      e.play_tone(Notes::D2, 0.06f);
+    }
+  }
+
+  // ===========================================================================
+  // 9. REIFENSTAPEL- & HINDERNIS-KOLLISIONEN
+  // ===========================================================================
+  void checkBarrierCollisions(Engine &e) {
+    for (int i = 0; i < 2; ++i) {
+      Car &c = cars[i];
+      for (const auto &b : barriers) {
+        float dx = c.x - b.x;
+        float dy = c.y - b.y;
+        float distSq = dx * dx + dy * dy;
+        float minDist = b.radius + 6.0f;
+
+        if (distSq < minDist * minDist && distSq > 0.001f) {
+          float dist = std::sqrt(distSq);
+          float nx = dx / dist;
+          float ny = dy / dist;
+
+          // Aus dem Hindernis herausschieben
+          c.x = b.x + nx * minDist;
+          c.y = b.y + ny * minDist;
+
+          // Geschwindigkeit dämpfen und abprallen
+          c.speed = -c.speed * 0.45f;
+          c.angle += nx * 0.4f;
+
+          // Funken & Reifensplitter
+          spawnCrashSparks(c.x, c.y);
+          e.play_tone(Notes::E2, 0.06f);
+        }
+      }
+    }
+  }
+
+  // ===========================================================================
+  // 10. CHECKPOINT- & RUNDEN-SYSTEM
   // ===========================================================================
   void checkCheckpoint(Car &c, Engine &e) {
     const auto &targetCp = checkpoints[c.nextCheckpoint];
@@ -494,51 +794,73 @@ public:
   }
 
   // ===========================================================================
-  // 8. AUTO-KOLLISION (Bodycheck)
+  // 11. AUTO-ZU-AUTO KOLLISION (Echtes Physik-Rammen & Abprallen)
   // ===========================================================================
   void checkCarCollision(Engine &e) {
     float dx = cars[1].x - cars[0].x;
     float dy = cars[1].y - cars[0].y;
     float distSq = dx * dx + dy * dy;
-    float minDist = 12.0f; // Kollisionsradius
+    float minDist = 13.0f; // Kollisionsdurchmesser
 
     if (distSq < minDist * minDist && distSq > 0.001f) {
       float dist = std::sqrt(distSq);
       float nx = dx / dist;
       float ny = dy / dist;
 
-      // Auseinanderdrücken
-      float overlap = (minDist - dist) * 0.5f;
+      // 1. Positions-Trennung (Kein Ineinanderfahren!)
+      float overlap = (minDist - dist) * 0.52f;
       cars[0].x -= nx * overlap;
       cars[0].y -= ny * overlap;
       cars[1].x += nx * overlap;
       cars[1].y += ny * overlap;
 
-      // Elastischer Impulsaustausch
-      float avgSpeed = (cars[0].speed + cars[1].speed) * 0.5f;
-      cars[0].speed = avgSpeed * 0.85f;
-      cars[1].speed = avgSpeed * 0.85f;
+      // 2. Elastischer Impulsaustausch (Geschwindigkeit & Drehmoment)
+      float v1x = std::cos(cars[0].angle) * cars[0].speed;
+      float v1y = std::sin(cars[0].angle) * cars[0].speed;
+      float v2x = std::cos(cars[1].angle) * cars[1].speed;
+      float v2y = std::sin(cars[1].angle) * cars[1].speed;
 
-      // Karambolage-Funken & Geräusch
+      float relVx = v1x - v2x;
+      float relVy = v1y - v2y;
+      float impulse = (relVx * nx + relVy * ny);
+
+      if (impulse > 0.0f) {
+        float bounce = 0.85f; // Starker Arcade-Crash Bounce
+        float j = (1.0f + bounce) * impulse * 0.5f;
+
+        v1x -= j * nx;
+        v1y -= j * ny;
+        v2x += j * nx;
+        v2y += j * ny;
+
+        cars[0].speed = std::clamp(std::sqrt(v1x * v1x + v1y * v1y), 0.0f, 220.0f);
+        cars[1].speed = std::clamp(std::sqrt(v2x * v2x + v2y * v2y), 0.0f, 220.0f);
+
+        // Drehmoment-Schock
+        cars[0].angle -= ny * 0.35f;
+        cars[1].angle += ny * 0.35f;
+      }
+
+      // Karambolage-Funken & Wuchtiger Crash-Sound
       spawnCrashSparks((cars[0].x + cars[1].x) * 0.5f, (cars[0].y + cars[1].y) * 0.5f);
-      e.play_tone(Notes::D3, 0.05f);
+      e.play_tone(Notes::C2, 0.08f);
     }
   }
 
   // ===========================================================================
-  // 9. ZIELSUCHENDE RAKETEN (Homing Missiles)
+  // 12. ZIELSUCHENDE RAKETEN (Homing Missiles)
   // ===========================================================================
   void fireRocket(int shooterId, Engine &e) {
     const Car &shooter = cars[shooterId];
 
     Rocket r;
     r.owner = shooterId;
-    r.x = shooter.x + std::cos(shooter.angle) * 10.0f;
-    r.y = shooter.y + std::sin(shooter.angle) * 10.0f;
+    r.x = shooter.x + std::cos(shooter.angle) * 11.0f;
+    r.y = shooter.y + std::sin(shooter.angle) * 11.0f;
     r.angle = shooter.angle;
-    r.vx = std::cos(shooter.angle) * 180.0f;
-    r.vy = std::sin(shooter.angle) * 180.0f;
-    r.life = 2.8f; // Verfolgt den Gegner für max 2.8 Sekunden
+    r.vx = std::cos(shooter.angle) * 190.0f;
+    r.vy = std::sin(shooter.angle) * 190.0f;
+    r.life = 3.0f; // Verfolgt den Gegner für max 3.0 Sekunden
     r.active = true;
 
     rockets.push_back(r);
@@ -573,10 +895,10 @@ public:
         while (angleDiff < -3.14159265f) angleDiff += 2.0f * 3.14159265f;
 
         // Raketen-Wendigkeit
-        float turnSpeed = 4.2f * dt;
+        float turnSpeed = 4.4f * dt;
         r.angle += std::clamp(angleDiff, -turnSpeed, turnSpeed);
 
-        float rocketSpeed = 195.0f;
+        float rocketSpeed = 200.0f;
         r.vx = std::cos(r.angle) * rocketSpeed;
         r.vy = std::sin(r.angle) * rocketSpeed;
       }
@@ -587,8 +909,28 @@ public:
       // Rauchschweif hinter der Rakete
       spawnRocketTrail(r.x, r.y, r.vx, r.vy);
 
+      // Barrieren-Treffer
+      bool hitBarrier = false;
+      for (const auto &b : barriers) {
+        float bdx = r.x - b.x;
+        float bdy = r.y - b.y;
+        if (bdx * bdx + bdy * bdy < (b.radius + 3.0f) * (b.radius + 3.0f)) {
+          hitBarrier = true;
+          break;
+        }
+      }
+
+      if (hitBarrier) {
+        r.active = false;
+        spawnExplosion(r.x, r.y);
+        playExplosionSound(e);
+        rockets[i] = rockets.back();
+        rockets.pop_back();
+        continue;
+      }
+
       // Treffer-Prüfung gegen das Ziel-Auto
-      if (dist < 10.0f) {
+      if (dist < 11.0f) {
         r.active = false;
         // 💥 VOLLTREFFER: Gegner wird für 2 Sekunden auf 50% Speed verlangsamt!
         cars[targetId].slowTimer = 2.0f;
@@ -607,8 +949,115 @@ public:
   }
 
   // ===========================================================================
-  // 10. PARTIKEL & EFFEKTE
+  // 13. PARTIKEL- & EFFEKT-SYSTEME
   // ===========================================================================
+  void spawnBoostFlames(float cx, float cy, float angle) {
+    float backX = cx - std::cos(angle) * 7.0f;
+    float backY = cy - std::sin(angle) * 7.0f;
+
+    for (int k = 0; k < 3; ++k) {
+      float spread = ((rand() % 100) / 100.0f - 0.5f) * 0.6f;
+      float pAngle = angle + 3.14159f + spread;
+      float pSpeed = 60.0f + (rand() % 80);
+
+      Particle p;
+      p.x = backX;
+      p.y = backY;
+      p.vx = std::cos(pAngle) * pSpeed;
+      p.vy = std::sin(pAngle) * pSpeed;
+      p.life = 0.25f + ((rand() % 100) / 100.0f) * 0.15f;
+      p.maxLife = p.life;
+      p.color = (k == 0) ? Colors::White : ((k == 1) ? Colors::Yellow : Colors::Red);
+      p.size = 2.0f;
+      particles.push_back(p);
+    }
+  }
+
+  void spawnCrashSparks(float x, float y) {
+    for (int k = 0; k < 12; ++k) {
+      float pAngle = ((rand() % 360) * 3.14159f) / 180.0f;
+      float pSpeed = 40.0f + (rand() % 90);
+
+      Particle p;
+      p.x = x;
+      p.y = y;
+      p.vx = std::cos(pAngle) * pSpeed;
+      p.vy = std::sin(pAngle) * pSpeed;
+      p.life = 0.20f + ((rand() % 100) / 100.0f) * 0.25f;
+      p.maxLife = p.life;
+      p.color = (k % 2 == 0) ? Colors::Gold : Colors::White;
+      p.size = 1.5f;
+      particles.push_back(p);
+    }
+  }
+
+  void spawnSlowSparks(float x, float y) {
+    for (int k = 0; k < 2; ++k) {
+      float pAngle = ((rand() % 360) * 3.14159f) / 180.0f;
+      Particle p;
+      p.x = x + (rand() % 7 - 3);
+      p.y = y + (rand() % 7 - 3);
+      p.vx = std::cos(pAngle) * 35.0f;
+      p.vy = std::sin(pAngle) * 35.0f;
+      p.life = 0.25f;
+      p.maxLife = 0.25f;
+      p.color = (rand() % 2 == 0) ? Colors::Cyan : Colors::LightGray;
+      p.size = 1.0f;
+      particles.push_back(p);
+    }
+  }
+
+  void spawnGrassDirt(float x, float y) {
+    Particle p;
+    p.x = x + (rand() % 5 - 2);
+    p.y = y + (rand() % 5 - 2);
+    p.vx = (rand() % 20 - 10);
+    p.vy = (rand() % 20 - 10);
+    p.life = 0.35f;
+    p.maxLife = 0.35f;
+    p.color = Colors::DarkGreen;
+    p.size = 1.5f;
+    particles.push_back(p);
+  }
+
+  void spawnRocketTrail(float rx, float ry, float rvx, float rvy) {
+    Particle p;
+    p.x = rx - rvx * 0.03f;
+    p.y = ry - rvy * 0.03f;
+    p.vx = -rvx * 0.1f + (rand() % 20 - 10);
+    p.vy = -rvy * 0.1f + (rand() % 20 - 10);
+    p.life = 0.28f;
+    p.maxLife = 0.28f;
+    p.color = (rand() % 2 == 0) ? Colors::LightGray : Colors::White;
+    p.size = 1.5f;
+    particles.push_back(p);
+  }
+
+  void spawnExplosion(float x, float y) {
+    for (int k = 0; k < 20; ++k) {
+      float pAngle = ((rand() % 360) * 3.14159f) / 180.0f;
+      float pSpeed = 30.0f + (rand() % 100);
+
+      Particle p;
+      p.x = x;
+      p.y = y;
+      p.vx = std::cos(pAngle) * pSpeed;
+      p.vy = std::sin(pAngle) * pSpeed;
+      p.life = 0.35f + ((rand() % 100) / 100.0f) * 0.3f;
+      p.maxLife = p.life;
+      p.color = (k % 3 == 0) ? Colors::White : ((k % 3 == 1) ? Colors::Yellow : Colors::Red);
+      p.size = 2.0f;
+      particles.push_back(p);
+    }
+  }
+
+  void spawnSkidMark(float x, float y) {
+    if (skidMarks.size() > 200) {
+      skidMarks.erase(skidMarks.begin());
+    }
+    skidMarks.push_back({x, y, 4.0f});
+  }
+
   void updateParticles(float dt) {
     for (size_t i = 0; i < particles.size();) {
       auto &p = particles[i];
@@ -619,6 +1068,8 @@ public:
       } else {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
+        p.vx *= 0.94f;
+        p.vy *= 0.94f;
         ++i;
       }
     }
@@ -636,147 +1087,92 @@ public:
     }
   }
 
-  void spawnBoostFlames(float x, float y, float angle) {
-    // Auspuff-Flammen entgegen der Fahrtrichtung
-    float rearX = x - std::cos(angle) * 7.0f;
-    float rearY = y - std::sin(angle) * 7.0f;
-
-    for (int i = 0; i < 3; ++i) {
-      Particle p;
-      p.x = rearX + (rand() % 4 - 2);
-      p.y = rearY + (rand() % 4 - 2);
-      p.vx = -std::cos(angle) * (60.0f + rand() % 50) + (rand() % 20 - 10);
-      p.vy = -std::sin(angle) * (60.0f + rand() % 50) + (rand() % 20 - 10);
-      p.maxLife = 0.18f + (rand() % 10) / 100.0f;
-      p.life = p.maxLife;
-      p.color = (i == 0) ? Ramps::Cyan[14] : ((i == 1) ? Colors::Yellow : Ramps::Fire[12]);
-      p.size = 1.5f;
-      particles.push_back(p);
-    }
+  // ===========================================================================
+  // 14. SOUND EFFEKTE
+  // ===========================================================================
+  void playBoostSound(Engine &e) {
+    e.play_tone(Notes::A5, 0.12f);
   }
 
-  void spawnRocketTrail(float x, float y, float vx, float vy) {
-    Particle p;
-    p.x = x + (rand() % 3 - 1);
-    p.y = y + (rand() % 3 - 1);
-    p.vx = -vx * 0.15f + (rand() % 16 - 8);
-    p.vy = -vy * 0.15f + (rand() % 16 - 8);
-    p.maxLife = 0.22f;
-    p.life = p.maxLife;
-    p.color = (rand() % 2 == 0) ? Colors::DarkGray : Ramps::Fire[10];
-    p.size = 1.0f;
-    particles.push_back(p);
+  void playRocketLaunchSound(Engine &e) {
+    e.play_tone(Notes::F5, 0.08f);
   }
 
-  void spawnExplosion(float x, float y) {
-    for (int i = 0; i < 35; ++i) {
-      Particle p;
-      p.x = x;
-      p.y = y;
-      float ang = (rand() % 360) * (3.14159265f / 180.0f);
-      float spd = 20.0f + (rand() % 85);
-      p.vx = std::cos(ang) * spd;
-      p.vy = std::sin(ang) * spd;
-      p.maxLife = 0.35f + (rand() % 20) / 100.0f;
-      p.life = p.maxLife;
-      p.color = (i < 10) ? Colors::White : ((i < 24) ? Ramps::Fire[12] : Colors::DarkGray);
-      p.size = 2.0f;
-      particles.push_back(p);
-    }
+  void playExplosionSound(Engine &e) {
+    e.play_tone(Notes::Cs2, 0.20f);
   }
 
-  void spawnSlowSparks(float x, float y) {
-    Particle p;
-    p.x = x + (rand() % 8 - 4);
-    p.y = y + (rand() % 8 - 4);
-    p.vx = (rand() % 30 - 15);
-    p.vy = -20.0f - (rand() % 25);
-    p.maxLife = 0.25f;
-    p.life = p.maxLife;
-    p.color = (rand() % 2 == 0) ? Ramps::Yellow[14] : Colors::DarkGray;
-    p.size = 1.0f;
-    particles.push_back(p);
+  void playLapSound(Engine &e) {
+    e.play_tone(Notes::E5, 0.08f);
   }
 
-  void spawnSkidMark(float x, float y) {
-    SkidMark sm;
-    sm.x = x;
-    sm.y = y;
-    sm.life = 2.5f;
-    skidMarks.push_back(sm);
-  }
-
-  void spawnGrassDirt(float x, float y) {
-    Particle p;
-    p.x = x + (rand() % 6 - 3);
-    p.y = y + (rand() % 6 - 3);
-    p.vx = (rand() % 30 - 15);
-    p.vy = (rand() % 30 - 15);
-    p.maxLife = 0.20f;
-    p.life = p.maxLife;
-    p.color = (rand() % 2 == 0) ? Colors::DarkGreen : Ramps::Earth::Soil[4];
-    p.size = 1.0f;
-    particles.push_back(p);
-  }
-
-  void spawnCrashSparks(float x, float y) {
-    for (int i = 0; i < 8; ++i) {
-      Particle p;
-      p.x = x;
-      p.y = y;
-      p.vx = (rand() % 60 - 30);
-      p.vy = (rand() % 60 - 30);
-      p.maxLife = 0.15f;
-      p.life = p.maxLife;
-      p.color = (i % 2 == 0) ? Colors::White : Colors::Gold;
-      p.size = 1.0f;
-      particles.push_back(p);
-    }
+  void playVictoryFanfare(Engine &e) {
+    e.play_tone(Notes::C5, 0.12f);
   }
 
   // ===========================================================================
-  // 11. RENDERING & ZEICHENFUNKTIONEN
+  // 15. RENDERING & GRAFIK
   // ===========================================================================
   void render(Engine &e) {
-    // 1. Rasen / Landschaft (Schöner satter Farbton mit Gras-Muster)
+    // 1. Hintergrund (Grüne Rasenfläche)
     e.cls(Colors::DarkGreen);
 
-    // Deko-Rasenmuster
-    for (int y = 0; y < 240; y += 32) {
-      for (int x = 0; x < 320; x += 32) {
-        if (((x / 32) + (y / 32)) % 2 == 0) {
-          e.rectfill(x, y, 32, 32, Ramps::Green[6]);
+    // Rasen-Textur-Muster
+    for (int y = 0; y < 240; y += 12) {
+      for (int x = 0; x < 320; x += 12) {
+        if (((x / 12) + (y / 12)) % 2 == 0) {
+          e.rectfill(x, y, 12, 12, Colors::LightGreen);
         }
       }
     }
 
-    // 2. Asphalt-Rennstrecke & Curbs zeichnen
+    // 2. Asphalt-Strecke & Curbs zeichnen
     renderTrack(e);
 
-    // 3. Reifenspuren auf dem Asphalt
+    // 3. Reifenspuren
     for (const auto &sm : skidMarks) {
-      e.pset(sm.x, sm.y, Colors::DarkGray);
+      e.rectfill(sm.x - 1, sm.y - 1, 2, 2, Colors::Black);
     }
 
-    // 4. Raketen rendern
-    renderRockets(e);
+    // 4. Start/Ziel Schachbrett-Linie
+    renderStartFinish(e);
 
-    // 5. Rennwagen beider Spieler rendern
-    renderCar(e, cars[0]);
-    renderCar(e, cars[1]);
+    // 5. Hindernisse & Reifenstapel
+    renderBarriers(e);
 
-    // 6. Partikel (Feuer, Rauch, Funken)
+    // 6. Raketen zeichnen
+    for (const auto &r : rockets) {
+      renderRocket(e, r);
+    }
+
+    // 7. Rennwagen zeichnen
+    for (int i = 0; i < 2; ++i) {
+      renderCar(e, cars[i]);
+    }
+
+    // 8. Partikel zeichnen
     for (const auto &p : particles) {
-      e.pset(p.x, p.y, p.color);
+      float lifeRatio = p.life / p.maxLife;
+      uint8_t c = p.color;
+      if (lifeRatio < 0.4f) c = Colors::DarkGray;
+      e.rectfill(p.x - p.size * 0.5f, p.y - p.size * 0.5f, p.size, p.size, c);
     }
 
-    // 7. HUD & Renn-Informationen
+    // 9. HUD (Tacho, Runden & Cooldowns)
     renderHUD(e);
+
+    // 10. Countdown & Sieger-Banner
+    if (state == State::Countdown) {
+      renderCountdownBanner(e);
+    } else if (state == State::Finished) {
+      renderVictoryBanner(e);
+    }
   }
 
-  // --- RENNSTRECKE MIT ASPHALT, CURBS & START/ZIEL LINIE ---
+  // Zeichnet die durchgehende Asphaltstrecke mit Randsteinen
   void renderTrack(Engine &e) {
-    // Strecke als verbundene dicke Asphalt-Segmente zeichnen
+    const int STEPS_PER_SEGMENT = 18;
+
     for (int i = 0; i < NUM_TRACK_NODES; ++i) {
       int next = (i + 1) % NUM_TRACK_NODES;
       float x1 = trackNodes[i].x;
@@ -784,243 +1180,224 @@ public:
       float x2 = trackNodes[next].x;
       float y2 = trackNodes[next].y;
 
-      // Normalen-Vektor zur Strecken-Richtung
-      float dx = x2 - x1;
-      float dy = y2 - y1;
-      float len = std::sqrt(dx * dx + dy * dy);
-      if (len < 0.001f) continue;
-      float nx = (-dy / len);
-      float ny = (dx / len);
+      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
+        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
+        float cx = x1 + t * (x2 - x1);
+        float cy = y1 + t * (y2 - y1);
 
-      // Asphalt-Streifen
-      float hw = TRACK_HALF_WIDTH;
-      for (float t = 0.0f; t <= 1.0f; t += 0.04f) {
-        float cx = x1 + t * dx;
-        float cy = y1 + t * dy;
+        // Randsteine (Rot/Weiß gestreift)
+        uint8_t curbColor = ((i * STEPS_PER_SEGMENT + s) / 3 % 2 == 0) ? Colors::Red : Colors::White;
+        e.circfill(cx, cy, TRACK_HALF_WIDTH + 3.0f, curbColor);
 
-        // 1. Rand-Curbs (Rot/Weiß gestreift)
-        bool kerbWhite = (static_cast<int>(t * 14.0f + i * 4) % 2 == 0);
-        uint8_t kerbCol = kerbWhite ? Colors::White : Colors::Red;
-        e.circlefill(cx + nx * (hw + 2.0f), cy + ny * (hw + 2.0f), 3.0f, kerbCol);
-        e.circlefill(cx - nx * (hw + 2.0f), cy - ny * (hw + 2.0f), 3.0f, kerbCol);
+        // Asphalt-Fahrbahn (Dunkelgrau)
+        e.circfill(cx, cy, TRACK_HALF_WIDTH, Colors::DarkGray);
 
-        // 2. Asphalt-Fahrbahn (Dunkelgrau)
-        e.circlefill(cx, cy, hw, Colors::DarkGray);
-
-        // 3. Weiße Mittellinie (gestrichelt)
-        if (static_cast<int>(t * 8.0f) % 2 == 0) {
-          e.pset(cx, cy, Colors::White);
+        // Fahrbahn-Textur (Leichte Asphalt-Linien)
+        if (s % 4 == 0) {
+          e.circfill(cx, cy, TRACK_HALF_WIDTH - 2.0f, Colors::LightGray);
+          e.circfill(cx, cy, TRACK_HALF_WIDTH - 3.5f, Colors::DarkGray);
         }
       }
     }
+  }
 
-    // Start-Ziel Linie (Kariertes Schachbrettmuster quer über die Strecke)
-    float sX = trackNodes[0].x;
-    float sY = trackNodes[0].y;
-    for (int k = -16; k <= 16; k += 4) {
-      uint8_t c1 = ((k / 4) % 2 == 0) ? Colors::White : Colors::Black;
-      uint8_t c2 = ((k / 4) % 2 == 0) ? Colors::Black : Colors::White;
-      e.rectfill(sX + k, sY - 2, 4, 2, c1);
-      e.rectfill(sX + k, sY, 4, 2, c2);
+  void renderStartFinish(Engine &e) {
+    float x = 284.0f;
+    float y = 175.0f;
+    float halfW = TRACK_HALF_WIDTH;
+
+    // Start-Ziel Checkerboard Linie quer über die Fahrbahn
+    for (float dx = -halfW + 1; dx < halfW - 1; dx += 4.0f) {
+      for (int dy = -3; dy <= 3; dy += 3) {
+        bool black = ((int(dx) / 4 + dy / 3) % 2 == 0);
+        e.rectfill(x + dx, y + dy, 4, 3, black ? Colors::Black : Colors::White);
+      }
+    }
+    e.line(x - halfW, y - 4, x + halfW, y - 4, Colors::Yellow);
+    e.line(x - halfW, y + 4, x + halfW, y + 4, Colors::Yellow);
+  }
+
+  void renderBarriers(Engine &e) {
+    for (const auto &b : barriers) {
+      // Äußere Reifenwulst
+      e.circfill(b.x, b.y, b.radius, Colors::Black);
+      e.circfill(b.x, b.y, b.radius - 2.0f, b.color1);
+      e.circfill(b.x, b.y, b.radius - 4.5f, b.color2);
+      e.circfill(b.x, b.y, 2.0f, Colors::Black);
     }
   }
 
-  // --- RENNWAGEN-SPRITE (Pixel-Art mit Drehung) ---
   void renderCar(Engine &e, const Car &c) {
-    float px = c.x;
-    float py = c.y;
+    // 12x7 Pixel Sportwagen mit Cockpit, Spoiler & Breitreifen
     float cosA = std::cos(c.angle);
     float sinA = std::sin(c.angle);
 
-    // Basis-Karosserie Vektoren (Länge 12px, Breite 7px)
-    auto drawRotatedPixel = [&](float rx, float ry, uint8_t color) {
-      int screenX = static_cast<int>(px + rx * cosA - ry * sinA);
-      int screenY = static_cast<int>(py + rx * sinA + ry * cosA);
-      e.pset(screenX, screenY, color);
+    // Körperfarbe & Akzent
+    uint8_t bodyColor = (c.id == 0) ? Colors::Red : Colors::Blue;
+    uint8_t trimColor = (c.id == 0) ? Colors::Gold : Colors::Cyan;
+    if (c.boostActive) {
+      trimColor = Colors::White; // Glühen im Boost
+    }
+
+    // Auto-Mittelpunkt
+    float cx = c.x;
+    float cy = c.y;
+
+    auto transform = [&](float lx, float ly) -> std::pair<float, float> {
+      return {cx + lx * cosA - ly * sinA, cy + lx * sinA + ly * cosA};
     };
 
-    uint8_t bodyColor = (c.id == 0) ? Colors::Red : Colors::Blue;
-    uint8_t roofColor = (c.id == 0) ? Colors::Gold : Colors::Cyan;
-    uint8_t stripeColor = (c.id == 0) ? Colors::White : Colors::Yellow;
+    // 1. Vier Breitreifen (Schwarz)
+    std::pair<float, float> wheels[4] = {
+      transform( 4.0f, -4.5f), transform( 4.0f,  4.5f),
+      transform(-4.0f, -4.5f), transform(-4.0f,  4.5f)
+    };
+    for (int w = 0; w < 4; ++w) {
+      e.rectfill(wheels[w].first - 1.5f, wheels[w].second - 1.5f, 3.0f, 3.0f, Colors::Black);
+    }
 
-    // 1. Schwarze Breitreifen (4 Räder)
-    drawRotatedPixel( 4.0f, -3.5f, Colors::Black);
-    drawRotatedPixel( 4.0f,  3.5f, Colors::Black);
-    drawRotatedPixel(-4.0f, -3.5f, Colors::Black);
-    drawRotatedPixel(-4.0f,  3.5f, Colors::Black);
-
-    // 2. Karosserie / Chassis
+    // 2. Karosserie (Chassis)
     for (float lx = -5.0f; lx <= 5.0f; lx += 1.0f) {
-      for (float ly = -2.5f; ly <= 2.5f; ly += 1.0f) {
-        drawRotatedPixel(lx, ly, bodyColor);
+      float w = (std::abs(lx) > 3.5f) ? 2.5f : 3.5f;
+      for (float ly = -w; ly <= w; ly += 1.0f) {
+        auto p = transform(lx, ly);
+        e.pset(p.first, p.second, bodyColor);
       }
     }
 
-    // 3. Rennstreifen auf der Motorhaube
-    drawRotatedPixel( 3.0f, 0.0f, stripeColor);
-    drawRotatedPixel( 4.0f, 0.0f, stripeColor);
-
-    // 4. Cockpit / Windschutzscheibe
-    for (float lx = -1.0f; lx <= 1.0f; lx += 1.0f) {
-      drawRotatedPixel(lx, -1.0f, roofColor);
-      drawRotatedPixel(lx,  0.0f, roofColor);
-      drawRotatedPixel(lx,  1.0f, roofColor);
+    // 3. Rennstreifen / Zierleiste
+    for (float lx = -4.0f; lx <= 4.0f; lx += 1.0f) {
+      auto p = transform(lx, 0.0f);
+      e.pset(p.first, p.second, trimColor);
     }
-    drawRotatedPixel(1.0f, 0.0f, Colors::White); // Glanzpunkt Frontscheibe
 
-    // 5. Frontscheinwerfer (Gelb/Weiß vorne)
-    drawRotatedPixel(5.5f, -2.0f, Colors::Yellow);
-    drawRotatedPixel(5.5f,  2.0f, Colors::Yellow);
+    // 4. Cockpit & Windschutzscheibe
+    auto cp1 = transform(0.0f, -1.0f);
+    auto cp2 = transform(0.0f,  1.0f);
+    auto cp3 = transform(1.5f,  0.0f);
+    e.pset(cp1.first, cp1.second, Colors::SkyBlue);
+    e.pset(cp2.first, cp2.second, Colors::SkyBlue);
+    e.pset(cp3.first, cp3.second, Colors::White);
 
-    // 6. Rückleuchten / Bremslicht
-    uint8_t rearLight = (c.speed < 0.0f || (c.boostActive)) ? Colors::White : Colors::Red;
-    drawRotatedPixel(-5.5f, -2.0f, rearLight);
-    drawRotatedPixel(-5.5f,  2.0f, rearLight);
+    // 5. Heckspoiler
+    auto spL = transform(-5.5f, -3.5f);
+    auto spR = transform(-5.5f,  3.5f);
+    e.line(spL.first, spL.second, spR.first, spR.second, trimColor);
 
-    // Status-Anzeige über dem Auto (SLOWED 50% / BOOST)
+    // 6. Scheinwerfer vorne
+    auto hlL = transform(5.5f, -2.5f);
+    auto hlR = transform(5.5f,  2.5f);
+    e.pset(hlL.first, hlL.second, Colors::Yellow);
+    e.pset(hlR.first, hlR.second, Colors::Yellow);
+
+    // 7. Slowdown-Warnung über dem Auto bei Raketentreffer
     if (c.slowTimer > 0.0f) {
-      bool blink = (static_cast<int>(raceTimer * 8.0f) % 2 == 0);
-      if (blink) {
-        e.draw_text(px - 14, py - 12, "SLOW 50%", Colors::Red, 1);
-      }
-    } else if (c.boostActive) {
-      e.draw_text(px - 12, py - 12, "BOOST!", Colors::Cyan, 1);
+      e.draw_text(c.x - 12, c.y - 14, "SLOW!", Colors::Red, 1);
     }
   }
 
-  // --- RAKETEN RENDERN ---
-  void renderRockets(Engine &e) {
-    for (const auto &r : rockets) {
-      int rx = static_cast<int>(r.x);
-      int ry = static_cast<int>(r.y);
-      e.circlefill(rx, ry, 2.5f, Colors::Red);
-      e.pset(rx, ry, Colors::White);
-      e.pset(rx - static_cast<int>(r.vx * 0.02f), ry - static_cast<int>(r.vy * 0.02f), Colors::Yellow);
-    }
+  void renderRocket(Engine &e, const Rocket &r) {
+    float cosA = std::cos(r.angle);
+    float sinA = std::sin(r.angle);
+
+    float tipX = r.x + cosA * 4.0f;
+    float tipY = r.y + sinA * 4.0f;
+    float backX = r.x - cosA * 4.0f;
+    float backY = r.y - sinA * 4.0f;
+
+    e.line(backX, backY, tipX, tipY, Colors::White);
+    e.pset(tipX, tipY, Colors::Red);
+    e.pset(backX, backY, Colors::Yellow);
   }
 
-  // --- HUD: TACHO, BOOST-METER & RUNDENZEITEN ---
   void renderHUD(Engine &e) {
-    // 1. SPIELER 1 (LINKS - ROT)
-    e.rectfill(8, 6, 95, 26, Colors::Black);
-    e.rect(8, 6, 95, 26, Colors::Red);
-    e.draw_text(12, 9, "P1: ROT", Colors::Red, 1);
-    std::string lap1 = "L:" + std::to_string(std::min(TOTAL_LAPS, cars[0].currentLap)) + "/" + std::to_string(TOTAL_LAPS);
-    e.draw_text(58, 9, lap1, Colors::White, 1);
+    // --- SPIELER 1 HUD (Oben Links) ---
+    e.rectfill(4, 4, 98, 22, Colors::DarkGray);
+    e.rect(4, 4, 98, 22, Colors::Red);
+    e.draw_text(6, 6, "P1: ROT", Colors::Red, 1);
 
-    // Boost-Balken P1
+    // Runde
+    std::string lap1 = "RUNDE: " + std::to_string(std::min(cars[0].currentLap, TOTAL_LAPS)) + "/" + std::to_string(TOTAL_LAPS);
+    e.draw_text(48, 6, lap1, Colors::White, 1);
+
+    // Speedometer & Boost Bar
+    std::string spd1 = std::to_string(static_cast<int>(std::abs(cars[0].speed))) + " KM/H";
+    e.draw_text(6, 16, spd1, Colors::Gold, 1);
+
+    // Boost Cooldown Balken
     if (cars[0].boostActive) {
-      e.draw_text(12, 19, "BOOSTING!", Colors::Cyan, 1);
-    } else if (cars[0].boostCooldown > 0.0f) {
-      int cdW = static_cast<int>((1.0f - (cars[0].boostCooldown / 5.0f)) * 40.0f);
-      e.draw_text(12, 19, "BOOST:", Colors::DarkGray, 1);
-      e.rectfill(48, 20, cdW, 4, Colors::Yellow);
+      e.draw_text(52, 16, "NITRO!", Colors::Yellow, 1);
+    } else if (cars[0].boostCooldown <= 0.0f) {
+      e.draw_text(52, 16, "BOOST: OK", Colors::LightGreen, 1);
     } else {
-      e.draw_text(12, 19, "BOOST READY!", Colors::LightGreen, 1);
+      int cd = static_cast<int>(cars[0].boostCooldown + 0.99f);
+      e.draw_text(52, 16, "CD: " + std::to_string(cd) + "S", Colors::LightGray, 1);
     }
 
-    // Raketen-Status P1
-    if (cars[0].rocketCooldown <= 0.0f) {
-      e.draw_text(68, 19, "[L-SHIFT]", Colors::Gold, 1);
-    }
+    // --- SPIELER 2 HUD (Oben Rechts) ---
+    e.rectfill(218, 4, 98, 22, Colors::DarkGray);
+    e.rect(218, 4, 98, 22, Colors::Blue);
+    e.draw_text(220, 6, "P2: BLAU", Colors::Cyan, 1);
 
-    // 2. SPIELER 2 (RECHTS - BLAU)
-    e.rectfill(217, 6, 95, 26, Colors::Black);
-    e.rect(217, 6, 95, 26, Colors::Blue);
-    e.draw_text(221, 9, "P2: BLAU", Colors::Blue, 1);
-    std::string lap2 = "L:" + std::to_string(std::min(TOTAL_LAPS, cars[1].currentLap)) + "/" + std::to_string(TOTAL_LAPS);
-    e.draw_text(268, 9, lap2, Colors::White, 1);
+    // Runde
+    std::string lap2 = "RUNDE: " + std::to_string(std::min(cars[1].currentLap, TOTAL_LAPS)) + "/" + std::to_string(TOTAL_LAPS);
+    e.draw_text(262, 6, lap2, Colors::White, 1);
 
-    // Boost-Balken P2
+    // Speedometer & Boost Bar
+    std::string spd2 = std::to_string(static_cast<int>(std::abs(cars[1].speed))) + " KM/H";
+    e.draw_text(220, 16, spd2, Colors::Cyan, 1);
+
+    // Boost Cooldown Balken
     if (cars[1].boostActive) {
-      e.draw_text(221, 19, "BOOSTING!", Colors::Cyan, 1);
-    } else if (cars[1].boostCooldown > 0.0f) {
-      int cdW = static_cast<int>((1.0f - (cars[1].boostCooldown / 5.0f)) * 40.0f);
-      e.draw_text(221, 19, "BOOST:", Colors::DarkGray, 1);
-      e.rectfill(257, 20, cdW, 4, Colors::Yellow);
+      e.draw_text(266, 16, "NITRO!", Colors::Yellow, 1);
+    } else if (cars[1].boostCooldown <= 0.0f) {
+      e.draw_text(266, 16, "BOOST: OK", Colors::LightGreen, 1);
     } else {
-      e.draw_text(221, 19, "BOOST READY!", Colors::LightGreen, 1);
+      int cd = static_cast<int>(cars[1].boostCooldown + 0.99f);
+      e.draw_text(266, 16, "CD: " + std::to_string(cd) + "S", Colors::LightGray, 1);
     }
 
-    // Raketen-Status P2
-    if (cars[1].rocketCooldown <= 0.0f) {
-      e.draw_text(278, 19, "[R-SHIFT]", Colors::Gold, 1);
+    // Mitte: Renndauer
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << raceTimer << "S";
+    e.draw_text(145, 6, ss.str(), Colors::White, 1);
+  }
+
+  void renderCountdownBanner(Engine &e) {
+    e.rectfill(90, 85, 140, 50, Colors::DarkGray);
+    e.rect(90, 85, 140, 50, Colors::Yellow);
+
+    if (countdownTimer > 3.0f) {
+      e.draw_text(125, 95, "BEREIT?", Colors::White, 2);
+    } else if (countdownTimer > 2.0f) {
+      e.draw_text(152, 95, "3", Colors::Red, 3);
+    } else if (countdownTimer > 1.0f) {
+      e.draw_text(152, 95, "2", Colors::Yellow, 3);
+    } else if (countdownTimer > 0.0f) {
+      e.draw_text(152, 95, "1", Colors::LightGreen, 3);
+    } else {
+      e.draw_text(140, 95, "GO!", Colors::White, 3);
     }
+    e.draw_text(100, 122, "DOPPEL-VOR = BOOST!", Colors::Gold, 1);
+  }
 
-    // 3. START-AMPEL / COUNTDOWN BANNER
-    if (state == State::Countdown) {
-      e.rectfill(100, 90, 120, 45, Colors::Black);
-      e.rect(100, 90, 120, 45, Colors::Gold);
+  void renderVictoryBanner(Engine &e) {
+    e.rectfill(60, 75, 200, 75, Colors::DarkGray);
+    e.rect(60, 75, 200, 75, (winner == 0) ? Colors::Red : Colors::Blue);
 
-      if (countdownTimer > 3.0f) {
-        e.draw_text(115, 102, "BEREIT MACHEN!", Colors::White, 1);
-      } else if (countdownTimer > 2.0f) {
-        e.draw_text(152, 98, "3", Colors::Red, 3);
-      } else if (countdownTimer > 1.0f) {
-        e.draw_text(152, 98, "2", Colors::Yellow, 3);
-      } else if (countdownTimer > 0.0f) {
-        e.draw_text(152, 98, "1", Colors::LightGreen, 3);
-      }
+    std::string winText = (winner == 0) ? "SPIELER 1 (ROT) GEWINNT!" : "SPIELER 2 (BLAU) GEWINNT!";
+    uint8_t winColor = (winner == 0) ? Colors::Red : Colors::Cyan;
+    e.draw_text(70, 85, winText, winColor, 1);
+
+    e.draw_text(85, 100, "CHAMPION DES GRAND PRIX!", Colors::Gold, 1);
+
+    std::stringstream ss;
+    ss << "SIEGERZEIT: " << std::fixed << std::setprecision(2) << cars[winner].finishTime << " SEKUNDEN";
+    e.draw_text(74, 115, ss.str(), Colors::White, 1);
+
+    bool blink = (int(e.time() * 3.0f) % 2) == 0;
+    if (blink) {
+      e.draw_text(80, 134, "DRUECKE R FUER NEUSTART", Colors::Yellow, 1);
     }
-
-    // 4. SIEGER-PODIUM
-    if (state == State::Finished) {
-      e.rectfill(60, 70, 200, 80, Colors::Black);
-      e.rect(60, 70, 200, 80, Colors::Gold);
-
-      std::string winTxt = (winner == 0) ? "SPIELER 1 (ROT) GEWINNT!" : "SPIELER 2 (BLAU) GEWINNT!";
-      uint8_t winCol = (winner == 0) ? Colors::Red : Colors::Blue;
-      e.draw_text(72, 85, "ZIEL-EINLAUF!", Colors::Gold, 2);
-      e.draw_text(74, 110, winTxt, winCol, 1);
-
-      bool blink = (static_cast<int>(raceTimer * 2.5f) % 2 == 0);
-      if (blink) {
-        e.draw_text(78, 130, "LEERTASTE: NEUSTART", Colors::Yellow, 1);
-      }
-
-      if (e.pressed(Key::Space) || e.pressed(Key::Enter)) {
-        resetRace();
-      }
-    }
-
-    // Tastatur-Hilfe am unteren Rand
-    e.draw_text(8, 230, "P1: W/A/S/D [2xW:BOOST] [L-SHIFT:RAKETE] | P2: PFEILE [2xUP:BOOST] [R-SHIFT:RAKETE]", Ramps::Grays[8], 1);
-  }
-
-  // ===========================================================================
-  // 12. SYNTHESIZER SOUNDS
-  // ===========================================================================
-  void playBoostSound(Engine &e) {
-    // Aufsteigender Turbo-Pfeifton
-    e.play_tone(Notes::D5, 0.06f);
-    e.play_tone(Notes::G5, 0.08f);
-    e.play_tone(Notes::C6, 0.15f);
-  }
-
-  void playRocketLaunchSound(Engine &e) {
-    // Bedrohlicher Raketenstart-Whoosh
-    e.play_tone(Notes::C4, 0.05f);
-    e.play_tone(Notes::G4, 0.07f);
-    e.play_tone(Notes::B4, 0.10f);
-  }
-
-  void playExplosionSound(Engine &e) {
-    // Tiefes Wummern bei Einschlag
-    e.play_tone(Notes::C2, 0.28f);
-    e.play_tone(Notes::F2, 0.18f);
-  }
-
-  void playLapSound(Engine &e) {
-    // Heller Runden-Gong
-    e.play_tone(Notes::E5, 0.08f);
-    e.play_tone(Notes::A5, 0.16f);
-  }
-
-  void playVictoryFanfare(Engine &e) {
-    // Grand Prix Siegerfanfare
-    e.play_tone(Notes::C4, 0.12f);
-    e.play_tone(Notes::E4, 0.12f);
-    e.play_tone(Notes::G4, 0.12f);
-    e.play_tone(Notes::C5, 0.35f);
   }
 };
