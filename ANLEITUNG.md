@@ -166,7 +166,7 @@ g++ -std=c++17 -I/opt/homebrew/include main.cc \
 Oder noch einfacher mit unserem **Makefile**:
 ```bash
 make          # Kompiliert das Spiel
-./test        # Startet das Spiel
+./run_the_games # Startet das Spiel
 make static   # Baut Datei ohne externe Abhängigkeiten
 make bundle   # Baut echte macOS App: MTG.app!
 ```

@@ -1,4 +1,6 @@
 # Build Artifacts & Executables
+run_the_games
+run_the_games_static
 test
 test_static
 *.dSYM/

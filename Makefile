@@ -12,8 +12,8 @@ STATIC_LDFLAGS = -Wl,-force_load,$(STATIC_DEPS)/lib/libsfml-window-s.a \
                  -framework Foundation -framework AppKit -framework IOKit \
                  -framework Carbon -framework AudioToolbox -framework CoreAudio -framework OpenGL
 
-TARGET = test
-STATIC_TARGET = test_static
+TARGET = run_the_games
+STATIC_TARGET = run_the_games_static
 APP_BUNDLE = MTG.app
 SRC = main.cc
 

@@ -12,26 +12,32 @@
 // =============================================================================
 // DARIOS SPIEL - ELEMENTAL PIXEL BRAWL (2-Player Local PvP Fighting Arena)
 // =============================================================================
-// 5 Einzigartige Elementar-Kämpfer nach Darios Vision:
-// 1. 🎸 Musik-Kämpfer (Dario): E-Gitarre, Drachen-Klangwelle, rote Haare, schwarze Augenringe
+// 6 Einzigartige Elementar- & Cyber-Kämpfer nach Darios Vision:
+// 1. 🎸 Musik-Kämpfer (Dario): E-Gitarre, Drachen-Klangwelle, rote Haare,
+// schwarze Augenringe
 // 2. ❄️ Eis-Kämpfer: Blau-Weiß, Eisstücke & Kristalle am Körper und Arm
 // 3. 🔥 Feuer-Kämpfer: Feuer am Arm, lodernde Feuerfrisur, Inferno-Feuerbälle
 // 4. ⚡ Blitz-Kämpfer: Blitz-Augen, elektrisierende Funken um Körper & Arm
 // 5. 💧 Wasser-Kämpfer: Blaue Haare & Augen, Ninja-Mundmaske, Hydro-Tsunami
+// 6. 💻 Hacker-Kämpfer (Byte): Cyber-Laptop, Cyber-Visor, schießt fliegende
+// Buchstaben & Matrix-Code!
 //
 // Steuerung (Genau 4 Tasten pro Spieler!):
-// - Spieler 1: W (Sprung), A / D (Laufen), Weg+Runter (Block), Hin+Runter (Superkraft)
-// - Spieler 2: Up (Sprung), Left / Right (Laufen), Weg+Runter (Block), Hin+Runter (Superkraft)
+// - Spieler 1: W (Sprung), A / D (Laufen), Weg+Runter (Block), Hin+Runter
+// (Superkraft)
+// - Spieler 2: Up (Sprung), Left / Right (Laufen), Weg+Runter (Block),
+// Hin+Runter (Superkraft)
 // =============================================================================
 
 struct DarioGame : Game {
 public:
   enum class FighterType {
-    Music = 0,    // Musik-Kämpfer (Dario)
-    Ice = 1,      // Eis-Kämpfer
-    Fire = 2,     // Feuer-Kämpfer
-    Lightning = 3,// Blitz-Kämpfer
-    Water = 4     // Wasser-Kämpfer
+    Music = 0,     // Musik-Kämpfer (Dario)
+    Ice = 1,       // Eis-Kämpfer
+    Fire = 2,      // Feuer-Kämpfer
+    Lightning = 3, // Blitz-Kämpfer
+    Water = 4,     // Wasser-Kämpfer
+    Hacker = 5     // Hacker-Kämpfer (Byte)
   };
 
   enum class State {
@@ -43,9 +49,9 @@ public:
   };
 
   enum class ShotMode {
-    Straight,   // Vorwärts, Vorwärts (0 Grad geradeaus)
-    UpDiag45,   // Vorwärts, dann Oben (45 Grad schräg nach oben)
-    DownGround  // Vorwärts + Runter (45 Grad nach unten -> Boden-Schockwelle)
+    Straight,  // Vorwärts, Vorwärts (0 Grad geradeaus)
+    UpDiag45,  // Vorwärts, dann Oben (45 Grad schräg nach oben)
+    DownGround // Vorwärts + Runter (45 Grad nach unten -> Boden-Schockwelle)
   };
 
   struct FighterDef {
@@ -131,8 +137,8 @@ public:
     int roundsWon = 0;
 
     bool isBlocking = false;
-    float blockTimer = 0.0f;     // Zeit wie lange Schild aktiv ist (max 1.0s)
-    float blockCooldown = 0.0f;  // Erholungszeit nach Schild-Ablauf
+    float blockTimer = 0.0f;    // Zeit wie lange Schild aktiv ist (max 1.0s)
+    float blockCooldown = 0.0f; // Erholungszeit nach Schild-Ablauf
     float attackCooldown = 0.0f;
     float maxCooldown = 0.8f;
     float hurtTimer = 0.0f;
@@ -141,7 +147,7 @@ public:
     int forwardTapCount = 0;
     bool prevMoveTowards = false;
     bool prevUp = false;
-    float slowTimer = 0.0f;      // Verlangsamung im Wasser (Wasser-Schockwelle)
+    float slowTimer = 0.0f; // Verlangsamung im Wasser (Wasser-Schockwelle)
   };
 
   // ===========================================================================
@@ -178,22 +184,68 @@ public:
   FighterDef getFighterDef(FighterType type) const {
     switch (type) {
     case FighterType::Music:
-      return {FighterType::Music, "DARIO", "DRACHEN-REITER", "DRACHEN-FLUG & RIFF",
-              Ramps::Gold[11], Ramps::Red[10], 0.60f, 32, 130.0f};
+      return {FighterType::Music,
+              "DARIO",
+              "DRACHEN-REITER",
+              "DRACHEN-FLUG & RIFF",
+              Ramps::Gold[11],
+              Ramps::Red[10],
+              0.60f,
+              32,
+              130.0f};
     case FighterType::Ice:
-      return {FighterType::Ice, "FROST", "EIS-KRIEGER", "EISKRISTALLE",
-              Ramps::SkyBlue[10], Colors::White, 0.70f, 18, 105.0f};
+      return {FighterType::Ice,
+              "FROST",
+              "EIS-KRIEGER",
+              "EISKRISTALLE",
+              Ramps::SkyBlue[10],
+              Colors::White,
+              0.70f,
+              18,
+              105.0f};
     case FighterType::Fire:
-      return {FighterType::Fire, "IGNIS", "FEUER-KRIEGER", "INFERNO-BALL",
-              Ramps::Fire[8], Ramps::Fire[12], 0.80f, 25, 120.0f};
+      return {FighterType::Fire,
+              "IGNIS",
+              "FEUER-KRIEGER",
+              "INFERNO-BALL",
+              Ramps::Fire[8],
+              Ramps::Fire[12],
+              0.80f,
+              25,
+              120.0f};
     case FighterType::Lightning:
-      return {FighterType::Lightning, "VOLT", "BLITZ-FALKE", "DONNER-SCHOCK",
-              Ramps::Gold[11], Ramps::Yellow[14], 0.60f, 16, 135.0f};
+      return {FighterType::Lightning,
+              "VOLT",
+              "BLITZ-FALKE",
+              "DONNER-SCHOCK",
+              Ramps::Gold[11],
+              Ramps::Yellow[14],
+              0.60f,
+              16,
+              135.0f};
     case FighterType::Water:
-      return {FighterType::Water, "AQUA", "WASSER-NINJA", "TSUNAMI-WELLE",
-              Ramps::Cyan[10], Ramps::Blue[12], 0.75f, 20, 110.0f};
+      return {FighterType::Water,
+              "AQUA",
+              "WASSER-NINJA",
+              "TSUNAMI-WELLE",
+              Ramps::Cyan[10],
+              Ramps::Blue[12],
+              0.75f,
+              20,
+              110.0f};
+    case FighterType::Hacker:
+      return {FighterType::Hacker,
+              "BYTE",
+              "CYBER-HACKER",
+              "ASCII-SALVE",
+              Ramps::Green[13],
+              Ramps::Cyan[13],
+              0.60f,
+              50,
+              128.0f};
     }
-    return {FighterType::Music, "DARIO", "MUSIK", "KLANG", Ramps::Red[9], Ramps::Gold[11], 0.8f, 20, 110.0f};
+    return {FighterType::Music, "DARIO", "MUSIK", "KLANG", Ramps::Red[9],
+            Ramps::Gold[11],    0.8f,    20,      110.0f};
   }
 
   // ===========================================================================
@@ -341,11 +393,11 @@ public:
     // Spieler 1 Steuerung: A / D zum Wählen, W zum Einloggen
     if (!p1Locked) {
       if (e.pressed(Key::A)) {
-        p1Cursor = (p1Cursor + 4) % 5;
+        p1Cursor = (p1Cursor + 5) % 6;
         playMenuBeep(e);
       }
       if (e.pressed(Key::D)) {
-        p1Cursor = (p1Cursor + 1) % 5;
+        p1Cursor = (p1Cursor + 1) % 6;
         playMenuBeep(e);
       }
       if (e.pressed(Key::W) || e.pressed(Key::Space)) {
@@ -361,11 +413,11 @@ public:
     // Spieler 2 Steuerung: Left / Right zum Wählen, Up zum Einloggen
     if (!p2Locked) {
       if (e.pressed(Key::Left)) {
-        p2Cursor = (p2Cursor + 4) % 5;
+        p2Cursor = (p2Cursor + 5) % 6;
         playMenuBeep(e);
       }
       if (e.pressed(Key::Right)) {
-        p2Cursor = (p2Cursor + 1) % 5;
+        p2Cursor = (p2Cursor + 1) % 6;
         playMenuBeep(e);
       }
       if (e.pressed(Key::Up) || e.pressed(Key::Enter)) {
@@ -404,10 +456,12 @@ public:
     float dt = e.dt();
 
     // 1. Spieler 1 Eingaben (WASD)
-    processPlayerInput(0, e.key(Key::A), e.key(Key::D), e.key(Key::W), e.key(Key::S), e.pressed(Key::W), e);
+    processPlayerInput(0, e.key(Key::A), e.key(Key::D), e.key(Key::W),
+                       e.key(Key::S), e.pressed(Key::W), e);
 
     // 2. Spieler 2 Eingaben (Pfeiltasten)
-    processPlayerInput(1, e.key(Key::Left), e.key(Key::Right), e.key(Key::Up), e.key(Key::Down), e.pressed(Key::Up), e);
+    processPlayerInput(1, e.key(Key::Left), e.key(Key::Right), e.key(Key::Up),
+                       e.key(Key::Down), e.pressed(Key::Up), e);
 
     // 3. Physik & Geländekollision für beide Spieler
     for (int i = 0; i < 2; ++i) {
@@ -435,14 +489,18 @@ public:
         // Unentschieden (beide bekommen einen Punkt)
         players[0].roundsWon++;
         players[1].roundsWon++;
-        spawnSupernova(players[0].x, players[0].y - 10.0f, players[0].fighter, /*isMega=*/true);
-        spawnSupernova(players[1].x, players[1].y - 10.0f, players[1].fighter, /*isMega=*/true);
+        spawnSupernova(players[0].x, players[0].y - 10.0f, players[0].fighter,
+                       /*isMega=*/true);
+        spawnSupernova(players[1].x, players[1].y - 10.0f, players[1].fighter,
+                       /*isMega=*/true);
       } else if (players[0].hp <= 0) {
         players[1].roundsWon++;
-        spawnSupernova(players[0].x, players[0].y - 10.0f, players[0].fighter, /*isMega=*/true);
+        spawnSupernova(players[0].x, players[0].y - 10.0f, players[0].fighter,
+                       /*isMega=*/true);
       } else {
         players[0].roundsWon++;
-        spawnSupernova(players[1].x, players[1].y - 10.0f, players[1].fighter, /*isMega=*/true);
+        spawnSupernova(players[1].x, players[1].y - 10.0f, players[1].fighter,
+                       /*isMega=*/true);
       }
 
       screenShake = 1.0f;
@@ -452,7 +510,8 @@ public:
     }
   }
 
-  void processPlayerInput(int pid, bool left, bool right, bool up, bool down, bool jumpPressed, Engine &e) {
+  void processPlayerInput(int pid, bool left, bool right, bool up, bool down,
+                          bool jumpPressed, Engine &e) {
     Player &p = players[pid];
     FighterDef def = getFighterDef(p.fighter);
 
@@ -491,8 +550,10 @@ public:
 
     bool inAir = (!p.isGrounded && !p.onPlatform);
 
-    // --- 1. "VORNE DANN OBEN" = SPRUNG & 45 GRAD SCHUSS NACH OBEN (JUMPING ANTI-AIR!) ---
-    if (justPressedUp && p.forwardTapTimer > 0.0f && p.forwardTapCount >= 1 && !down) {
+    // --- 1. "VORNE DANN OBEN" = SPRUNG & 45 GRAD SCHUSS NACH OBEN (JUMPING
+    // ANTI-AIR!) ---
+    if (justPressedUp && p.forwardTapTimer > 0.0f && p.forwardTapCount >= 1 &&
+        !down) {
       if (p.attackCooldown <= 0.0f) {
         // Spieler springt dynamisch in die Luft!
         if (p.isGrounded || p.onPlatform) {
@@ -512,7 +573,8 @@ public:
         p.attackCooldown = p.maxCooldown;
         p.forwardTapCount = 0;
         p.forwardTapTimer = 0.0f;
-        spawnDoubleJumpSparkle(p.x + p.facing * 10.0f, p.y - 12.0f, def.accentColor);
+        spawnDoubleJumpSparkle(p.x + p.facing * 10.0f, p.y - 12.0f,
+                               def.accentColor);
       }
       return; // Sprung & Schuss ausgeführt
     }
@@ -526,16 +588,19 @@ public:
           p.attackCooldown = p.maxCooldown;
           p.forwardTapCount = 0;
           p.forwardTapTimer = 0.0f;
-          spawnDoubleJumpSparkle(p.x + p.facing * 10.0f, p.y - 8.0f, def.accentColor);
+          spawnDoubleJumpSparkle(p.x + p.facing * 10.0f, p.y - 8.0f,
+                                 def.accentColor);
         }
       } else {
         p.forwardTapCount = 1;
-        p.forwardTapTimer = 0.32f; // 0.32s Zeitfenster für Folgeeingaben (Vorwärts oder Oben)
+        p.forwardTapTimer =
+            0.32f; // 0.32s Zeitfenster für Folgeeingaben (Vorwärts oder Oben)
       }
     }
 
-    // --- 3. BLOCKEN: "Weg vom Gegner + Runter" (z.B. A + S wenn nach rechts geblickt wird) ---
-    // Schild hält maximal 1.0 Sekunde -> erfordert präzises Reaktions-Timing!
+    // --- 3. BLOCKEN: "Weg vom Gegner + Runter" (z.B. A + S wenn nach rechts
+    // geblickt wird) --- Schild hält maximal 1.0 Sekunde -> erfordert präzises
+    // Reaktions-Timing!
     if (moveAway && down && p.blockCooldown <= 0.0f && p.blockTimer < 1.0f) {
       p.isBlocking = true;
       p.blockTimer += e.dt();
@@ -543,17 +608,20 @@ public:
 
       // Schildpartikel spawnen
       if (e.rnd(3) == 0) {
-        spawnShieldParticles(p.x + p.facing * 8.0f, p.y - 8.0f, def.accentColor);
+        spawnShieldParticles(p.x + p.facing * 8.0f, p.y - 8.0f,
+                             def.accentColor);
       }
 
-      // Nach genau 1.0 Sekunde bricht das Schild zusammen und geht in 0.75s Cooldown!
+      // Nach genau 1.0 Sekunde bricht das Schild zusammen und geht in 0.75s
+      // Cooldown!
       if (p.blockTimer >= 1.0f) {
         p.isBlocking = false;
         p.blockCooldown = 0.75f;
         spawnBlockSparks(p.x + p.facing * 8.0f, p.y - 8.0f);
         playBlockSound(e);
       }
-      return; // Während des Blockens kann man nicht gleichzeitig angreifen oder rennen
+      return; // Während des Blockens kann man nicht gleichzeitig angreifen oder
+              // rennen
     } else {
       p.isBlocking = false;
       // Wenn man Block loslässt, lädt sich die Schilddauer schnell wieder auf
@@ -565,7 +633,8 @@ public:
     // --- 4. BODEN-SCHOCKWELLE: "Hin zum Gegner + Runter" (z.B. D + S) ---
     if (moveTowards && down) {
       if (p.attackCooldown <= 0.0f) {
-        // Wenn man am Boden ist und zusätzlich Sprung drückt: Vorwärts-Sprungangriff nach unten!
+        // Wenn man am Boden ist und zusätzlich Sprung drückt:
+        // Vorwärts-Sprungangriff nach unten!
         if (!inAir && (up || jumpPressed)) {
           p.vy = -195.0f;
           p.vx = p.facing * 140.0f;
@@ -585,7 +654,8 @@ public:
       return;
     }
 
-    // --- C. DURCH PLATTFORM FALLEN: "Nur Runter" während man auf einer Plattform steht ---
+    // --- C. DURCH PLATTFORM FALLEN: "Nur Runter" während man auf einer
+    // Plattform steht ---
     if (down && p.onPlatform) {
       p.y += 3.0f;
       p.onPlatform = false;
@@ -597,12 +667,15 @@ public:
     bool isMusicFighter = (p.fighter == FighterType::Music);
     p.isFlying = false;
 
-    // DARIO KANN FLIEGEN: Wenn man in der Luft W / Up hält, gleitet & schwebt der Drache!
+    // DARIO KANN FLIEGEN: Wenn man in der Luft W / Up hält, gleitet & schwebt
+    // der Drache!
     if (isMusicFighter && !p.isGrounded && !p.onPlatform && up) {
       p.isFlying = true;
-      if (p.vy > 35.0f) p.vy = 35.0f; // Sanftes Schweben/Gleiten im Wind
+      if (p.vy > 35.0f)
+        p.vy = 35.0f; // Sanftes Schweben/Gleiten im Wind
       if (e.rnd(3) == 0) {
-        spawnDoubleJumpSparkle(p.x - p.facing * 4.0f, p.y - 6.0f, Ramps::Gold[12]);
+        spawnDoubleJumpSparkle(p.x - p.facing * 4.0f, p.y - 6.0f,
+                               Ramps::Gold[12]);
       }
     }
 
@@ -620,7 +693,8 @@ public:
         p.vy = -185.0f;
         p.isFlying = true;
         playJumpSound(e);
-        spawnDoubleJumpSparkle(p.x - p.facing * 5.0f, p.y - 8.0f, Ramps::Gold[14]);
+        spawnDoubleJumpSparkle(p.x - p.facing * 5.0f, p.y - 8.0f,
+                               Ramps::Gold[14]);
       } else if (p.canDoubleJump) {
         p.vy = (p.slowTimer > 0.0f) ? -150.0f : -185.0f;
         p.canDoubleJump = false;
@@ -648,9 +722,11 @@ public:
   // ===========================================================================
   void updatePlayerPhysics(Player &p, float dt) {
     // Schwerkraft (für Dario im Drachenflug sanft gedämpft)
-    float grav = (p.fighter == FighterType::Music && p.isFlying) ? 140.0f : 480.0f;
+    float grav =
+        (p.fighter == FighterType::Music && p.isFlying) ? 140.0f : 480.0f;
     p.vy += grav * dt;
-    if (p.vy > 350.0f) p.vy = 350.0f;
+    if (p.vy > 350.0f)
+      p.vy = 350.0f;
 
     float prevY = p.y;
     p.x += p.vx * dt;
@@ -659,7 +735,8 @@ public:
     // Obere Deckenbegrenzung (damit der Drache nicht über das HUD hinausfliegt)
     if (p.y < 30.0f) {
       p.y = 30.0f;
-      if (p.vy < 0.0f) p.vy = 0.0f;
+      if (p.vy < 0.0f)
+        p.vy = 0.0f;
     }
 
     // Arena-Wände (Links/Rechts Begrenzung)
@@ -684,7 +761,8 @@ public:
       }
     }
 
-    // 2. 3-Punkt Bodenkollision mit hügeligem Terrain (Linker Fuß, Mitte, Rechter Fuß)
+    // 2. 3-Punkt Bodenkollision mit hügeligem Terrain (Linker Fuß, Mitte,
+    // Rechter Fuß)
     if (!p.onPlatform) {
       float groundLeft = getGroundHeight(p.x - 4.0f);
       float groundMid = getGroundHeight(p.x);
@@ -758,6 +836,13 @@ public:
       case FighterType::Water:
         playWaterSplashSound(e);
         break;
+      case FighterType::Hacker:
+        proj.vx = p.facing * (baseSpd + 40.0f) * 0.707f;
+        proj.vy = -(baseSpd + 40.0f) * 0.707f;
+        proj.radius = 7.5f;
+        proj.damage = 60; // MASSIVER SCHADEN (60 HP)
+        playHackerCastSound(e);
+        break;
       }
     } else if (mode == ShotMode::DownGround) {
       // --- 45 GRAD SCHUSS NACH UNTEN (BODEN-SCHOCKWELLE) ---
@@ -789,6 +874,13 @@ public:
         break;
       case FighterType::Water:
         playWaterSplashSound(e);
+        break;
+      case FighterType::Hacker:
+        proj.vx = p.facing * (baseSpd + 40.0f) * 0.707f;
+        proj.vy = (baseSpd + 40.0f) * 0.707f;
+        proj.radius = 8.0f;
+        proj.damage = 65; // EXTREME MATRIX-VIRUS BODEN-WELLE (65 HP)
+        playHackerCastSound(e);
         break;
       }
     } else {
@@ -825,6 +917,12 @@ public:
         proj.radius = 7.5f;
         playWaterSplashSound(e);
         break;
+      case FighterType::Hacker: // Fliegende Matrix-Code Buchstaben
+        proj.vx = p.facing * (baseSpd + 55.0f);
+        proj.radius = 7.5f;
+        proj.damage = 50; // DURCHSCHLAGSKRÄFTIGE CODE-SALVE (50 HP)
+        playHackerCastSound(e);
+        break;
       }
     }
 
@@ -842,13 +940,15 @@ public:
         continue;
       }
 
-      // Wenn es eine Boden-Schockwelle ist: Folgt der Kontur des hügeligen Geländes!
+      // Wenn es eine Boden-Schockwelle ist: Folgt der Kontur des hügeligen
+      // Geländes!
       if (proj.isGroundWave) {
         proj.x += proj.vx * dt;
         proj.y = getGroundHeight(proj.x) - 4.0f;
         spawnGroundWaveParticles(proj);
 
-        // 💧 WASSER-SCHOCKWELLE hinterlässt eine Spur aus verlangsamenden Wasserpfützen!
+        // 💧 WASSER-SCHOCKWELLE hinterlässt eine Spur aus verlangsamenden
+        // Wasserpfützen!
         if (proj.type == FighterType::Water) {
           spawnWaterPuddle(proj.x, proj.owner);
         }
@@ -857,7 +957,8 @@ public:
         proj.y += proj.vy * dt;
         spawnProjectileTrail(proj);
 
-        // Prüfung: Wenn der Abwärtsschuss den Boden berührt -> Verwandelt sich in Boden-Schockwelle!
+        // Prüfung: Wenn der Abwärtsschuss den Boden berührt -> Verwandelt sich
+        // in Boden-Schockwelle!
         float gY = getGroundHeight(proj.x);
         if (proj.isAirToGround && proj.y >= gY - 4.0f) {
           proj.isGroundWave = true;
@@ -891,7 +992,8 @@ public:
       bool hit = false;
       if (proj.isGroundWave) {
         // BODEN-SCHOCKWELLE: Trifft NUR Gegner am Boden!
-        // Wenn der Gegner SPRINGT (target.y < gY - 10), springt er sauber drüber!
+        // Wenn der Gegner SPRINGT (target.y < gY - 10), springt er sauber
+        // drüber!
         float targetGroundY = getGroundHeight(target.x);
         bool targetGrounded = (target.y >= targetGroundY - 8.0f);
         if (std::abs(proj.x - target.x) <= 12.0f && targetGrounded) {
@@ -899,15 +1001,20 @@ public:
         }
       } else {
         // Normaler Flugtreffer (im Flug oder am Boden)
-        float hitRad = (proj.type == FighterType::Fire) ? (proj.radius + 12.0f) : (proj.radius + 8.0f);
-        float distSq = (proj.x - target.x) * (proj.x - target.x) + (proj.y - (target.y - 9.0f)) * (proj.y - (target.y - 9.0f));
+        float hitRad = (proj.type == FighterType::Fire) ? (proj.radius + 12.0f)
+                                                        : (proj.radius + 8.0f);
+        float distSq =
+            (proj.x - target.x) * (proj.x - target.x) +
+            (proj.y - (target.y - 9.0f)) * (proj.y - (target.y - 9.0f));
         if (distSq <= hitRad * hitRad) {
           hit = true;
         }
       }
 
-      // Auch wenn Feuerbälle auf das hügelige Gelände prallen: Sofortige Riesen-Explosion!
-      if (!proj.isGroundWave && !hit && proj.type == FighterType::Fire && proj.y >= getGroundHeight(proj.x) - 3.0f) {
+      // Auch wenn Feuerbälle auf das hügelige Gelände prallen: Sofortige
+      // Riesen-Explosion!
+      if (!proj.isGroundWave && !hit && proj.type == FighterType::Fire &&
+          proj.y >= getGroundHeight(proj.x) - 3.0f) {
         hit = true;
         proj.y = getGroundHeight(proj.x) - 3.0f;
       }
@@ -916,7 +1023,8 @@ public:
         proj.active = false;
 
         if (proj.type == FighterType::Fire) {
-          // 🔥 FEUER-EXPLOSION: Gewaltige Detonation & ÜBERALL BRENNENDER BODEN!
+          // 🔥 FEUER-EXPLOSION: Gewaltige Detonation & ÜBERALL BRENNENDER
+          // BODEN!
           spawnFireMegaExplosion(proj.x, proj.y);
           playFireExplosionSound(e);
           screenShake = 0.70f;
@@ -926,6 +1034,10 @@ public:
           spawnWaterPuddle(proj.x, proj.owner);
           spawnWaterPuddle(proj.x - 7.0f, proj.owner);
           spawnWaterPuddle(proj.x + 7.0f, proj.owner);
+        } else if (proj.type == FighterType::Hacker) {
+          // 💻 HACKER-TREFFER: Cyber-Glitch Sound & massives Bildschirm-Wackeln!
+          playCyberGlitchSound(e);
+          screenShake = 0.65f;
         }
 
         if (target.isBlocking) {
@@ -940,8 +1052,11 @@ public:
           target.hp = std::max(0, target.hp - proj.damage);
           target.hurtTimer = 0.28f;
           target.vx += (proj.vx > 0 ? 85.0f : -85.0f);
-          target.vy = proj.isGroundWave ? -175.0f : (proj.type == FighterType::Fire ? -130.0f : -45.0f);
-          spawnSupernova(target.x, target.y - 10.0f, proj.type, /*isMega=*/false);
+          target.vy = proj.isGroundWave
+                          ? -175.0f
+                          : (proj.type == FighterType::Fire ? -130.0f : -45.0f);
+          spawnSupernova(target.x, target.y - 10.0f, proj.type,
+                         /*isMega=*/false);
           if (proj.type != FighterType::Fire) {
             spawnHitExplosion(proj.x, proj.y, proj.type);
             playHitSound(e);
@@ -959,9 +1074,11 @@ public:
     // Entzündet 14 lodernde Brandherde entlang der Geländekontur
     for (int i = 0; i < 14; ++i) {
       GroundFire gf;
-      gf.x = std::clamp(centerX + (i * 7.0f - 45.0f) + (rand() % 6 - 3), 16.0f, 304.0f);
+      gf.x = std::clamp(centerX + (i * 7.0f - 45.0f) + (rand() % 6 - 3), 16.0f,
+                        304.0f);
       gf.y = getGroundHeight(gf.x);
-      gf.maxLife = 2.4f + (rand() % 130) / 100.0f; // Brennt 2.4 bis 3.7 Sekunden lang!
+      gf.maxLife =
+          2.4f + (rand() % 130) / 100.0f; // Brennt 2.4 bis 3.7 Sekunden lang!
       gf.life = gf.maxLife;
       gf.owner = owner;
       groundFires.push_back(gf);
@@ -1006,10 +1123,12 @@ public:
             target.hp = std::max(0, target.hp - 1);
             spawnBlockSparks(target.x, target.y - 6.0f);
           } else {
-            target.hp = std::max(0, target.hp - 4); // Feuerschaden pro Brandfleck
+            target.hp =
+                std::max(0, target.hp - 4); // Feuerschaden pro Brandfleck
             target.hurtTimer = 0.30f;
             target.vy = -110.0f; // Hüpft bei Feuertreffer hoch
-            spawnSupernova(target.x, target.y - 8.0f, FighterType::Fire, /*isMega=*/false);
+            spawnSupernova(target.x, target.y - 8.0f, FighterType::Fire,
+                           /*isMega=*/false);
             spawnHitExplosion(target.x, target.y - 6.0f, FighterType::Fire);
             playHitSound(e);
           }
@@ -1020,9 +1139,11 @@ public:
     }
   }
 
-  // --- WASSER-PFÜTZEN (Hinterlassen von der Wasser-Schockwelle, verlangsamen Gegner!) ---
+  // --- WASSER-PFÜTZEN (Hinterlassen von der Wasser-Schockwelle, verlangsamen
+  // Gegner!) ---
   void spawnWaterPuddle(float x, int owner) {
-    if (x < 12.0f || x > 308.0f) return;
+    if (x < 12.0f || x > 308.0f)
+      return;
     for (auto &wp : waterPuddles) {
       if (std::abs(wp.x - x) < 6.0f) {
         wp.life = wp.maxLife; // Pfütze auffrischen
@@ -1077,7 +1198,8 @@ public:
         particles.push_back(p);
       }
 
-      // Prüfung: Berührt der gegnerische Spieler das Wasser am Boden -> VERLANGSAMUNG (Slow Down)!
+      // Prüfung: Berührt der gegnerische Spieler das Wasser am Boden ->
+      // VERLANGSAMUNG (Slow Down)!
       int targetId = 1 - wp.owner;
       Player &target = players[targetId];
       float dist = std::abs(target.x - wp.x);
@@ -1085,7 +1207,8 @@ public:
       bool targetOnGround = (target.y >= targetGroundY - 7.0f);
 
       if (dist <= 8.0f && targetOnGround) {
-        target.slowTimer = 0.40f; // Verlangsamt den Gegner, solange er im Wasser steht/läuft!
+        target.slowTimer =
+            0.40f; // Verlangsamt den Gegner, solange er im Wasser steht/läuft!
         if (std::abs(target.vx) > 5.0f && e.rnd(3) == 0) {
           spawnWaterDroplets(target.x, target.y);
         }
@@ -1105,7 +1228,8 @@ public:
       e.line(wx - 3, wy, wx + 3, wy, Ramps::Cyan[11]);
 
       // Sanft glitzernde Wellenkräuselung an der Oberfläche
-      int ripple = static_cast<int>(std::sin(globalTimer * 8.0f + wp.x * 0.5f) * 2.0f);
+      int ripple =
+          static_cast<int>(std::sin(globalTimer * 8.0f + wp.x * 0.5f) * 2.0f);
       e.pset(wx + ripple, wy - 1, Ramps::Cyan[14]);
       if (static_cast<int>(globalTimer * 6.0f + wp.x) % 3 == 0) {
         e.pset(wx - 2, wy - 1, Colors::White);
@@ -1139,7 +1263,8 @@ public:
 
   void updateMatchOver(Engine &e) {
     // Leertaste oder Enter für Revanche
-    if (e.pressed(Key::Space) || e.pressed(Key::Enter) || e.pressed(Key::W) || e.pressed(Key::Up)) {
+    if (e.pressed(Key::Space) || e.pressed(Key::Enter) || e.pressed(Key::W) ||
+        e.pressed(Key::Up)) {
       p1Locked = false;
       p2Locked = false;
       state = State::CharacterSelect;
@@ -1196,7 +1321,8 @@ public:
     }
   }
 
-  // --- HIMMEL-GRADIENT (Dunkler, kontrastreicher Nachthimmel für maximalen Pop) ---
+  // --- HIMMEL-GRADIENT (Dunkler, kontrastreicher Nachthimmel für maximalen
+  // Pop) ---
   void renderSky(Engine &e) {
     for (int y = 0; y < 240; ++y) {
       float baseT = y / 240.0f;
@@ -1228,7 +1354,10 @@ public:
     for (int i = 0; i < 28; ++i) {
       int sx = (i * 37 + 19) % 320;
       int sy = (i * 23 + 11) % 95;
-      e.pset(sx, sy, (static_cast<int>(globalTimer * 2.5f + i) % 2 == 0) ? Colors::White : Colors::Gold);
+      e.pset(sx, sy,
+             (static_cast<int>(globalTimer * 2.5f + i) % 2 == 0)
+                 ? Colors::White
+                 : Colors::Gold);
     }
   }
 
@@ -1242,7 +1371,7 @@ public:
       // Stein-Plattform mit Moosbelag
       e.rectfill(x1, y, x2 - x1, 5, Ramps::Grays[8]);
       e.rectfill(x1, y + 5, x2 - x1, 3, Ramps::Grays[5]);
-      e.line(x1, y, x2, y, Ramps::Green[10]); // Moos-Kante oben
+      e.line(x1, y, x2, y, Ramps::Green[10]);     // Moos-Kante oben
       e.rect(x1, y, x2 - x1, 8, Ramps::Grays[3]); // Dunkler Rahmen
     }
   }
@@ -1273,16 +1402,21 @@ public:
     int py = static_cast<int>(p.y);
     int f = p.facing;
 
-    // Treffer-Blinken (Hurt-Flicker: Feines Durchscheinen während die Supernova aufleuchtet)
-    if (p.hurtTimer > 0.0f && (static_cast<int>(globalTimer * 28.0f) % 2 == 0)) {
-      return; // Lässt den Sprite feingliedrig aufblitzen statt mit weißem Kasten zu überdecken
+    // Treffer-Blinken (Hurt-Flicker: Feines Durchscheinen während die Supernova
+    // aufleuchtet)
+    if (p.hurtTimer > 0.0f &&
+        (static_cast<int>(globalTimer * 28.0f) % 2 == 0)) {
+      return; // Lässt den Sprite feingliedrig aufblitzen statt mit weißem
+              // Kasten zu überdecken
     }
 
     // --- A. SCHUTZSCHILD (beim Blocken - maximal 1.0 Sekunde aktiv!) ---
     if (p.isBlocking) {
       FighterDef def = getFighterDef(p.fighter);
-      // Wenn das Schild fast abläuft (letzte 0.3s), flackert es als visuelle Warnung!
-      bool warningFlicker = (p.blockTimer > 0.7f && static_cast<int>(globalTimer * 20.0f) % 2 == 0);
+      // Wenn das Schild fast abläuft (letzte 0.3s), flackert es als visuelle
+      // Warnung!
+      bool warningFlicker = (p.blockTimer > 0.7f &&
+                             static_cast<int>(globalTimer * 20.0f) % 2 == 0);
       if (!warningFlicker) {
         float shieldRadius = 14.0f + std::sin(globalTimer * 16.0f) * 1.5f;
         e.circle(px + f * 4, py - 10, shieldRadius, def.accentColor);
@@ -1293,23 +1427,28 @@ public:
     // --- B. KÄMPFER-SPEZIFISCHE PIXEL-SPRITES ---
     switch (p.fighter) {
     case FighterType::Music: {
-      // 🎸 MUSIK-KÄMPFER (DARIO): Sitzt auf einem mächtigen Drachen und rockt die E-Gitarre!
-      
+      // 🎸 MUSIK-KÄMPFER (DARIO): Sitzt auf einem mächtigen Drachen und rockt
+      // die E-Gitarre!
+
       // 1. DER DRACHE (py - 10 bis py)
       // Drachen-Schwanz hinten mit Stacheln
       int tailX = px - f * 8;
       int tailY = py - 6;
       e.line(px - f * 4, py - 6, tailX, tailY, Ramps::Green[9]);
       e.line(tailX, tailY, tailX - f * 3, tailY - 3, Ramps::Green[11]);
-      e.pset(tailX - f * 3, tailY - 4, Ramps::Gold[13]); // Goldene Schwanzspitze
+      e.pset(tailX - f * 3, tailY - 4,
+             Ramps::Gold[13]); // Goldene Schwanzspitze
 
       // Drachen-Körper / Bauch
-      e.rectfill(px - 6, py - 9, 12, 6, Ramps::Green[9]);               // Schuppenpanzer
-      e.rectfill(px - (f > 0 ? 3 : 5), py - 7, 8, 4, Ramps::Gold[9]);   // Goldener Drachenbauch
+      e.rectfill(px - 6, py - 9, 12, 6, Ramps::Green[9]); // Schuppenpanzer
+      e.rectfill(px - (f > 0 ? 3 : 5), py - 7, 8, 4,
+                 Ramps::Gold[9]); // Goldener Drachenbauch
       e.rect(px - 6, py - 9, 12, 6, Ramps::Green[6]);
 
       // Drachen-Beine & Krallen (stehen auf dem Boden)
-      int legStep = (std::abs(p.vx) > 5.0f) ? (static_cast<int>(globalTimer * 12.0f) % 2) : 0;
+      int legStep = (std::abs(p.vx) > 5.0f)
+                        ? (static_cast<int>(globalTimer * 12.0f) % 2)
+                        : 0;
       e.rectfill(px - 5, py - 3, 3, 3, Ramps::Green[8]);
       e.rectfill(px + 2, py - 3, 3, 3, Ramps::Green[8]);
       e.pset(px - 5 + f * legStep, py, Colors::White); // Krallen
@@ -1320,20 +1459,24 @@ public:
       int hy = py - 9;
       e.rectfill(hx - 2, hy - 3, 6, 6, Ramps::Green[10]);     // Kopf
       e.rectfill(hx + f * 2, hy - 1, 3, 3, Ramps::Green[11]); // Schnauze
-      e.pset(hx + f * 1, hy - 2, Ramps::Fire[12]);           // Feuriges Drachenauge
-      e.line(hx - 1, hy - 4, hx - f * 2, hy - 7, Ramps::Gold[13]); // Goldene Hörner
-      e.pset(hx + f * 4, hy, Ramps::Fire[14]);               // Kleine Flamme aus der Nase!
+      e.pset(hx + f * 1, hy - 2, Ramps::Fire[12]); // Feuriges Drachenauge
+      e.line(hx - 1, hy - 4, hx - f * 2, hy - 7,
+             Ramps::Gold[13]);                 // Goldene Hörner
+      e.pset(hx + f * 4, hy, Ramps::Fire[14]); // Kleine Flamme aus der Nase!
 
       // Drachen-Flügel (flattern dynamisch & majestätisch beim Fliegen!)
       float flapFreq = p.isFlying ? 28.0f : (p.isGrounded ? 10.0f : 16.0f);
-      int wingFlap = static_cast<int>(std::sin(globalTimer * flapFreq) * (p.isFlying ? 5.0f : 3.0f));
+      int wingFlap = static_cast<int>(std::sin(globalTimer * flapFreq) *
+                                      (p.isFlying ? 5.0f : 3.0f));
       int wx = px - f * 2;
       int wy = py - 12 + (p.isGrounded ? 0 : wingFlap);
       e.line(wx, wy, wx - f * 7, wy - 6 + wingFlap, Ramps::Green[12]);
-      e.line(wx - f * 7, wy - 6 + wingFlap, wx - f * 2, wy - 1, Ramps::Gold[11]);
+      e.line(wx - f * 7, wy - 6 + wingFlap, wx - f * 2, wy - 1,
+             Ramps::Gold[11]);
       e.line(wx - f * 5, wy - 4 + wingFlap, wx, wy + 1, Ramps::Green[10]);
       if (p.isFlying) {
-        e.pset(wx - f * 7, wy - 6 + wingFlap, Colors::White); // Glühende Flügelspitzen im Flug
+        e.pset(wx - f * 7, wy - 6 + wingFlap,
+               Colors::White); // Glühende Flügelspitzen im Flug
       }
 
       // 2. DARIO (SITZT AUF DEM DRACHENSATTEL, py - 22 bis py - 10)
@@ -1357,9 +1500,9 @@ public:
       // 3. E-GITARRE (Dario spielt ein Gitarrensolo auf dem Drachen!)
       int gx = px + f * 4;
       int gy = py - 14;
-      e.line(gx - 3, gy + 3, gx + 3, gy - 3, Ramps::Red[9]);       // Roter Korpus
-      e.line(gx + 1, gy - 1, gx + 6 * f, gy - 6, Colors::White);   // Gitarrenhals
-      e.pset(gx, gy + 1, Colors::White);                           // Tonabnehmer
+      e.line(gx - 3, gy + 3, gx + 3, gy - 3, Ramps::Red[9]);     // Roter Korpus
+      e.line(gx + 1, gy - 1, gx + 6 * f, gy - 6, Colors::White); // Gitarrenhals
+      e.pset(gx, gy + 1, Colors::White);                         // Tonabnehmer
       break;
     }
 
@@ -1375,12 +1518,14 @@ public:
 
       // 3. Kopf & Eishelm
       e.rectfill(px - 4, py - 17, 8, 5, Ramps::Earth::Sand[6]);
-      e.pset(px + f * 2, py - 15, Ramps::Cyan[12]); // Eisblaues Auge
+      e.pset(px + f * 2, py - 15, Ramps::Cyan[12]);     // Eisblaues Auge
       e.rectfill(px - 4, py - 18, 8, 2, Colors::White); // Eiskappe
 
       // 4. Eis-Stücke / Kristalle am Körper und am Arm
-      e.line(px - 5, py - 13, px - 8, py - 16, Ramps::Cyan[14]); // Kristall an Schulter
-      e.line(px + f * 5, py - 10, px + f * 9, py - 13, Colors::White); // Eisspeer am Arm
+      e.line(px - 5, py - 13, px - 8, py - 16,
+             Ramps::Cyan[14]); // Kristall an Schulter
+      e.line(px + f * 5, py - 10, px + f * 9, py - 13,
+             Colors::White); // Eisspeer am Arm
       e.pset(px + f * 8, py - 12, Ramps::Cyan[14]);
       break;
     }
@@ -1454,7 +1599,8 @@ public:
 
       // 2. Ninja-Gewand
       e.rectfill(px - 5, py - 12, 10, 6, Ramps::Blue[8]);
-      e.line(px - 4, py - 8, px + 4, py - 8, Ramps::Cyan[12]); // Türkise Schärpe
+      e.line(px - 4, py - 8, px + 4, py - 8,
+             Ramps::Cyan[12]); // Türkise Schärpe
 
       // 3. Gesicht mit BLAUEN AUGEN & NINJA-MASKE
       e.rectfill(px - 4, py - 17, 8, 5, Ramps::Earth::Sand[6]);
@@ -1465,7 +1611,71 @@ public:
 
       // 4. BLAUE HAARE & Stirnband
       e.rectfill(px - 4, py - 18, 8, 2, Ramps::Blue[9]);
-      e.line(px - 5, py - 16, px - 8 * f, py - 14, Ramps::Cyan[12]); // Wehendes Band
+      e.line(px - 5, py - 16, px - 8 * f, py - 14,
+             Ramps::Cyan[12]); // Wehendes Band
+      break;
+    }
+
+    case FighterType::Hacker: {
+      // 💻 HACKER-KÄMPFER (BYTE): Cyber-Hoodie, Cyber-Visor & tippt rasant auf
+      // dem Laptop!
+      // 1. Cyber-Beine & Schuhe mit leuchtender Neon-Sohle
+      int legStep = (std::abs(p.vx) > 5.0f)
+                        ? (static_cast<int>(globalTimer * 12.0f) % 2)
+                        : 0;
+      e.rectfill(px - 4, py - 6, 3, 6, Ramps::Grays[3]);
+      e.rectfill(px + 1, py - 6, 3, 6, Ramps::Grays[3]);
+      // Neon-grüne Schuhsohlen
+      e.line(px - 4 + f * legStep, py, px - 2 + f * legStep, py,
+             Ramps::Green[14]);
+      e.line(px + 1 - f * legStep, py, px + 3 - f * legStep, py,
+             Ramps::Green[14]);
+
+      // 2. Rumpf / Cyber-Hoodie mit Matrix-Datenleitungen
+      e.rectfill(px - 5, py - 12, 10, 6, Ramps::Grays[4]);
+      e.rect(px - 5, py - 12, 10, 6, Ramps::Grays[2]);
+      // Grüne Matrix-Schaltkreis-Linie auf der Brust
+      e.line(px - 2, py - 12, px - 2, py - 8, Ramps::Green[13]);
+      e.line(px - 2, py - 8, px + 2, py - 8, Ramps::Green[14]);
+
+      // 3. Kopf mit Hoodie & CYBER-VISOR (leuchtende Cyber-Brille)
+      e.rectfill(px - 4, py - 17, 8, 5, Ramps::Earth::Sand[6]);  // Gesicht
+      e.rectfill(px - 4, py - 18, 8, 2, Ramps::Grays[3]);        // Hoodie oben
+      e.line(px - 5, py - 17, px - 5, py - 13, Ramps::Grays[3]); // Hoodie Seite
+
+      // Leuchtender Cyber-Visor / VR-Brille (Cyan + Neon-Grün)
+      e.rectfill(px + f * 0, py - 16, 5, 2, Ramps::Cyan[14]);
+      e.pset(px + f * 2, py - 16, Colors::White);    // Glanzpunkt
+      e.pset(px + f * 4, py - 15, Ramps::Green[15]); // Status-LED
+
+      // 4. DER HACKER-COMPUTER / LAPTOP (in den Händen gehalten!)
+      int lx = px + f * 5;
+      int ly = py - 9;
+
+      // Laptop-Basis / Gehäuse
+      e.rectfill(lx - 4, ly + 1, 8, 3, Ramps::Grays[6]);
+      // Tastatur mit leuchtenden Tasten
+      e.line(lx - 3, ly + 2, lx + 3, ly + 2, Ramps::Cyan[12]);
+
+      // Laptop-Bildschirm (aufgeklappt, leuchtet hellgrün/weiß)
+      int scrX = lx + f * 3;
+      int scrY = ly - 4;
+      e.rectfill(scrX - 3, scrY - 2, 6, 5, Ramps::Grays[2]); // Rahmen
+      e.rectfill(scrX - 2, scrY - 1, 4, 3,
+                 Ramps::Green[13]);              // Display Matrix-Grün
+      e.pset(scrX - 1, scrY, Colors::White);     // Code-Pixel 1
+      e.pset(scrX + 1, scrY - 1, Colors::White); // Code-Pixel 2
+
+      // Schnelle Tipp-Animation der Hände
+      int typeAnim = static_cast<int>(globalTimer * 20.0f) % 3;
+      e.pset(lx - 2 + typeAnim, ly + 1, Ramps::Earth::Sand[6]);
+      e.pset(lx + 1 - typeAnim, ly + 1, Ramps::Earth::Sand[6]);
+
+      // Aufsteigende fliegende Matrix-Code Bits direkt aus dem Laptop!
+      if (rand() % 3 == 0) {
+        e.pset(scrX + (rand() % 5 - 2), scrY - 3 - (rand() % 3),
+               Ramps::Green[15]);
+      }
       break;
     }
     }
@@ -1473,14 +1683,16 @@ public:
     // Verlangsamungs-Anzeige (Wasserspritzer um die Füße bei Slowdown)
     if (p.slowTimer > 0.0f) {
       e.line(px - 4, py, px + 4, py, Ramps::Cyan[12]);
-      e.pset(px + (static_cast<int>(globalTimer * 14.0f) % 7 - 3), py - 2, Colors::White);
+      e.pset(px + (static_cast<int>(globalTimer * 14.0f) % 7 - 3), py - 2,
+             Colors::White);
     }
   }
 
   // --- PROJEKTILE RENDERN ---
   void renderProjectiles(Engine &e) {
     for (const auto &proj : projectiles) {
-      if (!proj.active) continue;
+      if (!proj.active)
+        continue;
       int px = static_cast<int>(proj.x);
       int py = static_cast<int>(proj.y);
       int dir = (proj.vx > 0) ? 1 : -1;
@@ -1524,6 +1736,24 @@ public:
           e.line(px - dir * 4, py, px + dir * 5, py - 7, Colors::White);
           break;
         }
+        case FighterType::Hacker: {
+          // 💻 Hacker-Bodenwelle: Kriechender grüner Matrix-Code &
+          // Glitch-Stream am Boden!
+          static const char *groundCodes[] = {"010101", "_VIRUS_", "<ERR!>",
+                                              "{404}",  ">>>EXE",  "[HACK]"};
+          int codeIdx =
+              (static_cast<int>(globalTimer * 8.0f) + std::abs(px / 18)) % 6;
+
+          e.rectfill(px - 14, py - 6, 28, 7, Ramps::Grays[1]);
+          e.rect(px - 14, py - 6, 28, 7, Ramps::Green[12]);
+          e.draw_text(px - 12, py - 5, groundCodes[codeIdx], Ramps::Green[15],
+                      1);
+
+          // Digitaler Funkenschweif
+          e.line(px - dir * 10, py, px + dir * 8, py, Ramps::Cyan[14]);
+          e.pset(px + (rand() % 16 - 8), py - (rand() % 8), Colors::White);
+          break;
+        }
         }
         continue;
       }
@@ -1531,7 +1761,8 @@ public:
       // --- NORMALE FLUG-PROJEKTILE (Gerade & Schrägflug) ---
       switch (proj.type) {
       case FighterType::Music: {
-        // 🎸 Musik-Drache: Mächtiger fliegender Drachenkopf aus goldenem Schallfeuer & E-Gitarren-Akkorden
+        // 🎸 Musik-Drache: Mächtiger fliegender Drachenkopf aus goldenem
+        // Schallfeuer & E-Gitarren-Akkorden
         e.circlefill(px, py, 7.0f, Ramps::Gold[11]);
         e.circlefill(px, py, 5.0f, Ramps::Fire[10]);
         e.circlefill(px + dir * 2, py, 3.0f, Colors::White);
@@ -1539,7 +1770,8 @@ public:
         e.line(px - dir * 3, py - 6, px + dir * 4, py - 8, Ramps::Gold[14]);
         e.line(px - dir * 3, py + 6, px + dir * 4, py + 8, Ramps::Gold[14]);
         e.line(px + dir * 5, py - 4, px + dir * 9, py, Ramps::Red[9]);
-        e.pset(px + dir * 6, py - 2, Colors::White); // Glühendes Drachenauge im Projektil
+        e.pset(px + dir * 6, py - 2,
+               Colors::White); // Glühendes Drachenauge im Projektil
         break;
       }
       case FighterType::Ice: {
@@ -1569,6 +1801,45 @@ public:
         e.pset(px + dir * 2, py - 2, Colors::White);
         break;
       }
+      case FighterType::Hacker: {
+        // 💻 Hacker: Fliegende Matrix-Buchstaben & Code-Blöcke aus dem Laptop!
+        static const char *codeSnippets[] = {"<HACK>", "{CODE}", "0101", "ROOT",
+                                             "404!",   "EXE",    "C++",  "[#]"};
+        int codeIdx =
+            (static_cast<int>(proj.life * 10.0f) + proj.owner * 3) % 8;
+        const char *txt = codeSnippets[codeIdx];
+
+        // Leuchtende Cyber-Matrix Kapsel / Hologramm-Kasten
+        e.rectfill(px - 14, py - 5, 28, 10, Ramps::Grays[1]);
+        e.rect(px - 14, py - 5, 28, 10, Ramps::Green[13]);
+        e.rect(px - 13, py - 4, 26, 8, Ramps::Cyan[14]);
+
+        // Matrix-Code Text (Grün mit weißem Glanz)
+        e.draw_text(px - 11, py - 3, txt, Ramps::Green[15], 1);
+
+        // Fliegende Satelliten-Buchstaben & Bits vor und hinter dem Projektil
+        char bit1 =
+            (static_cast<int>(globalTimer * 16.0f) % 2 == 0) ? '0' : '1';
+        char bit2 =
+            (static_cast<int>(globalTimer * 12.0f) % 2 == 0) ? '{' : '}';
+        char bit3 =
+            (static_cast<int>(globalTimer * 14.0f) % 2 == 0) ? '<' : '>';
+
+        std::string s1(1, bit1);
+        std::string s2(1, bit2);
+        std::string s3(1, bit3);
+
+        e.draw_text(px - dir * 18, py - 6, s1, Ramps::Green[13], 1);
+        e.draw_text(px - dir * 16, py + 2, s2, Ramps::Cyan[13], 1);
+        e.draw_text(px + dir * 16, py - 2, s3, Colors::White, 1);
+
+        // Digitaler Glitch-Blitz
+        if (rand() % 3 == 0) {
+          e.line(px - 10, py + (rand() % 8 - 4), px + 10, py + (rand() % 8 - 4),
+                 Colors::White);
+        }
+        break;
+      }
       }
     }
   }
@@ -1589,8 +1860,10 @@ public:
 
       // Lodernde Flammenzungen nach oben
       e.line(gx - 1, gy, gx + flameWobble, gy - flameH, Ramps::Fire[10]);
-      e.line(gx + 1, gy, gx + flameWobble + 1, gy - (flameH - 2), Ramps::Fire[13]);
-      e.pset(gx + flameWobble, gy - flameH, Colors::White); // Weißglühende Flammenspitze
+      e.line(gx + 1, gy, gx + flameWobble + 1, gy - (flameH - 2),
+             Ramps::Fire[13]);
+      e.pset(gx + flameWobble, gy - flameH,
+             Colors::White); // Weißglühende Flammenspitze
     }
   }
 
@@ -1647,8 +1920,10 @@ public:
           float diag = rayLen * 0.707f;
           e.line(sx - diag, sy - diag, sx + diag, sy + diag, Colors::White);
           e.line(sx - diag, sy + diag, sx + diag, sy - diag, Colors::White);
-          e.line(sx - diag * 1.2f, sy - diag * 1.2f, sx + diag * 1.2f, sy + diag * 1.2f, sn.ringColor);
-          e.line(sx - diag * 1.2f, sy + diag * 1.2f, sx + diag * 1.2f, sy - diag * 1.2f, sn.ringColor);
+          e.line(sx - diag * 1.2f, sy - diag * 1.2f, sx + diag * 1.2f,
+                 sy + diag * 1.2f, sn.ringColor);
+          e.line(sx - diag * 1.2f, sy + diag * 1.2f, sx + diag * 1.2f,
+                 sy - diag * 1.2f, sn.ringColor);
         }
       }
     }
@@ -1665,15 +1940,20 @@ public:
     // Name & Element
     e.draw_text(10, 6, "P1: " + d0.name, d0.mainColor, 1);
     // Lebensbalken
-    int hpW0 = static_cast<int>((static_cast<float>(players[0].hp) / players[0].maxHp) * 85);
+    int hpW0 = static_cast<int>(
+        (static_cast<float>(players[0].hp) / players[0].maxHp) * 85);
     e.rectfill(10, 16, 85, 6, Colors::DarkGray);
     e.rect(9, 15, 87, 8, Colors::White);
-    uint8_t col0 = (players[0].hp > players[0].maxHp / 2) ? Colors::LightGreen : (players[0].hp > players[0].maxHp / 4 ? Colors::Yellow : Colors::Red);
+    uint8_t col0 = (players[0].hp > players[0].maxHp / 2)
+                       ? Colors::LightGreen
+                       : (players[0].hp > players[0].maxHp / 4 ? Colors::Yellow
+                                                               : Colors::Red);
     e.rectfill(10, 16, hpW0, 6, col0);
 
     // Runden-Sterne Spieler 1 (Best of 3)
     for (int r = 0; r < 2; ++r) {
-      uint8_t starCol = (r < players[0].roundsWon) ? Colors::Gold : Colors::DarkGray;
+      uint8_t starCol =
+          (r < players[0].roundsWon) ? Colors::Gold : Colors::DarkGray;
       e.rectfill(102 + r * 10, 16, 6, 6, starCol);
       e.rect(102 + r * 10, 16, 6, 6, Colors::White);
     }
@@ -1682,15 +1962,20 @@ public:
     // Name & Element
     e.draw_text(225, 6, "P2: " + d1.name, d1.mainColor, 1);
     // Lebensbalken
-    int hpW1 = static_cast<int>((static_cast<float>(players[1].hp) / players[1].maxHp) * 85);
+    int hpW1 = static_cast<int>(
+        (static_cast<float>(players[1].hp) / players[1].maxHp) * 85);
     e.rectfill(225, 16, 85, 6, Colors::DarkGray);
     e.rect(224, 15, 87, 8, Colors::White);
-    uint8_t col1 = (players[1].hp > players[1].maxHp / 2) ? Colors::LightGreen : (players[1].hp > players[1].maxHp / 4 ? Colors::Yellow : Colors::Red);
+    uint8_t col1 = (players[1].hp > players[1].maxHp / 2)
+                       ? Colors::LightGreen
+                       : (players[1].hp > players[1].maxHp / 4 ? Colors::Yellow
+                                                               : Colors::Red);
     e.rectfill(310 - hpW1, 16, hpW1, 6, col1);
 
     // Runden-Sterne Spieler 2 (Best of 3)
     for (int r = 0; r < 2; ++r) {
-      uint8_t starCol = (r < players[1].roundsWon) ? Colors::Gold : Colors::DarkGray;
+      uint8_t starCol =
+          (r < players[1].roundsWon) ? Colors::Gold : Colors::DarkGray;
       e.rectfill(200 + r * 10, 16, 6, 6, starCol);
       e.rect(200 + r * 10, 16, 6, 6, Colors::White);
     }
@@ -1700,7 +1985,10 @@ public:
     e.draw_text(138, 6, roundTxt, Colors::Gold, 1);
 
     // Tastatur-Erinnerung
-    e.draw_text(10, 230, "BLOCK:WEG+S  GERADE:VOR,VOR  45 OBEN:VOR,OBEN  BODENWELLE:HIN+S", Ramps::Grays[7], 1);
+    e.draw_text(
+        10, 230,
+        "BLOCK:WEG+S  GERADE:VOR,VOR  45 OBEN:VOR,OBEN  BODENWELLE:HIN+S",
+        Ramps::Grays[7], 1);
   }
 
   void renderRoundIntroBanner(Engine &e) {
@@ -1734,7 +2022,11 @@ public:
     e.rect(40, 40, 240, 150, Colors::Gold);
     e.rect(42, 42, 236, 146, Ramps::Grays[2]);
 
-    std::string champName = (matchWinner == 0) ? (players[0].fighter == FighterType::Music ? "DARIO (P1)" : "SPIELER 1") : "SPIELER 2";
+    std::string champName =
+        (matchWinner == 0)
+            ? (players[0].fighter == FighterType::Music ? "DARIO (P1)"
+                                                        : "SPIELER 1")
+            : "SPIELER 2";
     uint8_t champColor = (matchWinner == 0) ? Ramps::Blue[10] : Ramps::Red[10];
 
     e.draw_text(70, 55, "CHAMPION SIEG!", Colors::Gold, 2);
@@ -1762,58 +2054,64 @@ public:
     e.draw_text(55, 12, "DARIOS SPIEL: ELEMENTAL BRAWL", Colors::Gold, 2);
     e.draw_text(72, 32, "WAEHLE DEINEN ELEMENTAR-KAEMPFER!", Colors::White, 1);
 
-    // 5 Kämpfer-Karten
-    for (int i = 0; i < 5; ++i) {
+    // 6 Kämpfer-Karten
+    for (int i = 0; i < 6; ++i) {
       FighterDef def = getFighterDef(static_cast<FighterType>(i));
-      int cardX = 14 + i * 60;
-      int cardY = 55;
-      int cardW = 52;
-      int cardH = 120;
+      int cardX = 6 + i * 52;
+      int cardY = 50;
+      int cardW = 48;
+      int cardH = 138;
 
       // Rahmen & Hintergrund der Karte
       bool p1Here = (p1Cursor == i);
       bool p2Here = (p2Cursor == i);
 
       uint8_t bgCol = Ramps::Grays[4];
-      if (p1Here && p2Here) bgCol = Ramps::Purple[4];
-      else if (p1Here) bgCol = Ramps::Blue[4];
-      else if (p2Here) bgCol = Ramps::Red[4];
+      if (p1Here && p2Here)
+        bgCol = Ramps::Purple[4];
+      else if (p1Here)
+        bgCol = Ramps::Blue[4];
+      else if (p2Here)
+        bgCol = Ramps::Red[4];
 
       e.rectfill(cardX, cardY, cardW, cardH, bgCol);
       e.rect(cardX, cardY, cardW, cardH, def.mainColor);
 
       // Name & Titel
-      e.draw_text(cardX + 4, cardY + 6, def.name, Colors::White, 1);
-      e.draw_text(cardX + 4, cardY + 18, def.title, def.accentColor, 1);
+      e.draw_text(cardX + 3, cardY + 5, def.name, Colors::White, 1);
+      e.draw_text(cardX + 3, cardY + 16, def.title, def.accentColor, 1);
 
       // Vorschau-Sprite in der Karte
       Player dummy;
-      dummy.x = cardX + 26.0f;
+      dummy.x = cardX + 24.0f;
       dummy.y = cardY + 70.0f;
       dummy.fighter = static_cast<FighterType>(i);
       dummy.facing = 1;
       renderFighter(e, dummy);
 
       // Superkraft-Name
-      e.draw_text(cardX + 3, cardY + 84, "KRAFT:", Colors::Gold, 1);
-      e.draw_text(cardX + 3, cardY + 95, def.powerName, Colors::White, 1);
+      e.draw_text(cardX + 3, cardY + 86, "KRAFT:", Colors::Gold, 1);
+      e.draw_text(cardX + 3, cardY + 97, def.powerName, Colors::White, 1);
 
       // Cursor-Markierungen
       if (p1Here) {
         std::string tag = p1Locked ? "[P1 OK]" : "> P1 <";
-        e.draw_text(cardX + 5, cardY + 108, tag, Ramps::Blue[12], 1);
+        e.draw_text(cardX + 3, cardY + 112, tag, Ramps::Blue[12], 1);
       }
       if (p2Here) {
         std::string tag = p2Locked ? "[P2 OK]" : "> P2 <";
-        e.draw_text(cardX + 5, cardY + (p1Here ? 116 : 108), tag, Ramps::Red[12], 1);
+        e.draw_text(cardX + 3, cardY + (p1Here ? 123 : 112), tag,
+                    Ramps::Red[12], 1);
       }
     }
 
     // Fußzeile Steuerung
     e.rectfill(0, 195, 320, 45, Colors::Black);
     e.line(0, 195, 320, 195, Colors::White);
-    e.draw_text(16, 204, "SPIELER 1: A / D = WAEHLEN   W / LEERTASTE = LOCK-IN", Ramps::Blue[12], 1);
-    e.draw_text(16, 218, "SPIELER 2: LINKS / RECHTS     UP / ENTER = LOCK-IN", Ramps::Red[12], 1);
+    e.draw_text(16, 204, "SPIELER 1: A / D = WAEHLEN   W / LEERTASTE = LOCK-IN",
+                Ramps::Blue[12], 1);
+    e.draw_text(16, 218, "SPIELER 2: LINKS / RECHTS     UP / ENTER = LOCK-IN",
+                Ramps::Red[12], 1);
   }
 
   // ===========================================================================
@@ -1845,6 +2143,9 @@ public:
     case FighterType::Water:
       p.color = (rand() % 2 == 0) ? Ramps::Cyan[12] : Ramps::Blue[10];
       break;
+    case FighterType::Hacker:
+      p.color = (rand() % 2 == 0) ? Ramps::Green[14] : Ramps::Cyan[14];
+      break;
     }
     particles.push_back(p);
   }
@@ -1875,6 +2176,9 @@ public:
     case FighterType::Water:
       p.color = (rand() % 2 == 0) ? Ramps::Cyan[10] : Ramps::Blue[12];
       break;
+    case FighterType::Hacker:
+      p.color = (rand() % 2 == 0) ? Ramps::Green[13] : Colors::White;
+      break;
     }
     particles.push_back(p);
   }
@@ -1893,18 +2197,32 @@ public:
       p.size = 2.0f;
 
       switch (type) {
-      case FighterType::Music: p.color = (i % 2 == 0) ? Colors::Gold : Ramps::Red[9]; break;
-      case FighterType::Ice:   p.color = (i % 2 == 0) ? Colors::White : Ramps::Cyan[13]; break;
-      case FighterType::Fire:  p.color = Ramps::Fire[8 + (i % 8)]; break;
-      case FighterType::Lightning: p.color = (i % 2 == 0) ? Ramps::Yellow[14] : Colors::White; break;
-      case FighterType::Water: p.color = (i % 2 == 0) ? Ramps::Cyan[11] : Ramps::Blue[10]; break;
+      case FighterType::Music:
+        p.color = (i % 2 == 0) ? Colors::Gold : Ramps::Red[9];
+        break;
+      case FighterType::Ice:
+        p.color = (i % 2 == 0) ? Colors::White : Ramps::Cyan[13];
+        break;
+      case FighterType::Fire:
+        p.color = Ramps::Fire[8 + (i % 8)];
+        break;
+      case FighterType::Lightning:
+        p.color = (i % 2 == 0) ? Ramps::Yellow[14] : Colors::White;
+        break;
+      case FighterType::Water:
+        p.color = (i % 2 == 0) ? Ramps::Cyan[11] : Ramps::Blue[10];
+        break;
+      case FighterType::Hacker:
+        p.color = (i % 2 == 0) ? Ramps::Green[14] : Ramps::Cyan[13];
+        break;
       }
       particles.push_back(p);
     }
   }
 
   void spawnFireMegaExplosion(float x, float y) {
-    // 💥 RIESIGE FEUER-EXPLOSION: Mehrstufige Druckwelle, Funkenregen & Rauchwolke
+    // 💥 RIESIGE FEUER-EXPLOSION: Mehrstufige Druckwelle, Funkenregen &
+    // Rauchwolke
     for (int i = 0; i < 65; ++i) {
       Particle p;
       p.x = x + (rand() % 12 - 6);
@@ -1966,6 +2284,11 @@ public:
       sn.ringColor = Ramps::Cyan[11];
       sn.rayColor = Ramps::Blue[10];
       break;
+    case FighterType::Hacker:
+      sn.coreColor = Colors::White;
+      sn.ringColor = Ramps::Green[14];
+      sn.rayColor = Ramps::Cyan[13];
+      break;
     }
     supernovas.push_back(sn);
 
@@ -1982,7 +2305,8 @@ public:
       p.maxLife = (isMega ? 0.45f : 0.25f) + (rand() % 20) / 100.0f;
       p.life = p.maxLife;
       p.size = (i % 2 == 0) ? (isMega ? 2.5f : 1.5f) : 1.0f;
-      p.color = (i % 3 == 0) ? Colors::White : ((i % 3 == 1) ? sn.ringColor : sn.rayColor);
+      p.color = (i % 3 == 0) ? Colors::White
+                             : ((i % 3 == 1) ? sn.ringColor : sn.rayColor);
       particles.push_back(p);
     }
   }
@@ -2075,22 +2399,16 @@ public:
   // ===========================================================================
   // 14. SYNTHESIZER SOUNDS
   // ===========================================================================
-  void playMenuBeep(Engine &e) {
-    e.play_tone(Notes::E4, 0.06f);
-  }
+  void playMenuBeep(Engine &e) { e.play_tone(Notes::E4, 0.06f); }
 
   void playLockSound(Engine &e) {
     e.play_tone(Notes::A4, 0.08f);
     e.play_tone(Notes::E5, 0.12f);
   }
 
-  void playFightGong(Engine &e) {
-    e.play_tone(Notes::D3, 0.40f);
-  }
+  void playFightGong(Engine &e) { e.play_tone(Notes::D3, 0.40f); }
 
-  void playJumpSound(Engine &e) {
-    e.play_tone(Notes::G4, 0.06f);
-  }
+  void playJumpSound(Engine &e) { e.play_tone(Notes::G4, 0.06f); }
 
   void playGuitarDragonSound(Engine &e) {
     // Epischer E-Gitarren Power Chord + Drachen-Dröhnen
@@ -2105,9 +2423,7 @@ public:
     e.play_tone(Notes::Fs5, 0.12f);
   }
 
-  void playFireCastSound(Engine &e) {
-    e.play_tone(Notes::A2, 0.20f);
-  }
+  void playFireCastSound(Engine &e) { e.play_tone(Notes::A2, 0.20f); }
 
   void playFireExplosionSound(Engine &e) {
     // Satter, dröhnender Explosions-Knall
@@ -2116,25 +2432,29 @@ public:
     e.play_tone(Notes::G2, 0.16f);
   }
 
-  void playThunderSound(Engine &e) {
-    e.play_tone(Notes::Ds5, 0.08f);
+  void playThunderSound(Engine &e) { e.play_tone(Notes::Ds5, 0.08f); }
+
+  void playWaterSplashSound(Engine &e) { e.play_tone(Notes::F3, 0.15f); }
+
+  void playHackerCastSound(Engine &e) {
+    // 8-Bit Cyber Modem-Arpeggio & Tastatur-Pew
+    e.play_tone(Notes::B5, 0.035f);
+    e.play_tone(Notes::E6, 0.045f);
+    e.play_tone(Notes::Gs5, 0.055f);
   }
 
-  void playWaterSplashSound(Engine &e) {
-    e.play_tone(Notes::F3, 0.15f);
+  void playCyberGlitchSound(Engine &e) {
+    // Digitaler Glitch- & Terminal-Sound
+    e.play_tone(Notes::As4, 0.05f);
+    e.play_tone(Notes::F5, 0.07f);
+    e.play_tone(Notes::D6, 0.10f);
   }
 
-  void playBlockSound(Engine &e) {
-    e.play_tone(Notes::A5, 0.08f);
-  }
+  void playBlockSound(Engine &e) { e.play_tone(Notes::A5, 0.08f); }
 
-  void playHitSound(Engine &e) {
-    e.play_tone(Notes::B2, 0.12f);
-  }
+  void playHitSound(Engine &e) { e.play_tone(Notes::B2, 0.12f); }
 
-  void playKoSound(Engine &e) {
-    e.play_tone(Notes::D2, 0.50f);
-  }
+  void playKoSound(Engine &e) { e.play_tone(Notes::D2, 0.50f); }
 
   void playVictoryFanfare(Engine &e) {
     e.play_tone(Notes::C4, 0.12f);
