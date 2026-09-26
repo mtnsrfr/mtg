@@ -23,7 +23,7 @@
 //                SHIFT RECHTS = Zielsuchende Rakete (bremst Gegner für 2s auf 50% Speed!)
 // - Kollisionen:
 //   * Echtes Auto-zu-Auto Rammen & Abprallen mit Funken und Trägheitsübertrag!
-//   * Reifenstapel, Leitplanken & Streckenbarrieren mit Aufprall-Physik!
+//   * Exakt platzierte Reifenstapel an den Kurvenscheiteln & Leitplanken mit Aufprall-Physik!
 // - Sound & Musik:
 //   * Authentisches Akustik-Gitarren Strumming (Rhythmisches Akkord-Schrammeln)!
 //   * Dezentes, warmes Motor-Grollen in Echtzeit!
@@ -259,6 +259,9 @@ public:
   std::array<TrackPoint, NUM_TRACK_NODES> trackNodes;
   const float TRACK_HALF_WIDTH = 17.0f; // Streckenbreite = 34 Pixel
 
+  // Vorberechnete gleichmäßige Abtastpunkte entlang der Strecke (1px Abstand)
+  std::vector<TrackPoint> trackSamples;
+
   // 8 Checkpoint-Tore entlang der Strecke
   static const int NUM_CHECKPOINTS = 8;
   struct Checkpoint {
@@ -301,6 +304,24 @@ public:
     trackNodes[20] = {250.0f, 222.0f}; // Bremspunkt Zielkurve
     trackNodes[21] = {278.0f, 212.0f}; // Scheitelpunkt K5 (Scharfe 90° Zielkurve)
 
+    // Gleichmäßige 1-Pixel Abtastung für messerscharfes Rendering ohne Artefakte
+    trackSamples.clear();
+    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
+      int next = (i + 1) % NUM_TRACK_NODES;
+      float x1 = trackNodes[i].x;
+      float y1 = trackNodes[i].y;
+      float x2 = trackNodes[next].x;
+      float y2 = trackNodes[next].y;
+
+      float dist = std::hypot(x2 - x1, y2 - y1);
+      int steps = std::max(1, static_cast<int>(dist * 1.2f));
+
+      for (int s = 0; s < steps; ++s) {
+        float t = static_cast<float>(s) / steps;
+        trackSamples.push_back({x1 + t * (x2 - x1), y1 + t * (y2 - y1)});
+      }
+    }
+
     // 8 Checkpoints an Schlüsselstellen
     checkpoints[0] = {284.0f, 175.0f, 28.0f}; // Start / Ziel Tor
     checkpoints[1] = {284.0f,  75.0f, 28.0f}; // Hauptgerade
@@ -314,19 +335,17 @@ public:
 
   void initBarriers() {
     barriers.clear();
-    // Reifenstapel & Hindernisse an den Kurvenscheiteln (verhindern unbefugtes Abkürzen!)
-    barriers.push_back({256.0f,  48.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 1
-    barriers.push_back({308.0f,  14.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 1
-    barriers.push_back({ 54.0f,  52.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 2
-    barriers.push_back({ 12.0f,  14.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 2
-    barriers.push_back({ 50.0f, 134.0f, 8.0f, Colors::Red, Colors::White}); // Innen Haarnadel K3
-    barriers.push_back({152.0f,  76.0f, 8.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 1
-    barriers.push_back({148.0f, 148.0f, 8.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 2
-    barriers.push_back({ 72.0f, 198.0f, 9.0f, Colors::Red, Colors::White}); // Innen Kurve 4
-    barriers.push_back({ 14.0f, 228.0f, 9.0f, Colors::Red, Colors::White}); // Außen Kurve 4
-    barriers.push_back({256.0f, 196.0f, 8.0f, Colors::Red, Colors::White}); // Innen Zielkurve
-    barriers.push_back({308.0f, 228.0f, 9.0f, Colors::Red, Colors::White}); // Außen Zielkurve
-    barriers.push_back({210.0f,  75.0f, 13.0f, Colors::DarkPurple, Colors::Cyan}); // Infield Monument
+    // Reifenstapel exakt an den Kurvenscheiteln im Gras platziert (blockieren nicht die Fahrbahn!)
+    barriers.push_back({248.0f,  56.0f, 7.0f, Colors::Red, Colors::White}); // Innen Kurve 1
+    barriers.push_back({ 56.0f,  56.0f, 7.0f, Colors::Red, Colors::White}); // Innen Kurve 2
+    barriers.push_back({ 48.0f, 130.0f, 7.0f, Colors::Red, Colors::White}); // Innen Haarnadel K3
+    barriers.push_back({148.0f,  86.0f, 7.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 1 (Oben)
+    barriers.push_back({152.0f, 150.0f, 7.0f, Colors::Yellow, Colors::DarkGray}); // Schikane Scheitel 2 (Unten)
+    barriers.push_back({ 76.0f, 180.0f, 7.0f, Colors::Red, Colors::White}); // Innen Kurve 4 (Süd-West)
+    barriers.push_back({252.0f, 185.0f, 7.0f, Colors::Red, Colors::White}); // Innen Zielkurve (Süd-Ost)
+
+    // Infield-Teich / See als schönes Natur-Hindernis
+    barriers.push_back({210.0f,  75.0f, 14.0f, Colors::SkyBlue, Colors::Blue});
   }
 
   void resetRace() {
@@ -1099,7 +1118,7 @@ public:
   // 15. RENDERING & GRAFIK
   // ===========================================================================
   void render(Engine &e) {
-    // 1. Hintergrund (Grüne Rasenfläche mit Dezem Schachbrettmuster)
+    // 1. Hintergrund (Grüne Rasenfläche mit dezenter Schachbrett-Musterung)
     e.cls(Colors::DarkGreen);
 
     for (int y = 0; y < 240; y += 12) {
@@ -1110,7 +1129,7 @@ public:
       }
     }
 
-    // 2. 3-Pass Asphalt-Strecke mit Randsteinen (Curbs nur am Außenrand)
+    // 2. Perfekt gerenderte Asphaltstrecke mit gleichmäßigen Curbs & Mittellinie
     renderTrack(e);
 
     // 3. Reifenspuren
@@ -1121,7 +1140,7 @@ public:
     // 4. Start/Ziel Schachbrett-Linie
     renderStartFinish(e);
 
-    // 5. Hindernisse & Reifenstapel
+    // 5. Reifenstapel & Infield-See
     renderBarriers(e);
 
     // 6. Raketen zeichnen
@@ -1153,61 +1172,30 @@ public:
     }
   }
 
-  // Zeichnet die durchgehende Asphaltstrecke sauber in 3 Schritten
+  // Zeichnet die durchgehende Asphaltstrecke in 3 perfekten Passes
   void renderTrack(Engine &e) {
-    const int STEPS_PER_SEGMENT = 18;
+    if (trackSamples.empty()) return;
 
-    // PASS 1: Randsteine / Curbs (Rot/Weiß gestreift) als breite Basis
-    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
-      int next = (i + 1) % NUM_TRACK_NODES;
-      float x1 = trackNodes[i].x;
-      float y1 = trackNodes[i].y;
-      float x2 = trackNodes[next].x;
-      float y2 = trackNodes[next].y;
+    size_t numSamples = trackSamples.size();
 
-      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
-        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
-        float cx = x1 + t * (x2 - x1);
-        float cy = y1 + t * (y2 - y1);
-
-        uint8_t curbColor = (((i * STEPS_PER_SEGMENT + s) / 3) % 2 == 0) ? Colors::Red : Colors::White;
-        e.circlefill(cx, cy, TRACK_HALF_WIDTH + 2.5f, curbColor);
-      }
+    // PASS 1: Randsteine / Curbs (Rot/Weiß gestreift alle 10 Pixel) als breite Basis
+    for (size_t k = 0; k < numSamples; ++k) {
+      const auto &p = trackSamples[k];
+      uint8_t curbColor = ((k / 10) % 2 == 0) ? Colors::Red : Colors::White;
+      e.circlefill(p.x, p.y, TRACK_HALF_WIDTH + 2.5f, curbColor);
     }
 
-    // PASS 2: Dunkelgrauer Asphalt (liegt ÜBER den Curbs, sodass Curbs nur an den Rändern sichtbar sind)
-    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
-      int next = (i + 1) % NUM_TRACK_NODES;
-      float x1 = trackNodes[i].x;
-      float y1 = trackNodes[i].y;
-      float x2 = trackNodes[next].x;
-      float y2 = trackNodes[next].y;
-
-      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
-        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
-        float cx = x1 + t * (x2 - x1);
-        float cy = y1 + t * (y2 - y1);
-
-        e.circlefill(cx, cy, TRACK_HALF_WIDTH, Colors::DarkGray);
-      }
+    // PASS 2: Dunkelgrauer Asphalt (liegt vollständig ÜBER den Curbs)
+    for (size_t k = 0; k < numSamples; ++k) {
+      const auto &p = trackSamples[k];
+      e.circlefill(p.x, p.y, TRACK_HALF_WIDTH, Colors::DarkGray);
     }
 
-    // PASS 3: Gestrichelte weiße Mittellinie
-    for (int i = 0; i < NUM_TRACK_NODES; ++i) {
-      int next = (i + 1) % NUM_TRACK_NODES;
-      float x1 = trackNodes[i].x;
-      float y1 = trackNodes[i].y;
-      float x2 = trackNodes[next].x;
-      float y2 = trackNodes[next].y;
-
-      for (int s = 0; s <= STEPS_PER_SEGMENT; ++s) {
-        float t = static_cast<float>(s) / STEPS_PER_SEGMENT;
-        float cx = x1 + t * (x2 - x1);
-        float cy = y1 + t * (y2 - y1);
-
-        if (((i * STEPS_PER_SEGMENT + s) / 4) % 2 == 0) {
-          e.circlefill(cx, cy, 0.8f, Colors::White);
-        }
+    // PASS 3: Gestrichelte weiße Mittellinie (6 Pixel Dash, 12 Pixel Pause)
+    for (size_t k = 0; k < numSamples; ++k) {
+      if ((k % 18) < 6) {
+        const auto &p = trackSamples[k];
+        e.circlefill(p.x, p.y, 0.75f, Colors::White);
       }
     }
   }
@@ -1230,10 +1218,21 @@ public:
 
   void renderBarriers(Engine &e) {
     for (const auto &b : barriers) {
-      e.circlefill(b.x, b.y, b.radius, Colors::Black);
-      e.circlefill(b.x, b.y, b.radius - 2.0f, b.color1);
-      e.circlefill(b.x, b.y, b.radius - 4.5f, b.color2);
-      e.circlefill(b.x, b.y, 2.0f, Colors::Black);
+      if (b.radius > 10.0f) {
+        // Infield-Teich / See
+        e.circlefill(b.x + 1.5f, b.y + 1.5f, b.radius, Colors::DarkPurple); // Schatten
+        e.circlefill(b.x, b.y, b.radius, Colors::Blue);
+        e.circlefill(b.x, b.y, b.radius - 3.0f, Colors::SkyBlue);
+        e.circlefill(b.x - 3.0f, b.y - 3.0f, 3.5f, Colors::White); // Glanzlicht
+      } else {
+        // 3D-Rennsport Reifenstapel
+        e.circlefill(b.x + 1.5f, b.y + 1.5f, b.radius, Colors::DarkGreen); // Schatten
+        e.circlefill(b.x, b.y, b.radius, Colors::Black); // Reifenkörper
+        e.circlefill(b.x, b.y, b.radius - 1.5f, Colors::DarkGray);
+        e.circlefill(b.x, b.y, b.radius - 3.0f, b.color1); // Farbiger Streifendeckel
+        e.circlefill(b.x, b.y, b.radius - 4.8f, b.color2);
+        e.circlefill(b.x, b.y, 1.5f, Colors::Black);
+      }
     }
   }
 
@@ -1342,6 +1341,13 @@ public:
       e.draw_text(52, 16, "CD: " + std::to_string(cd) + "S", Colors::LightGray, 1);
     }
 
+    // --- MITTE: ZEIT-BADGE ---
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << raceTimer << "S";
+    e.rectfill(130, 4, 60, 14, Colors::DarkGray);
+    e.rect(130, 4, 60, 14, Colors::Gold);
+    e.draw_text(138, 7, ss.str(), Colors::White, 1);
+
     // --- SPIELER 2 HUD (Oben Rechts) ---
     e.rectfill(218, 4, 98, 22, Colors::DarkGray);
     e.rect(218, 4, 98, 22, Colors::Blue);
@@ -1364,11 +1370,6 @@ public:
       int cd = static_cast<int>(cars[1].boostCooldown + 0.99f);
       e.draw_text(266, 16, "CD: " + std::to_string(cd) + "S", Colors::LightGray, 1);
     }
-
-    // Mitte: Renndauer
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(1) << raceTimer << "S";
-    e.draw_text(145, 6, ss.str(), Colors::White, 1);
   }
 
   void renderCountdownBanner(Engine &e) {
