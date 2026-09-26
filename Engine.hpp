@@ -39,7 +39,10 @@ enum class Key {
   Num4 = static_cast<int>(sf::Keyboard::Key::Num4),
   Num5 = static_cast<int>(sf::Keyboard::Key::Num5),
   Num6 = static_cast<int>(sf::Keyboard::Key::Num6),
+  Num7 = static_cast<int>(sf::Keyboard::Key::Num7),
   R = static_cast<int>(sf::Keyboard::Key::R),
+  LShift = static_cast<int>(sf::Keyboard::Key::LShift),
+  RShift = static_cast<int>(sf::Keyboard::Key::RShift),
 };
 
 // =============================================================================

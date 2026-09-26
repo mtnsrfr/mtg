@@ -47,8 +47,16 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
      * Player 1: `W` (Jump), `A`/`D` (Move), `Away+S` (Block Shield), `Towards+S` (Superpower Attack).
      * Player 2: `Up` (Jump), `Left`/`Right` (Move), `Away+Down` (Block Shield), `Towards+Down` (Superpower Attack).
 
-7. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
-   * Switch between games instantly with keys `1`, `2`, `3`, `4`, `5`, and `6`.
+7. **🏎️ Retro Grand Prix (`RacerGame.hpp`)**:
+   * 2-Player top-down racing circuit with asphalt track, curbs, skid marks, and 3-lap grand prix.
+   * **Double-Tap Forward Boost**: Double-tap `W` (P1) or `Up` (P2) for a 2-second high-speed nitro burst (with 5-second cooldown).
+   * **Homing Rocket Weapon**: Press `Left Shift` (P1) or `Right Shift` (P2) to launch a guided missile that slows the opponent to half speed for 2 seconds.
+   * *Controls*:
+     * Player 1: `W`/`S` (Accelerate/Brake), `A`/`D` (Steer), Double-tap `W` (Turbo Boost), `Left Shift` (Fire Rocket).
+     * Player 2: `Up`/`Down` (Accelerate/Brake), `Left`/`Right` (Steer), Double-tap `Up` (Turbo Boost), `Right Shift` (Fire Rocket).
+
+8. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
+   * Switch between games instantly with keys `1`, `2`, `3`, `4`, `5`, `6`, and `7`.
    * Return to the menu at any time by pressing `Escape`.
 
 ---
