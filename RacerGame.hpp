@@ -30,87 +30,165 @@
 // - 3 Runden bis zum Champion-Sieg!
 // =============================================================================
 
-// Prozeduraler Akustik-Gitarren-Soundtrack mit authentischem Strumming (Akkord-Schrammeln)
+// Prozeduraler Akustik-Gitarren-Soundtrack mit 24 Takten, 3 Sektionen, Strumming & Melodie-Transitionen
 inline std::vector<int16_t> generateGuitarStrummingBgm() {
   const unsigned sampleRate = 44100;
   const float tempoBpm = 118.0f; // Gemütliches, treibendes Akustik-Tempo
-  const float beatDuration = 60.0f / tempoBpm; // ~0.508s
+  const float beatDuration = 60.0f / tempoBpm; // ~0.5085s
   const float barDuration = beatDuration * 4.0f; // ~2.034s
-  const int numBars = 8;
-  const float totalDuration = barDuration * numBars; // ~16.27s
+  const int numBars = 24; // 3 vollständige Sektionen (Theme A, Chorus B, Bridge C)
+  const float totalDuration = barDuration * numBars; // ~48.81s
   const unsigned totalSamples = static_cast<unsigned>(sampleRate * totalDuration);
 
   std::vector<int16_t> buffer(totalSamples, 0);
   const double twoPi = 2.0 * M_PI;
 
-  // 6 Gitarrensaiten pro Akkord (Acoustic Strumming Voicings)
   struct GuitarChord {
     std::array<double, 6> freqs;
   };
 
-  // Harmoniefolge: Em -> G -> C -> D -> Em -> C -> G -> D
-  std::array<GuitarChord, 8> chords = {{
-    // Bar 0: E-Moll (Em: E2, B2, E3, G3, B3, E4)
-    {{Notes::E2, Notes::B2, Notes::E3, Notes::G3, Notes::B3, Notes::E4}},
-    // Bar 1: G-Dur (G: G2, B2, D3, G3, B3, G4)
-    {{Notes::G2, Notes::B2, Notes::D3, Notes::G3, Notes::B3, Notes::G4}},
-    // Bar 2: C-Dur (C: C3, E3, G3, C4, E4, G4)
-    {{Notes::C3, Notes::E3, Notes::G3, Notes::C4, Notes::E4, Notes::G4}},
-    // Bar 3: D-Dur (D: D3, A3, D4, Fs4, A4, D5)
-    {{Notes::D3, Notes::A3, Notes::D4, Notes::Fs4, Notes::A4, Notes::D5}},
-    // Bar 4: E-Moll (Em)
-    {{Notes::E2, Notes::B2, Notes::E3, Notes::G3, Notes::B3, Notes::E4}},
-    // Bar 5: C-Dur (C)
-    {{Notes::C3, Notes::E3, Notes::G3, Notes::C4, Notes::E4, Notes::G4}},
-    // Bar 6: G-Dur (G)
-    {{Notes::G2, Notes::B2, Notes::D3, Notes::G3, Notes::B3, Notes::G4}},
-    // Bar 7: D-Dur (D)
-    {{Notes::D3, Notes::A3, Notes::D4, Notes::Fs4, Notes::A4, Notes::D5}}
+  GuitarChord chordEm = {{Notes::E2, Notes::B2, Notes::E3, Notes::G3, Notes::B3, Notes::E4}};
+  GuitarChord chordG  = {{Notes::G2, Notes::B2, Notes::D3, Notes::G3, Notes::B3, Notes::G4}};
+  GuitarChord chordC  = {{Notes::C3, Notes::E3, Notes::G3, Notes::C4, Notes::E4, Notes::G4}};
+  GuitarChord chordD  = {{Notes::D3, Notes::A3, Notes::D4, Notes::Fs4, Notes::A4, Notes::D5}};
+  GuitarChord chordB7 = {{Notes::B2, Notes::Ds3, Notes::A3, Notes::B3, Notes::Fs4, Notes::B4}};
+  GuitarChord chordAm = {{Notes::A2, Notes::E3, Notes::A3, Notes::C4, Notes::E4, Notes::A4}};
+  GuitarChord chordBm = {{Notes::B2, Notes::Fs3, Notes::B3, Notes::D4, Notes::Fs4, Notes::B4}};
+  GuitarChord chordD7 = {{Notes::D3, Notes::A3, Notes::C4, Notes::Fs4, Notes::A4, Notes::D5}};
+
+  std::array<GuitarChord, 24> chords = {{
+    // === SEKTION A: Hauptthema (Takte 0 - 7) ===
+    chordEm, chordG,  chordC,  chordD,
+    chordEm, chordC,  chordG,  chordD,
+
+    // === SEKTION B: Aufhellender Chorus / Melodie-Variation (Takte 8 - 15) ===
+    chordG,  chordD,  chordEm, chordC,
+    chordG,  chordB7, chordEm, chordD7,
+
+    // === SEKTION C: Bridge & Dynamischer Spannungsaufbau (Takte 16 - 23) ===
+    chordAm, chordBm, chordC,  chordD,
+    chordAm, chordC,  chordB7, chordD
   }};
 
-  // Strum-Pattern innerhalb eines Taktes (Beat-Position, Down/Up, Lautstärke)
   struct StrumEvent {
-    float beatOffset; // Position im Takt (0.0 bis 4.0)
-    bool isDown;      // true = Downstroke, false = Upstroke
+    float beatOffset;
+    bool isDown;
     float volume;
   };
 
-  std::vector<StrumEvent> strumPattern = {
-    {0.00f, true,  1.00f}, // Beat 1: Starker Downstrum
-    {1.00f, true,  0.80f}, // Beat 2: Downstrum
-    {1.50f, false, 0.70f}, // Beat 2+: Upstrum
-    {2.50f, false, 0.75f}, // Beat 3+: Upstrum
-    {3.00f, true,  0.85f}, // Beat 4: Downstrum
-    {3.50f, false, 0.70f}  // Beat 4+: Upstrum
+  // Pattern A (Klassischer entspannter Groove)
+  std::vector<StrumEvent> patternA = {
+    {0.00f, true,  1.00f},
+    {1.00f, true,  0.80f},
+    {1.50f, false, 0.65f},
+    {2.50f, false, 0.70f},
+    {3.00f, true,  0.85f},
+    {3.50f, false, 0.65f}
   };
 
-  // Liste aller Saitenanschläge
+  // Pattern B (Lebendiger Chorus mit 16tel Akzenten)
+  std::vector<StrumEvent> patternB = {
+    {0.00f, true,  1.05f},
+    {0.75f, false, 0.60f},
+    {1.00f, true,  0.80f},
+    {1.50f, false, 0.70f},
+    {2.00f, true,  0.90f},
+    {2.50f, false, 0.75f},
+    {3.00f, true,  0.85f},
+    {3.50f, false, 0.75f},
+    {3.75f, true,  0.65f}
+  };
+
+  // Pattern C (Bridge Spannungs-Strumming)
+  std::vector<StrumEvent> patternC = {
+    {0.00f, true,  0.90f},
+    {1.00f, true,  0.75f},
+    {2.00f, true,  0.85f},
+    {2.50f, false, 0.75f},
+    {3.00f, true,  0.95f},
+    {3.50f, false, 0.80f}
+  };
+
+  // Turnaround Pattern vor dem Loop-Neustart (Takte 22-23)
+  std::vector<StrumEvent> patternTurnaround = {
+    {0.00f, true,  0.90f},
+    {0.50f, false, 0.70f},
+    {1.00f, true,  0.85f},
+    {1.50f, false, 0.75f},
+    {2.00f, true,  1.00f},
+    {2.50f, false, 0.85f},
+    {3.00f, true,  1.10f},
+    {3.50f, false, 0.95f}
+  };
+
   struct Pluck {
     unsigned startSample;
     double freq;
     float gain;
   };
   std::vector<Pluck> plucks;
-  plucks.reserve(numBars * strumPattern.size() * 6 + 100);
+  plucks.reserve(numBars * 10 * 6 + 200);
 
   for (int bar = 0; bar < numBars; ++bar) {
     float barStartTime = bar * barDuration;
     const auto &chord = chords[bar];
 
-    for (const auto &strum : strumPattern) {
+    const std::vector<StrumEvent> *pat = &patternA;
+    if (bar >= 8 && bar < 16) pat = &patternB;
+    else if (bar >= 16 && bar < 22) pat = &patternC;
+    else if (bar >= 22) pat = &patternTurnaround;
+
+    for (const auto &strum : *pat) {
       float strumTime = barStartTime + strum.beatOffset * beatDuration;
 
       for (int s = 0; s < 6; ++s) {
-        float stringDelay = strum.isDown ? (s * 0.0065f) : ((5 - s) * 0.0045f);
+        float stringDelay = strum.isDown ? (s * 0.0060f) : ((5 - s) * 0.0042f);
         float pluckTime = strumTime + stringDelay;
         if (pluckTime >= totalDuration) continue;
 
         unsigned sampleIdx = static_cast<unsigned>(pluckTime * sampleRate);
-        float stringGain = strum.volume * (strum.isDown ? (1.0f - s * 0.05f) : (0.7f + s * 0.06f));
+        float stringGain = strum.volume * (strum.isDown ? (1.0f - s * 0.04f) : (0.7f + s * 0.05f));
 
         plucks.push_back({sampleIdx, chord.freqs[s], stringGain});
       }
     }
+  }
+
+  // === AKUSTIK-GITARREN MELODIE-FILLS & ZUPFMUSTER IN SEKTION B & C ===
+  struct MelodyNote {
+    int bar;
+    float beatOffset;
+    double freq;
+    float gain;
+  };
+
+  std::vector<MelodyNote> melodyNotes = {
+    // Sektion B: Melodie-Licks (Takte 8 - 15)
+    { 8, 2.0f, Notes::B4, 0.85f}, { 8, 3.0f, Notes::D5, 0.90f},
+    { 9, 1.0f, Notes::A4, 0.80f}, { 9, 2.5f, Notes::Fs4, 0.85f},
+    {10, 1.0f, Notes::G4, 0.85f}, {10, 2.0f, Notes::B4, 0.90f}, {10, 3.0f, Notes::E5, 0.95f},
+    {11, 1.5f, Notes::D5, 0.85f}, {11, 2.5f, Notes::C5, 0.80f}, {11, 3.5f, Notes::B4, 0.80f},
+    {12, 1.0f, Notes::G4, 0.85f}, {12, 2.0f, Notes::B4, 0.90f}, {12, 3.0f, Notes::D5, 0.95f},
+    {13, 1.0f, Notes::Ds4, 0.85f}, {13, 2.0f, Notes::Fs4, 0.90f}, {13, 3.0f, Notes::A4, 0.95f},
+    {14, 1.0f, Notes::G4, 0.90f}, {14, 2.0f, Notes::B4, 0.95f}, {14, 3.0f, Notes::E5, 1.05f},
+    {15, 1.0f, Notes::D5, 0.90f}, {15, 2.0f, Notes::C5, 0.85f}, {15, 3.0f, Notes::A4, 0.85f},
+
+    // Sektion C: Aufsteigende Akustik-Arpeggios (Takte 16 - 23)
+    {16, 1.5f, Notes::E4, 0.80f}, {16, 2.5f, Notes::A4, 0.85f}, {16, 3.5f, Notes::C5, 0.90f},
+    {17, 1.5f, Notes::Fs4, 0.80f}, {17, 2.5f, Notes::B4, 0.85f}, {17, 3.5f, Notes::D5, 0.90f},
+    {18, 1.5f, Notes::G4, 0.85f}, {18, 2.5f, Notes::C5, 0.90f}, {18, 3.5f, Notes::E5, 0.95f},
+    {19, 1.5f, Notes::A4, 0.85f}, {19, 2.5f, Notes::D5, 0.95f}, {19, 3.5f, Notes::Fs5, 1.00f},
+    {20, 1.5f, Notes::C5, 0.90f}, {20, 2.5f, Notes::E5, 0.95f}, {20, 3.5f, Notes::A5, 1.00f},
+    {21, 1.5f, Notes::E5, 0.95f}, {21, 2.5f, Notes::G5, 1.00f}, {21, 3.5f, Notes::C6, 1.05f},
+    {22, 1.0f, Notes::B4, 0.95f}, {22, 2.0f, Notes::Ds5, 1.00f}, {22, 3.0f, Notes::Fs5, 1.05f},
+    {23, 0.5f, Notes::A5, 1.05f}, {23, 1.5f, Notes::B5, 1.10f}, {23, 2.5f, Notes::D6, 1.15f}, {23, 3.5f, Notes::E6, 1.20f}
+  };
+
+  for (const auto &m : melodyNotes) {
+    float noteTime = m.bar * barDuration + m.beatOffset * beatDuration;
+    if (noteTime >= totalDuration) continue;
+    unsigned sampleIdx = static_cast<unsigned>(noteTime * sampleRate);
+    plucks.push_back({sampleIdx, m.freq, m.gain * 1.15f});
   }
 
   // Akustik-Mix Puffer (Fließkomma)
@@ -124,16 +202,16 @@ inline std::vector<int16_t> generateGuitarStrummingBgm() {
 
     for (unsigned i = start; i < end; ++i) {
       double t = static_cast<double>(i - start) / sampleRate;
-      double env = std::exp(-t * 3.6);
+      double env = std::exp(-t * 3.5);
       double wave = std::sin(twoPi * p.freq * t)
                   + 0.50 * std::sin(twoPi * p.freq * 2.0 * t) * std::exp(-t * 2.5)
                   + 0.25 * std::sin(twoPi * p.freq * 3.0 * t) * std::exp(-t * 5.0)
                   + 0.10 * std::sin(twoPi * p.freq * 4.0 * t) * std::exp(-t * 8.0);
-      mixBuffer[i] += static_cast<float>(0.075 * p.gain * wave * env);
+      mixBuffer[i] += static_cast<float>(0.070 * p.gain * wave * env);
     }
   }
 
-  // Dezenten Bass & leichten Shaker hinzufügen
+  // Dezenten Basslauf & Akustik-Shaker hinzufügen
   for (unsigned i = 0; i < totalSamples; ++i) {
     double t = static_cast<double>(i) / sampleRate;
     int currentBar = static_cast<int>(t / barDuration) % numBars;
@@ -141,20 +219,24 @@ inline std::vector<int16_t> generateGuitarStrummingBgm() {
     int currentBeat = static_cast<int>(barTime / beatDuration);
     float beatTime = std::fmod(barTime, beatDuration);
 
-    // Warmer Akustik-Bass auf Beat 0 und 2
+    // Warmer Akustik-Bass auf Beat 0 und 2 mit Übergangstönen
     if ((currentBeat == 0 || currentBeat == 2) && beatTime < 0.38f) {
       double bFreq = chords[currentBar].freqs[0] * 0.5;
+      if (currentBeat == 2 && currentBar % 2 == 1) {
+        bFreq = chords[currentBar].freqs[1] * 0.5; // Quinte als Bass-Walking Note
+      }
       float bEnv = std::exp(-beatTime * 5.5f);
       double bWave = std::sin(twoPi * bFreq * beatTime) + 0.25 * std::sin(twoPi * bFreq * 2.0 * beatTime);
       mixBuffer[i] += static_cast<float>(0.13 * bWave * bEnv);
     }
 
-    // Leichter Percussion-Shaker auf Achtelnoten
+    // Leichter Percussion-Shaker auf Achtelnoten (wird in Sektion C lebendiger)
     float eighthTime = std::fmod(beatTime, beatDuration * 0.5f);
     if (eighthTime < 0.035f) {
       float sEnv = 1.0f - eighthTime / 0.035f;
       float noise = ((rand() % 1000) / 500.0f - 1.0f);
-      mixBuffer[i] += 0.020f * noise * sEnv;
+      float shakerVol = (currentBar >= 16) ? 0.030f : 0.018f;
+      mixBuffer[i] += shakerVol * noise * sEnv;
     }
   }
 
