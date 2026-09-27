@@ -186,4 +186,13 @@ struct MenuGame : Game {
       currentGame = CurrentGame::Racer;
     }
   }
+
+  bool customPresent(sf::Image &image, unsigned outW, unsigned outH,
+                     const std::vector<uint8_t> &buffer, int srcW, int srcH,
+                     const std::array<sf::Color, 256> &palette) override {
+    if (currentGame == CurrentGame::Dario && dario) {
+      return dario->customPresent(image, outW, outH, buffer, srcW, srcH, palette);
+    }
+    return false;
+  }
 };

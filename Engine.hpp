@@ -1188,6 +1188,13 @@ private:
 struct Game {
   virtual ~Game() = default;
   virtual void update(Engine &e) = 0;
+
+  // Optional: Ermöglicht Sub-Pixel-Effekte wie Fluid-Refraktion / Blur auf 2x-Auflösung (640x480)
+  virtual bool customPresent(sf::Image &image, unsigned outW, unsigned outH,
+                             const std::vector<uint8_t> &buffer, int srcW, int srcH,
+                             const std::array<sf::Color, 256> &palette) {
+    return false;
+  }
 };
 
 // =============================================================================
@@ -1197,16 +1204,19 @@ class EngineApp {
 public:
   EngineApp(int width = 320, int height = 240, int windowScale = 4,
             const std::string &title = "Retro Game Engine")
-      : engineWidth(width), engineHeight(height), engine(width, height),
+      : engineWidth(width), engineHeight(height),
+        outWidth(width * 2), outHeight(height * 2),
+        engine(width, height),
         window(sf::VideoMode({static_cast<unsigned>(width * windowScale),
                               static_cast<unsigned>(height * windowScale)}),
                title),
-        image({static_cast<unsigned>(width), static_cast<unsigned>(height)},
+        image({static_cast<unsigned>(width * 2), static_cast<unsigned>(height * 2)},
               sf::Color::Black) {
     window.setFramerateLimit(60);
-    (void)texture.resize({static_cast<unsigned>(width), static_cast<unsigned>(height)});
+    (void)texture.resize({static_cast<unsigned>(outWidth), static_cast<unsigned>(outHeight)});
     sprite.emplace(texture);
-    sprite->setScale({static_cast<float>(windowScale), static_cast<float>(windowScale)});
+    float finalScale = static_cast<float>(width * windowScale) / static_cast<float>(outWidth);
+    sprite->setScale({finalScale, finalScale});
   }
 
   // Wählt das Spiel aus, das gestartet werden soll
@@ -1253,12 +1263,22 @@ public:
       const auto &buffer = engine.getBuffer();
       const auto &palette = engine.getPalette();
 
-      for (int y = 0; y < engineHeight; ++y) {
-        int offset = y * engineWidth;
-        for (int x = 0; x < engineWidth; ++x) {
-          uint8_t palIdx = buffer[offset + x];
-          image.setPixel({static_cast<unsigned>(x), static_cast<unsigned>(y)},
-                         palette[palIdx]);
+      if (!game || !game->customPresent(image, outWidth, outHeight, buffer,
+                                        engineWidth, engineHeight, palette)) {
+        // Standard 2x-Pixelverdopplung für gestochen scharfen Retro-Look
+        for (int y = 0; y < engineHeight; ++y) {
+          int srcRow = y * engineWidth;
+          unsigned dstY0 = static_cast<unsigned>(y * 2);
+          unsigned dstY1 = dstY0 + 1;
+          for (int x = 0; x < engineWidth; ++x) {
+            sf::Color col = palette[buffer[srcRow + x]];
+            unsigned dstX0 = static_cast<unsigned>(x * 2);
+            unsigned dstX1 = dstX0 + 1;
+            image.setPixel({dstX0, dstY0}, col);
+            image.setPixel({dstX1, dstY0}, col);
+            image.setPixel({dstX0, dstY1}, col);
+            image.setPixel({dstX1, dstY1}, col);
+          }
         }
       }
 
@@ -1275,6 +1295,8 @@ public:
 private:
   int engineWidth;
   int engineHeight;
+  int outWidth;
+  int outHeight;
   Engine engine;
   sf::RenderWindow window;
   sf::Image image;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine.hpp"
+#include "FluidSolver.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -119,6 +120,26 @@ public:
     bool isMega;
   };
 
+  enum class FluidElementType : uint8_t {
+    Water, // Aqua-Wasser: schwere Tropfen, fließen Berghänge hinab, verlangsamen Gegner
+    Fire,  // Ignis-Feuer: lodernde Funken, steigen durch Auftrieb auf, brennen den Boden an
+    Wind,  // Sturm-Wirbel: extrem schnelle Partikel & Geschwindigkeits-Vektorlinien
+    Steam  // Wasserdampf: entsteht wenn Feuer und Wasser aufeinandertreffen -> Explosions-Druckwelle
+  };
+
+  struct FluidParticle {
+    float x = 0.0f;
+    float y = 0.0f;
+    float vx = 0.0f;
+    float vy = 0.0f;
+    float life = 0.0f;
+    float maxLife = 1.0f;
+    float size = 1.5f;
+    FluidElementType type = FluidElementType::Water;
+    int owner = -1; // 0 = P1, 1 = P2, -1 = Neutral
+    bool active = true;
+  };
+
   struct Player {
     int id; // 0 oder 1
     FighterType fighter;
@@ -161,6 +182,12 @@ public:
   std::vector<GroundFire> groundFires;
   std::vector<WaterPuddle> waterPuddles;
   std::vector<Supernova> supernovas;
+
+  // Navier-Stokes Fluid-Simulation & Elementar-Partikel
+  FluidSolver2D fluidSolver;
+  std::vector<FluidParticle> fluidParticles;
+  float p1FluidDmgTimer = 0.0f;
+  float p2FluidDmgTimer = 0.0f;
 
   int p1Cursor = 0;
   int p2Cursor = 1;
@@ -241,7 +268,7 @@ public:
               Ramps::Green[13],
               Ramps::Cyan[13],
               0.60f,
-              50,
+              20,
               128.0f};
     }
     return {FighterType::Music, "DARIO", "MUSIK", "KLANG", Ramps::Red[9],
@@ -275,6 +302,9 @@ public:
     platforms.clear();
     platforms.push_back({45.0f, 115.0f, 142.0f});  // Linke Plattform
     platforms.push_back({205.0f, 275.0f, 142.0f}); // Rechte Plattform
+
+    // Navier-Stokes Fluid-Maske initialisieren (Boden & Plattformen)
+    fluidSolver.updateSolidMask([this](float x) { return getGroundHeight(x); }, platforms);
   }
 
   float getGroundHeight(float x) const {
@@ -347,6 +377,11 @@ public:
     groundFires.clear();
     waterPuddles.clear();
     supernovas.clear();
+    fluidParticles.clear();
+    fluidSolver.reset();
+    fluidSolver.updateSolidMask([this](float x) { return getGroundHeight(x); }, platforms);
+    p1FluidDmgTimer = 0.0f;
+    p2FluidDmgTimer = 0.0f;
     roundStateTimer = 0.0f;
     state = State::RoundIntro;
   }
@@ -455,6 +490,9 @@ public:
   void updateFighting(Engine &e) {
     float dt = e.dt();
 
+    p1FluidDmgTimer = std::max(0.0f, p1FluidDmgTimer - dt);
+    p2FluidDmgTimer = std::max(0.0f, p2FluidDmgTimer - dt);
+
     // 1. Spieler 1 Eingaben (WASD)
     processPlayerInput(0, e.key(Key::A), e.key(Key::D), e.key(Key::W),
                        e.key(Key::S), e.pressed(Key::W), e);
@@ -466,6 +504,11 @@ public:
     // 3. Physik & Geländekollision für beide Spieler
     for (int i = 0; i < 2; ++i) {
       updatePlayerPhysics(players[i], dt);
+      // Aerodynamischer Nachlauf: Spieler erzeugen Wirbelschleppen im Fluid-Feld!
+      if (std::abs(players[i].vx) > 10.0f || std::abs(players[i].vy) > 10.0f) {
+        fluidSolver.addVelocity(players[i].x, players[i].y - 8.0f,
+                                players[i].vx * 0.35f, players[i].vy * 0.35f, 9.0f);
+      }
     }
 
     // 4. Automatische Blickrichtung zum Gegner
@@ -477,7 +520,9 @@ public:
       players[1].facing = 1;
     }
 
-    // 5. Projektile, brennenden Boden, Wasserpfützen & Supernovas aktualisieren
+    // 5. Navier-Stokes Fluid, Projektile, brennenden Boden, Wasserpfützen & Supernovas aktualisieren
+    fluidSolver.step(dt);
+    updateFluidParticles(e, dt);
     updateProjectiles(e, dt);
     updateGroundFires(e, dt);
     updateWaterPuddles(e, dt);
@@ -606,7 +651,8 @@ public:
       p.blockTimer += e.dt();
       p.vx = 0.0f;
 
-      // Schildpartikel spawnen
+      // Schildpartikel spawnen & schützender Luft-Gegenstrom
+      fluidSolver.addVelocity(p.x + p.facing * 10.0f, p.y - 8.0f, p.facing * 90.0f, 0.0f, 12.0f);
       if (e.rnd(3) == 0) {
         spawnShieldParticles(p.x + p.facing * 8.0f, p.y - 8.0f,
                              def.accentColor);
@@ -688,6 +734,9 @@ public:
         p.canDoubleJump = true;
         playJumpSound(e);
         spawnJumpDust(p.x, p.y);
+        // Abwind-Impuls in die Fluid-Simulation
+        fluidSolver.addVelocity(p.x, p.y - 4.0f, 0.0f, 160.0f, 12.0f);
+        spawnWindParticles(p.x, p.y - 2.0f, 0.0f, 50.0f, pid, 6);
       } else if (isMusicFighter) {
         // DARIO KANN ENDLOS WEITERFLATTERN & DURCH FLÜGELSCHLÄGE AUFSTEIGEN!
         p.vy = -185.0f;
@@ -695,11 +744,17 @@ public:
         playJumpSound(e);
         spawnDoubleJumpSparkle(p.x - p.facing * 5.0f, p.y - 8.0f,
                                Ramps::Gold[14]);
+        fluidSolver.addVelocity(p.x, p.y - 6.0f, p.facing * 90.0f, 160.0f, 14.0f);
+        spawnWindParticles(p.x, p.y - 4.0f, p.facing * 70.0f, 90.0f, pid, 8);
       } else if (p.canDoubleJump) {
         p.vy = (p.slowTimer > 0.0f) ? -150.0f : -185.0f;
         p.canDoubleJump = false;
         playJumpSound(e);
         spawnDoubleJumpSparkle(p.x, p.y, def.mainColor);
+        // Wirbelsturm-Doppelsprung
+        fluidSolver.addVelocity(p.x, p.y - 6.0f, p.facing * 110.0f, 190.0f, 14.0f);
+        spawnWindParticles(p.x, p.y - 4.0f, p.facing * 80.0f, 110.0f, pid, 10);
+        playWindWhooshSound(e);
       }
     }
 
@@ -827,6 +882,9 @@ public:
         break;
       case FighterType::Fire:
         playFireCastSound(e);
+        spawnFireStream(p.x + p.facing * 12.0f, p.y - 12.0f, p.facing * 200.0f, -200.0f, pid, 28);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 12.0f, p.facing * 210.0f, -210.0f, 16.0f);
+        fluidSolver.addBuoyancy(p.x + p.facing * 14.0f, p.y - 12.0f, 160.0f, 16.0f);
         break;
       case FighterType::Lightning:
         proj.vx = p.facing * (baseSpd + 75.0f) * 0.707f;
@@ -835,12 +893,14 @@ public:
         break;
       case FighterType::Water:
         playWaterSplashSound(e);
+        spawnWaterStream(p.x + p.facing * 12.0f, p.y - 12.0f, p.facing * 210.0f, -210.0f, pid, 36);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 12.0f, p.facing * 230.0f, -230.0f, 18.0f);
         break;
       case FighterType::Hacker:
         proj.vx = p.facing * (baseSpd + 40.0f) * 0.707f;
         proj.vy = -(baseSpd + 40.0f) * 0.707f;
         proj.radius = 7.5f;
-        proj.damage = 60; // MASSIVER SCHADEN (60 HP)
+        proj.damage = 22; // Ausbalancierter Cyber-Schuss (22 HP)
         playHackerCastSound(e);
         break;
       }
@@ -866,6 +926,9 @@ public:
         break;
       case FighterType::Fire:
         playFireCastSound(e);
+        spawnFireStream(p.x + p.facing * 12.0f, p.y - 10.0f, p.facing * 200.0f, 140.0f, pid, 28);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 10.0f, p.facing * 210.0f, 130.0f, 16.0f);
+        fluidSolver.addBuoyancy(p.x + p.facing * 14.0f, p.y - 10.0f, 140.0f, 16.0f);
         break;
       case FighterType::Lightning:
         proj.vx = p.facing * (baseSpd + 75.0f) * 0.707f;
@@ -874,25 +937,27 @@ public:
         break;
       case FighterType::Water:
         playWaterSplashSound(e);
+        spawnWaterStream(p.x + p.facing * 12.0f, p.y - 10.0f, p.facing * 210.0f, 160.0f, pid, 40);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 10.0f, p.facing * 220.0f, 150.0f, 18.0f);
         break;
       case FighterType::Hacker:
         proj.vx = p.facing * (baseSpd + 40.0f) * 0.707f;
         proj.vy = (baseSpd + 40.0f) * 0.707f;
         proj.radius = 8.0f;
-        proj.damage = 65; // EXTREME MATRIX-VIRUS BODEN-WELLE (65 HP)
+        proj.damage = 24; // Matrix-Virus Boden-Welle (24 HP)
         playHackerCastSound(e);
         break;
       }
     } else {
       // --- GERADEAUS-SCHUSS (FORWARD FORWARD, 0 GRAD) ---
       proj.x = p.x + p.facing * 12.0f;
-      proj.y = p.y - 8.0f;
+      proj.y = p.y - 11.0f; // Brusthöhe, fliegt sauber über Bodenunebenheiten
       proj.vy = 0.0f;
 
       switch (p.fighter) {
       case FighterType::Music: // Drachen-Feuerodem + E-Gitarren Power-Akkord
         proj.x = p.x + p.facing * 16.0f;
-        proj.y = p.y - 9.0f;
+        proj.y = p.y - 11.0f;
         proj.vx = p.facing * (baseSpd + 45.0f);
         proj.radius = 8.5f;
         playGuitarDragonSound(e);
@@ -902,25 +967,30 @@ public:
         proj.radius = 5.0f;
         playIceCastSound(e);
         break;
-      case FighterType::Fire: // Inferno Feuerball
+      case FighterType::Fire: // Inferno Feuerball & thermischer Flammenstrahl
         proj.vx = p.facing * (baseSpd + 30.0f);
         proj.radius = 6.0f;
         playFireCastSound(e);
+        spawnFireStream(p.x + p.facing * 12.0f, p.y - 11.0f, p.facing * 240.0f, -20.0f, pid, 30);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 11.0f, p.facing * 250.0f, -20.0f, 16.0f);
+        fluidSolver.addBuoyancy(p.x + p.facing * 14.0f, p.y - 11.0f, 150.0f, 16.0f);
         break;
       case FighterType::Lightning: // Blitzschneller Donnerkeil
         proj.vx = p.facing * (baseSpd + 85.0f);
         proj.radius = 4.0f;
         playThunderSound(e);
         break;
-      case FighterType::Water: // Tsunami Hydro-Welle
+      case FighterType::Water: // Tsunami Hydro-Welle & Navier-Stokes Strahl
         proj.vx = p.facing * (baseSpd - 10.0f);
         proj.radius = 7.5f;
         playWaterSplashSound(e);
+        spawnWaterStream(p.x + p.facing * 12.0f, p.y - 8.0f, p.facing * 260.0f, 0.0f, pid, 38);
+        fluidSolver.addVelocity(p.x + p.facing * 14.0f, p.y - 8.0f, p.facing * 270.0f, 0.0f, 18.0f);
         break;
       case FighterType::Hacker: // Fliegende Matrix-Code Buchstaben
         proj.vx = p.facing * (baseSpd + 55.0f);
         proj.radius = 7.5f;
-        proj.damage = 50; // DURCHSCHLAGSKRÄFTIGE CODE-SALVE (50 HP)
+        proj.damage = 20; // Ausbalancierte Code-Salve (20 HP)
         playHackerCastSound(e);
         break;
       }
@@ -1001,22 +1071,13 @@ public:
         }
       } else {
         // Normaler Flugtreffer (im Flug oder am Boden)
-        float hitRad = (proj.type == FighterType::Fire) ? (proj.radius + 12.0f)
-                                                        : (proj.radius + 8.0f);
+        float hitRad = proj.radius + 8.0f;
         float distSq =
             (proj.x - target.x) * (proj.x - target.x) +
             (proj.y - (target.y - 9.0f)) * (proj.y - (target.y - 9.0f));
         if (distSq <= hitRad * hitRad) {
           hit = true;
         }
-      }
-
-      // Auch wenn Feuerbälle auf das hügelige Gelände prallen: Sofortige
-      // Riesen-Explosion!
-      if (!proj.isGroundWave && !hit && proj.type == FighterType::Fire &&
-          proj.y >= getGroundHeight(proj.x) - 3.0f) {
-        hit = true;
-        proj.y = getGroundHeight(proj.x) - 3.0f;
       }
 
       if (hit) {
@@ -1027,17 +1088,19 @@ public:
           // BODEN!
           spawnFireMegaExplosion(proj.x, proj.y);
           playFireExplosionSound(e);
-          screenShake = 0.70f;
+          screenShake = 0.55f;
           igniteGroundEverywhere(proj.x, proj.owner);
         } else if (proj.type == FighterType::Water) {
-          // 💧 WASSER-AUFPRALL: Hinterlässt glitzernde Wasserpfützen am Boden!
+          // 💧 WASSER-AUFPRALL: Hinterlässt glitzernde Wasserpfützen am Boden & Navier-Stokes Gischt!
           spawnWaterPuddle(proj.x, proj.owner);
           spawnWaterPuddle(proj.x - 7.0f, proj.owner);
           spawnWaterPuddle(proj.x + 7.0f, proj.owner);
+          fluidSolver.addRadialImpulse(proj.x, proj.y, 140.0f, 20.0f);
+          spawnWaterStream(proj.x, proj.y, 0.0f, -80.0f, proj.owner, 18);
         } else if (proj.type == FighterType::Hacker) {
-          // 💻 HACKER-TREFFER: Cyber-Glitch Sound & massives Bildschirm-Wackeln!
+          // 💻 HACKER-TREFFER: Cyber-Glitch Sound & Bildschirm-Wackeln!
           playCyberGlitchSound(e);
-          screenShake = 0.65f;
+          screenShake = 0.40f;
         }
 
         if (target.isBlocking) {
@@ -1062,6 +1125,27 @@ public:
             playHitSound(e);
             screenShake = 0.45f;
           }
+        }
+      } else if (!proj.isGroundWave && proj.y >= getGroundHeight(proj.x) - 2.0f) {
+        // Einschlag ins hügelige Gelände (KEIN direkter Treffer auf den Spieler!)
+        proj.active = false;
+        if (proj.type == FighterType::Fire) {
+          spawnFireMegaExplosion(proj.x, proj.y);
+          playFireExplosionSound(e);
+          screenShake = 0.35f;
+          igniteGroundEverywhere(proj.x, proj.owner);
+          // Spritzschaden NUR wenn der Gegner tatsächlich DIREKT in der Explosionswolke steht:
+          float distSq = (proj.x - target.x) * (proj.x - target.x) +
+                         (proj.y - target.y) * (proj.y - target.y);
+          if (distSq <= 20.0f * 20.0f) {
+            int splashDmg = target.isBlocking ? 2 : 8;
+            target.hp = std::max(0, target.hp - splashDmg);
+            target.hurtTimer = 0.20f;
+            target.vy = -90.0f;
+          }
+        } else {
+          spawnHitExplosion(proj.x, proj.y, proj.type);
+          playHitSound(e);
         }
       }
 
@@ -1095,6 +1179,9 @@ public:
         groundFires.pop_back();
         continue;
       }
+
+      // Thermischer Auftrieb in die Fluid-Simulation einspeisen (heiße Kaminluft steigt auf!)
+      fluidSolver.addBuoyancy(gf.x, gf.y - 4.0f, 85.0f * dt, 10.0f);
 
       // Flammen-Partikel & Rauch steigen auf
       if (e.rnd(3) == 0) {
@@ -1243,6 +1330,8 @@ public:
   void updateRoundOver(Engine &e) {
     float dt = e.dt();
     roundStateTimer += dt;
+    fluidSolver.step(dt);
+    updateFluidParticles(e, dt);
     updateSupernovas(dt);
 
     if (roundStateTimer >= 2.2f) {
@@ -1303,8 +1392,10 @@ public:
     renderFighter(e, players[0]);
     renderFighter(e, players[1]);
 
-    // 5. Projektile, Partikel & Supernovas
+    // 5. Projektile, Navier-Stokes Fluid-Dichte, Partikel & Supernovas
+    renderFluidDensity(e);
     renderProjectiles(e);
+    renderFluidParticles(e);
     renderParticles(e);
     renderSupernovas(e);
 
@@ -2223,6 +2314,9 @@ public:
   void spawnFireMegaExplosion(float x, float y) {
     // 💥 RIESIGE FEUER-EXPLOSION: Mehrstufige Druckwelle, Funkenregen &
     // Rauchwolke
+    fluidSolver.addRadialImpulse(x, y, 220.0f, 26.0f);
+    spawnFireStream(x, y, 0.0f, -50.0f, -1, 22);
+
     for (int i = 0; i < 65; ++i) {
       Particle p;
       p.x = x + (rand() % 12 - 6);
@@ -2461,5 +2555,468 @@ public:
     e.play_tone(Notes::E4, 0.12f);
     e.play_tone(Notes::G4, 0.12f);
     e.play_tone(Notes::C5, 0.35f);
+  }
+
+  // ===========================================================================
+  // NAVIER-STOKES FLUID SIMULATION & ELEMENTAR-PARTIKEL
+  // ===========================================================================
+
+  void spawnWaterStream(float startX, float startY, float vx, float vy, int owner, int count) {
+    fluidSolver.addWaterDensity(startX, startY, 0.45f, 16.0f);
+    for (int i = 0; i < count; ++i) {
+      FluidParticle p;
+      p.x = startX + (rand() % 8 - 4);
+      p.y = startY + (rand() % 8 - 4);
+      float spreadAng = ((rand() % 31) - 15) * 0.0174533f; // +/- 15 Grad Streuung
+      float cosA = std::cos(spreadAng);
+      float sinA = std::sin(spreadAng);
+      float spdMult = 0.75f + (rand() % 50) / 100.0f;
+      p.vx = (vx * cosA - vy * sinA) * spdMult;
+      p.vy = (vx * sinA + vy * cosA) * spdMult;
+      p.maxLife = 1.0f + (rand() % 60) / 100.0f; // 1.0 bis 1.6s
+      p.life = p.maxLife;
+      p.size = (rand() % 3 == 0) ? 2.0f : 1.2f;
+      p.type = FluidElementType::Water;
+      p.owner = owner;
+      p.active = true;
+      fluidParticles.push_back(p);
+    }
+  }
+
+  void spawnFireStream(float startX, float startY, float vx, float vy, int owner, int count) {
+    fluidSolver.addFireDensity(startX, startY, 0.50f, 15.0f);
+    for (int i = 0; i < count; ++i) {
+      FluidParticle p;
+      p.x = startX + (rand() % 6 - 3);
+      p.y = startY + (rand() % 6 - 3);
+      float spreadAng = ((rand() % 35) - 17) * 0.0174533f;
+      float cosA = std::cos(spreadAng);
+      float sinA = std::sin(spreadAng);
+      float spdMult = 0.70f + (rand() % 60) / 100.0f;
+      p.vx = (vx * cosA - vy * sinA) * spdMult;
+      p.vy = (vx * sinA + vy * cosA) * spdMult;
+      p.maxLife = 0.75f + (rand() % 50) / 100.0f; // 0.75 bis 1.25s
+      p.life = p.maxLife;
+      p.size = (rand() % 2 == 0) ? 2.0f : 1.4f;
+      p.type = FluidElementType::Fire;
+      p.owner = owner;
+      p.active = true;
+      fluidParticles.push_back(p);
+    }
+  }
+
+  void spawnWindParticles(float startX, float startY, float vx, float vy, int owner, int count) {
+    for (int i = 0; i < count; ++i) {
+      FluidParticle p;
+      p.x = startX + (rand() % 10 - 5);
+      p.y = startY + (rand() % 10 - 5);
+      float spdMult = 0.8f + (rand() % 40) / 100.0f;
+      float noiseY = (rand() % 40 - 20);
+      p.vx = vx * spdMult;
+      p.vy = vy * spdMult + noiseY;
+      p.maxLife = 0.45f + (rand() % 30) / 100.0f; // 0.45 bis 0.75s
+      p.life = p.maxLife;
+      p.size = 1.0f;
+      p.type = FluidElementType::Wind;
+      p.owner = owner;
+      p.active = true;
+      fluidParticles.push_back(p);
+    }
+  }
+
+  void spawnSteamBurst(float x, float y, int count) {
+    for (int i = 0; i < count; ++i) {
+      FluidParticle p;
+      p.x = x + (rand() % 8 - 4);
+      p.y = y + (rand() % 8 - 4);
+      float ang = (rand() % 360) * 0.0174533f;
+      float spd = 20.0f + (rand() % 60);
+      p.vx = std::cos(ang) * spd;
+      p.vy = std::sin(ang) * spd - 30.0f; // Steigt schnell nach oben
+      p.maxLife = 0.60f + (rand() % 40) / 100.0f;
+      p.life = p.maxLife;
+      p.size = 2.0f + (rand() % 20) / 10.0f;
+      p.type = FluidElementType::Steam;
+      p.owner = -1; // Neutral
+      p.active = true;
+      fluidParticles.push_back(p);
+    }
+  }
+
+  void updateFluidParticles(Engine &e, float dt) {
+    // Partikel-Pool begrenzen (maximal 260 gleichzeitige Fluid-Partikel für geschmeidige 60 FPS)
+    if (fluidParticles.size() > 260) {
+      fluidParticles.erase(fluidParticles.begin(),
+                           fluidParticles.begin() + (fluidParticles.size() - 260));
+    }
+
+    for (size_t i = 0; i < fluidParticles.size();) {
+      auto &p = fluidParticles[i];
+      p.life -= dt;
+      if (p.life <= 0.0f || !p.active) {
+        fluidParticles[i] = fluidParticles.back();
+        fluidParticles.pop_back();
+        continue;
+      }
+
+      // 1. Bilineares Abtasten der Fluid-Strömung aus dem Navier-Stokes Gitter
+      float fvx = 0.0f, fvy = 0.0f;
+      fluidSolver.sampleVelocity(p.x, p.y, fvx, fvy);
+
+      float drag = (p.type == FluidElementType::Wind)
+                       ? 16.0f
+                       : ((p.type == FluidElementType::Water) ? 9.0f : 12.0f);
+      p.vx += (fvx - p.vx) * std::min(1.0f, drag * dt);
+      p.vy += (fvy - p.vy) * std::min(1.0f, drag * dt);
+
+      // 2. Schwerkraft & Auftrieb
+      if (p.type == FluidElementType::Water) {
+        p.vy += 90.0f * dt; // Schwerkraft zieht Wassertropfen nach unten
+      } else if (p.type == FluidElementType::Fire) {
+        p.vy -= 70.0f * dt; // Thermischer Auftrieb lässt Flammen aufsteigen
+      } else if (p.type == FluidElementType::Steam) {
+        p.vy -= 45.0f * dt; // Dampf steigt sanft nach oben
+      }
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
+      // Kopplung der Partikel an das Eulersche Navier-Stokes Gitter:
+      // Kontinuierliche Einspeisung von Dichte & Impuls entlang der Flugbahn
+      if (p.type == FluidElementType::Water) {
+        fluidSolver.addWaterDensity(p.x, p.y, 0.35f * dt, 4.0f);
+        fluidSolver.addVelocity(p.x, p.y, p.vx * 0.25f * dt, p.vy * 0.25f * dt, 5.0f);
+      } else if (p.type == FluidElementType::Fire) {
+        fluidSolver.addFireDensity(p.x, p.y, 0.40f * dt, 4.0f);
+        fluidSolver.addVelocity(p.x, p.y, p.vx * 0.20f * dt, (p.vy - 30.0f) * 0.20f * dt, 5.0f);
+      } else if (p.type == FluidElementType::Wind) {
+        fluidSolver.addVelocity(p.x, p.y, p.vx * 0.50f * dt, p.vy * 0.50f * dt, 6.0f);
+      }
+
+      // 3. Bildschirmgrenzen
+      if (p.x < 2.0f || p.x > 318.0f || p.y < 0.0f || p.y > 238.0f) {
+        p.active = false;
+        fluidParticles[i] = fluidParticles.back();
+        fluidParticles.pop_back();
+        continue;
+      }
+
+      // 4. Gelände- & Plattformkollision
+      float gy = getGroundHeight(p.x);
+      if (p.y >= gy - 1.5f) {
+        p.y = gy - 1.5f;
+        if (p.type == FluidElementType::Water) {
+          p.vy = -p.vy * 0.15f; // Geringe Abprallhöhe
+          // Wasser fließt Hänge hinab (Gradienten-Kollision)
+          float slope =
+              (getGroundHeight(p.x + 3.0f) - getGroundHeight(p.x - 3.0f)) / 6.0f;
+          p.vx += slope * 160.0f * dt;
+          p.vx *= 0.94f;
+          if (p.life < 0.35f && e.rnd(10) == 0) {
+            spawnWaterPuddle(p.x, p.owner);
+          }
+        } else if (p.type == FluidElementType::Fire) {
+          p.life -= dt * 2.5f;
+          if (p.life > 0.4f && e.rnd(20) == 0) {
+            igniteGroundEverywhere(p.x, p.owner);
+          }
+        } else if (p.type == FluidElementType::Steam) {
+          p.life -= dt * 2.0f;
+        } else if (p.type == FluidElementType::Wind) {
+          p.active = false;
+        }
+      }
+
+      // Schwebende Plattformen
+      for (const auto &plat : platforms) {
+        if (p.x >= plat.x1 && p.x <= plat.x2 && p.y >= plat.y - 2.0f &&
+            p.y <= plat.y + 4.0f && p.vy > 0.0f) {
+          p.y = plat.y - 2.0f;
+          p.vy = -p.vy * 0.20f;
+          p.vx *= 0.94f;
+          break;
+        }
+      }
+
+      // 5. Elementar-Chemie: Wasser trifft Feuer = Dampf-Explosion!
+      if (p.type == FluidElementType::Water || p.type == FluidElementType::Fire) {
+        for (size_t j = i + 1; j < fluidParticles.size(); ++j) {
+          auto &other = fluidParticles[j];
+          if (!other.active)
+            continue;
+          if ((p.type == FluidElementType::Water &&
+               other.type == FluidElementType::Fire) ||
+              (p.type == FluidElementType::Fire &&
+               other.type == FluidElementType::Water)) {
+            float cdx = p.x - other.x;
+            float cdy = p.y - other.y;
+            if (cdx * cdx + cdy * cdy <= 36.0f) { // <= 6 Pixel Abstand
+              float midX = (p.x + other.x) * 0.5f;
+              float midY = (p.y + other.y) * 0.5f;
+              p.active = false;
+              other.active = false;
+              fluidSolver.addRadialImpulse(midX, midY, 150.0f, 18.0f);
+              spawnSteamBurst(midX, midY, 6);
+              playSteamHissSound(e);
+              break;
+            }
+          }
+        }
+      }
+
+      if (!p.active) {
+        fluidParticles[i] = fluidParticles.back();
+        fluidParticles.pop_back();
+        continue;
+      }
+
+      // 6. Trefferprüfung gegen gegnerischen Spieler
+      for (int pid = 0; pid < 2; ++pid) {
+        if (p.owner != -1 && p.owner == pid)
+          continue;
+        Player &target = players[pid];
+
+        float dx = p.x - target.x;
+        float dy = p.y - (target.y - 9.0f);
+        if (dx * dx + dy * dy <= 10.0f * 10.0f) {
+          if (target.isBlocking) {
+            // Schild reflektiert Fluid-Partikel!
+            p.vx = -p.vx * 0.70f + (rand() % 40 - 20);
+            p.vy = -p.vy * 0.70f + (rand() % 40 - 20);
+            p.owner = target.id;
+            spawnBlockSparks(p.x, p.y);
+            if (e.rnd(4) == 0)
+              playBlockSound(e);
+          } else {
+            // Treffer! Impulsübertragung & Schaden
+            p.active = false;
+            target.vx += p.vx * 0.04f;
+            if (p.type == FluidElementType::Water) {
+              target.slowTimer = std::max(target.slowTimer, 0.45f);
+            } else if (p.type == FluidElementType::Wind) {
+              target.vy -= 40.0f;
+              target.vx += p.vx * 0.15f;
+            }
+
+            float &dmgTimer = (pid == 0) ? p1FluidDmgTimer : p2FluidDmgTimer;
+            if (dmgTimer <= 0.0f) {
+              int dmg = (p.type == FluidElementType::Fire) ? 3 : 2;
+              target.hp = std::max(0, target.hp - dmg);
+              target.hurtTimer = 0.12f;
+              dmgTimer = 0.08f; // Verhindert Sofort-Tod durch viele Partikel
+              playHitSound(e);
+            }
+          }
+          break;
+        }
+      }
+
+      ++i;
+    }
+  }
+
+  void renderFluidDensity(Engine &e) {
+    const auto &densW = fluidSolver.getWaterDensity();
+    const auto &densF = fluidSolver.getFireDensity();
+    constexpr int GW = FluidSolver2D::GW;
+    constexpr int GH = FluidSolver2D::GH;
+
+    for (int gy = 0; gy < GH; ++gy) {
+      int screenY = gy * 2;
+      int rowIdx = gy * GW;
+      for (int gx = 0; gx < GW; ++gx) {
+        int i = rowIdx + gx;
+        float dw = densW[i];
+        float df = densF[i];
+
+        if (dw > 0.06f) {
+          int screenX = gx * 2;
+          uint8_t col = (dw > 0.30f) ? Ramps::Cyan[11]
+                       : (dw > 0.16f) ? Ramps::Cyan[8]
+                                      : Ramps::Blue[13];
+          e.pset(screenX, screenY, col);
+          e.pset(screenX + 1, screenY, col);
+          e.pset(screenX, screenY + 1, col);
+          e.pset(screenX + 1, screenY + 1, col);
+        } else if (df > 0.06f) {
+          int screenX = gx * 2;
+          uint8_t col = (df > 0.35f) ? Ramps::Fire[12]
+                       : (df > 0.18f) ? Ramps::Fire[8]
+                                      : Ramps::Fire[4];
+          e.pset(screenX, screenY, col);
+          e.pset(screenX + 1, screenY, col);
+          e.pset(screenX, screenY + 1, col);
+          e.pset(screenX + 1, screenY + 1, col);
+        }
+      }
+    }
+  }
+
+  void renderFluidParticles(Engine &e) {
+    for (const auto &p : fluidParticles) {
+      if (!p.active)
+        continue;
+      int px = static_cast<int>(p.x);
+      int py = static_cast<int>(p.y);
+      if (px < 0 || px >= 320 || py < 0 || py >= 240)
+        continue;
+
+      switch (p.type) {
+      case FluidElementType::Water: {
+        float spdSq = p.vx * p.vx + p.vy * p.vy;
+        if (spdSq > 75.0f * 75.0f) {
+          e.pset(px, py, Colors::White);
+          int tx = static_cast<int>(p.x - p.vx * 0.015f);
+          int ty = static_cast<int>(p.y - p.vy * 0.015f);
+          if (tx >= 0 && tx < 320 && ty >= 0 && ty < 240) {
+            e.pset(tx, ty, Ramps::Cyan[11]);
+          }
+        } else {
+          e.rectfill(px - 1, py - 1, 2, 2, Ramps::Cyan[9]);
+          e.pset(px, py, Ramps::Blue[13]);
+        }
+        break;
+      }
+      case FluidElementType::Fire: {
+        float t = std::clamp(p.life / p.maxLife, 0.0f, 1.0f);
+        uint8_t col = Ramps::Fire.sample(t);
+        if (t > 0.65f) {
+          e.rectfill(px - 1, py - 1, 2, 2, col);
+          e.pset(px, py, Colors::White);
+        } else {
+          e.pset(px, py, col);
+        }
+        break;
+      }
+      case FluidElementType::Wind: {
+        int tx = static_cast<int>(p.x - p.vx * 0.035f);
+        int ty = static_cast<int>(p.y - p.vy * 0.035f);
+        e.line(px, py, tx, ty, Ramps::Grays[11]);
+        e.pset(px, py, Colors::White);
+        break;
+      }
+      case FluidElementType::Steam: {
+        float prog = 1.0f - (p.life / p.maxLife);
+        float r = p.size + prog * 3.5f;
+        uint8_t steamCol =
+            Ramps::Grays[std::clamp(6 + static_cast<int>(p.life * 8.0f), 0, 15)];
+        e.circle(px, py, r, steamCol);
+        if (r > 2.5f) {
+          e.pset(px, py, Colors::White);
+        }
+        break;
+      }
+      }
+    }
+  }
+
+  void playSteamHissSound(Engine &e) {
+    e.play_tone(Notes::B6, 0.05f);
+    e.play_tone(Notes::F6, 0.07f);
+  }
+
+  void playWindWhooshSound(Engine &e) {
+    e.play_tone(Notes::G3, 0.08f);
+    e.play_tone(Notes::D3, 0.12f);
+  }
+
+  // ===========================================================================
+  // SUB-PIXEL 2X FLUID-REFRAKTION & GESCHWINDIGKEITS-FALTUNG (640x480)
+  // ===========================================================================
+  bool customPresent(sf::Image &image, unsigned outW, unsigned outH,
+                     const std::vector<uint8_t> &buffer, int srcW, int srcH,
+                     const std::array<sf::Color, 256> &palette) override {
+    if (state == State::CharacterSelect) {
+      return false; // Im Charakter-Auswahlmenü Standard-Pixelverdopplung
+    }
+
+    // 2x-Sub-Pixel Convolution & Optical Flow Refraction
+    for (int by = 0; by < srcH; ++by) {
+      int srcRow = by * srcW;
+      unsigned dstY0 = static_cast<unsigned>(by * 2);
+      unsigned dstY1 = dstY0 + 1;
+
+      for (int bx = 0; bx < srcW; ++bx) {
+        float sx = static_cast<float>(bx);
+        float sy = static_cast<float>(by);
+
+        float vx = 0.0f, vy = 0.0f;
+        fluidSolver.sampleVelocity(sx, sy, vx, vy);
+        float spdSq = vx * vx + vy * vy;
+        float waterDens = fluidSolver.sampleWaterDensity(sx, sy);
+        float fireDens = fluidSolver.sampleFireDensity(sx, sy);
+        float curlVal = std::abs(fluidSolver.sampleCurl(sx, sy));
+
+        unsigned dstX0 = static_cast<unsigned>(bx * 2);
+        unsigned dstX1 = dstX0 + 1;
+
+        // Wenn keine nennenswerte Strömung / Dichte / Wirbel vorhanden ist:
+        // Gestochen scharfer, nativer 2x Retro-Pixel ohne Rechenaufwand!
+        if (spdSq < 20.0f && curlVal < 0.6f && waterDens < 0.010f && fireDens < 0.010f) {
+          sf::Color baseCol = palette[buffer[srcRow + bx]];
+          image.setPixel({dstX0, dstY0}, baseCol);
+          image.setPixel({dstX1, dstY0}, baseCol);
+          image.setPixel({dstX0, dstY1}, baseCol);
+          image.setPixel({dstX1, dstY1}, baseCol);
+          continue;
+        }
+
+        // Bei aktiver Strömung: Kontinuierliche Sub-Pixel Refraktion & 3-Tap Faltung
+        float dispX = std::clamp(vx * 0.038f, -6.0f, 6.0f);
+        float dispY = std::clamp(vy * 0.038f, -6.0f, 6.0f);
+
+        for (int subY = 0; subY < 2; ++subY) {
+          for (int subX = 0; subX < 2; ++subX) {
+            float curSx = sx + subX * 0.5f;
+            float curSy = sy + subY * 0.5f;
+
+            // 3-Tap Abtastung entlang des Strömungsvektors
+            float tap1X = std::clamp(curSx - dispX * 1.15f, 0.0f, 319.0f);
+            float tap1Y = std::clamp(curSy - dispY * 1.15f, 0.0f, 239.0f);
+            float tap2X = std::clamp(curSx - dispX * 0.50f, 0.0f, 319.0f);
+            float tap2Y = std::clamp(curSy - dispY * 0.50f, 0.0f, 239.0f);
+            float tap3X = std::clamp(curSx + dispX * 0.35f, 0.0f, 319.0f);
+            float tap3Y = std::clamp(curSy + dispY * 0.35f, 0.0f, 239.0f);
+
+            int i1 = static_cast<int>(tap1Y) * srcW + static_cast<int>(tap1X);
+            int i2 = static_cast<int>(tap2Y) * srcW + static_cast<int>(tap2X);
+            int i3 = static_cast<int>(tap3Y) * srcW + static_cast<int>(tap3X);
+
+            sf::Color c1 = palette[buffer[i1]];
+            sf::Color c2 = palette[buffer[i2]];
+            sf::Color c3 = palette[buffer[i3]];
+
+            // 25% - 50% - 25% Richtungs-Faltung (Bewegungsunschärfe entlang Strömung)
+            int r = static_cast<int>(c1.r * 0.25f + c2.r * 0.50f + c3.r * 0.25f);
+            int g = static_cast<int>(c1.g * 0.25f + c2.g * 0.50f + c3.g * 0.25f);
+            int b = static_cast<int>(c1.b * 0.25f + c2.b * 0.50f + c3.b * 0.25f);
+
+            // Spektrale Tönung durch das Eulersche Dichtefeld:
+            // 1. Wasser-Strömung: Kristall-Türkis/Azur Schimmer
+            if (waterDens > 0.010f) {
+              float wAlpha = std::min(0.40f, waterDens * 0.50f);
+              r = static_cast<int>(r * (1.0f - wAlpha) + 35.0f * wAlpha);
+              g = static_cast<int>(g * (1.0f - wAlpha) + 165.0f * wAlpha);
+              b = static_cast<int>(b * (1.0f - wAlpha) + 250.0f * wAlpha);
+            }
+            // 2. Feuer/Hitze-Auftrieb: Warmer Bernstein-/Gold-Glanz
+            if (fireDens > 0.010f) {
+              float fAlpha = std::min(0.45f, fireDens * 0.60f);
+              r = static_cast<int>(r * (1.0f - fAlpha) + 255.0f * fAlpha);
+              g = static_cast<int>(g * (1.0f - fAlpha) + 130.0f * fAlpha);
+              b = static_cast<int>(b * (1.0f - fAlpha) + 25.0f * fAlpha);
+            }
+
+            unsigned px = dstX0 + subX;
+            unsigned py = dstY0 + subY;
+            image.setPixel({px, py}, sf::Color(static_cast<uint8_t>(std::clamp(r, 0, 255)),
+                                               static_cast<uint8_t>(std::clamp(g, 0, 255)),
+                                               static_cast<uint8_t>(std::clamp(b, 0, 255))));
+          }
+        }
+      }
+    }
+
+    return true;
   }
 };

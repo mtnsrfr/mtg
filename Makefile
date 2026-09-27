@@ -16,19 +16,20 @@ TARGET = run_the_games
 STATIC_TARGET = run_the_games_static
 APP_BUNDLE = MTG.app
 SRC = main.cc
+HEADERS = $(wildcard *.hpp)
 
 .PHONY: all static bundle run run-static run-bundle clean
 
 all: $(TARGET)
 
 # Dynamic build
-$(TARGET): $(SRC)
+$(TARGET): $(SRC) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
 # Static build (single portable standalone binary)
 static: $(STATIC_TARGET)
 
-$(STATIC_TARGET): $(SRC)
+$(STATIC_TARGET): $(SRC) $(HEADERS)
 	$(CXX) $(STATIC_CXXFLAGS) $(SRC) -o $(STATIC_TARGET) $(STATIC_LDFLAGS)
 
 # Standalone macOS .app Bundle
