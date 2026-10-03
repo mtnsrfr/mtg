@@ -56,8 +56,22 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
      * Player 1: `W`/`S` (Accelerate/Brake), `A`/`D` (Steer), Double-tap `W` (Turbo Boost), `Left Shift` (Fire Rocket).
      * Player 2: `Up`/`Down` (Accelerate/Brake), `Left`/`Right` (Steer), Double-tap `Up` (Turbo Boost), `Right Shift` (Fire Rocket).
 
-8. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
-   * Switch between games instantly with keys `1`, `2`, `3`, `4`, `5`, `6`, and `7`.
+8. **🧠 Swarmfront: Nanite Wars RTS (`SwarmGame.hpp`)**:
+   * Real-time swarm intelligence strategy game with 1000+ units simulated in real-time via Boids flocking physics.
+   * **Rock-Paper-Scissors Swarm Triad**:
+     * ⚡ **Needle Drones** (Melee Swarm): Overwhelms Snipers, weak to Acid Splash.
+     * 💥 **Acid Spitters** (AoE Artillery): Melts dense Needle Swarms with corrosive pools, outranged by Snipers.
+     * 🎯 **Pulse Snipers** (Piercing Laser): Picks off slow Acid Spitters from long range, weak to Melee surrounds.
+     * 👁️ **Scout Flies** (Recon): Ultra-fast scouts that clear Fog of War and harvest biomass.
+   * **Zero-Waste Biomass Recycling**: Every destroyed unit drops biomass that can be scavenged on the battlefield to breed replacement units.
+   * **Macro Pheromone Steering**: Click or drag on the map to set swarm attraction beacons and order attack/defense/disperse directives.
+   * *Controls*:
+     * `Left Click`: Place/drag Pheromone Beacon, `Right Click`: Defend Nexus.
+     * `1`/`2`/`3`/`4`: Spawn Needles, Acid, Pulse, Scouts.
+     * `Q`: Defend Nexus, `W`: Attack Enemy Hive, `E`: Disperse Swarm (AoE dodge), `Tab` / `5`: Toggle Auto-Build.
+
+9. **🎯 Multi-Game Launcher (`MenuGame.hpp`)**:
+   * Switch between games instantly with keys `1`, `2`, `3`, `4`, `5`, `6`, `7`, and `8`.
    * Return to the menu at any time by pressing `Escape`.
 
 ---

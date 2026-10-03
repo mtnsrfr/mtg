@@ -26,6 +26,12 @@ enum class Key {
   S = static_cast<int>(sf::Keyboard::Key::S),
   A = static_cast<int>(sf::Keyboard::Key::A),
   D = static_cast<int>(sf::Keyboard::Key::D),
+  Q = static_cast<int>(sf::Keyboard::Key::Q),
+  E = static_cast<int>(sf::Keyboard::Key::E),
+  F = static_cast<int>(sf::Keyboard::Key::F),
+  B = static_cast<int>(sf::Keyboard::Key::B),
+  M = static_cast<int>(sf::Keyboard::Key::M),
+  Tab = static_cast<int>(sf::Keyboard::Key::Tab),
   Up = static_cast<int>(sf::Keyboard::Key::Up),
   Down = static_cast<int>(sf::Keyboard::Key::Down),
   Left = static_cast<int>(sf::Keyboard::Key::Left),
@@ -40,6 +46,8 @@ enum class Key {
   Num5 = static_cast<int>(sf::Keyboard::Key::Num5),
   Num6 = static_cast<int>(sf::Keyboard::Key::Num6),
   Num7 = static_cast<int>(sf::Keyboard::Key::Num7),
+  Num8 = static_cast<int>(sf::Keyboard::Key::Num8),
+  Num9 = static_cast<int>(sf::Keyboard::Key::Num9),
   R = static_cast<int>(sf::Keyboard::Key::R),
   LShift = static_cast<int>(sf::Keyboard::Key::LShift),
   RShift = static_cast<int>(sf::Keyboard::Key::RShift),
@@ -481,6 +489,14 @@ public:
   bool mouse_down(sf::Mouse::Button btn = sf::Mouse::Button::Left) const {
     return sf::Mouse::isButtonPressed(btn);
   }
+  bool mouse_pressed(sf::Mouse::Button btn = sf::Mouse::Button::Left) const {
+    auto it = mousePressedState.find(btn);
+    return (it != mousePressedState.end() && it->second);
+  }
+  bool mouse_released(sf::Mouse::Button btn = sf::Mouse::Button::Left) const {
+    auto it = mouseReleasedState.find(btn);
+    return (it != mouseReleasedState.end() && it->second);
+  }
 
   // --- ZEICHEN-FUNKTIONEN (Unterstützt Kommazahlen und ganze Zahlen) ---
 
@@ -813,8 +829,20 @@ public:
     }
   }
 
+  void setMouseButtonState(sf::Mouse::Button btn, bool isDown) {
+    bool wasDown = mouseButtonState[btn];
+    mouseButtonState[btn] = isDown;
+    if (isDown && !wasDown) {
+      mousePressedState[btn] = true;
+    } else if (!isDown && wasDown) {
+      mouseReleasedState[btn] = true;
+    }
+  }
+
   void clearKeyTransitions() {
     keyPressedState.clear();
+    mousePressedState.clear();
+    mouseReleasedState.clear();
   }
 
 private:
@@ -830,6 +858,9 @@ private:
 
   std::unordered_map<sf::Keyboard::Key, bool> keyState;
   std::unordered_map<sf::Keyboard::Key, bool> keyPressedState;
+  std::unordered_map<sf::Mouse::Button, bool> mouseButtonState;
+  std::unordered_map<sf::Mouse::Button, bool> mousePressedState;
+  std::unordered_map<sf::Mouse::Button, bool> mouseReleasedState;
   uint32_t rngState = 123456789u;
 
   void initPalette() {
@@ -1235,7 +1266,7 @@ public:
 
       engine.clearKeyTransitions();
 
-      // Fenster-Ereignisse (Schließen, Tastendrücke) verarbeiten
+      // Fenster-Ereignisse (Schließen, Tastendrücke, Mausklicks) verarbeiten
       while (std::optional event = window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
           window.close();
@@ -1243,6 +1274,10 @@ public:
           engine.setKeyState(keyPressed->code, true);
         } else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>()) {
           engine.setKeyState(keyReleased->code, false);
+        } else if (const auto *mbPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+          engine.setMouseButtonState(mbPressed->button, true);
+        } else if (const auto *mbReleased = event->getIf<sf::Event::MouseButtonReleased>()) {
+          engine.setMouseButtonState(mbReleased->button, false);
         }
       }
 

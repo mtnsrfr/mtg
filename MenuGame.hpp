@@ -8,6 +8,7 @@
 #include "TankGame.hpp"
 #include "DarioGame.hpp"
 #include "RacerGame.hpp"
+#include "SwarmGame.hpp"
 #include <memory>
 
 // =============================================================================
@@ -21,6 +22,7 @@
 // - Taste 5: Tank Duel (Artillerie-Panzerduell)
 // - Taste 6: Darios Spiel (Elementar-Kampfarena)
 // - Taste 7: Retro Grand Prix (2-Player Top-Down Racer)
+// - Taste 8: Swarmfront: Nanite Wars (Echtzeit-Schwarm-Strategie RTS)
 // - ESCAPE: Jederzeit zurück ins Hauptmenü!
 // =============================================================================
 struct MenuGame : Game {
@@ -35,7 +37,8 @@ struct MenuGame : Game {
     Unicorn,
     Tank,
     Dario,
-    Racer
+    Racer,
+    Swarm
   };
 
   CurrentGame currentGame = CurrentGame::Menu;
@@ -46,6 +49,7 @@ struct MenuGame : Game {
   std::unique_ptr<TankGame> tank;
   std::unique_ptr<DarioGame> dario;
   std::unique_ptr<RacerGame> racer;
+  std::unique_ptr<SwarmGame> swarm;
 
   // ===========================================================================
   // 2. KONSTRUKTOR (Wird beim Start einmal ausgeführt)
@@ -58,6 +62,7 @@ struct MenuGame : Game {
     tank = std::make_unique<TankGame>();
     dario = std::make_unique<DarioGame>();
     racer = std::make_unique<RacerGame>();
+    swarm = std::make_unique<SwarmGame>();
   }
 
   // ===========================================================================
@@ -97,6 +102,9 @@ struct MenuGame : Game {
     case CurrentGame::Racer:
       racer->update(e);
       break;
+    case CurrentGame::Swarm:
+      swarm->update(e);
+      break;
     }
   }
 
@@ -115,45 +123,50 @@ struct MenuGame : Game {
     bool blink = (int(e.time() * 2.5f) % 2) == 0;
 
     // Spiel 1: Pong
-    e.rectfill(28, 29, 264, 16, Colors::DarkGray);
-    e.rect(28, 29, 264, 16, Colors::Red);
-    e.draw_text(38, 33, "DRUECKE 1 : 2-SPIELER PONG", Colors::White, 1);
+    e.rectfill(28, 28, 264, 15, Colors::DarkGray);
+    e.rect(28, 28, 264, 15, Colors::Red);
+    e.draw_text(38, 32, "DRUECKE 1 : 2-SPIELER PONG", Colors::White, 1);
 
     // Spiel 2: Snake
-    e.rectfill(28, 48, 264, 16, Colors::DarkGray);
-    e.rect(28, 48, 264, 16, Colors::Yellow);
-    e.draw_text(38, 52, "DRUECKE 2 : SCHLANGEN-DUELL", Colors::White, 1);
+    e.rectfill(28, 45, 264, 15, Colors::DarkGray);
+    e.rect(28, 45, 264, 15, Colors::Yellow);
+    e.draw_text(38, 49, "DRUECKE 2 : SCHLANGEN-DUELL", Colors::White, 1);
 
     // Spiel 3: Starfighter
-    e.rectfill(28, 67, 264, 16, Colors::DarkGray);
-    e.rect(28, 67, 264, 16, Colors::Blue);
-    e.draw_text(38, 71, "DRUECKE 3 : STARFIGHTER ATTACK", Colors::White, 1);
+    e.rectfill(28, 62, 264, 15, Colors::DarkGray);
+    e.rect(28, 62, 264, 15, Colors::Blue);
+    e.draw_text(38, 66, "DRUECKE 3 : STARFIGHTER ATTACK", Colors::White, 1);
 
     // Spiel 4: The Unicorn
-    e.rectfill(28, 86, 264, 16, Colors::DarkGray);
-    e.rect(28, 86, 264, 16, Colors::Pink);
-    e.draw_text(38, 90, "DRUECKE 4 : THE UNICORN", Colors::Gold, 1);
+    e.rectfill(28, 79, 264, 15, Colors::DarkGray);
+    e.rect(28, 79, 264, 15, Colors::Pink);
+    e.draw_text(38, 83, "DRUECKE 4 : THE UNICORN", Colors::Gold, 1);
 
     // Spiel 5: Tank Duel
-    e.rectfill(28, 105, 264, 16, Colors::DarkGray);
-    e.rect(28, 105, 264, 16, Colors::Cyan);
-    e.draw_text(38, 109, "DRUECKE 5 : TANK DUEL (ARTILLERY)", Colors::Cyan, 1);
+    e.rectfill(28, 96, 264, 15, Colors::DarkGray);
+    e.rect(28, 96, 264, 15, Colors::Cyan);
+    e.draw_text(38, 100, "DRUECKE 5 : TANK DUEL (ARTILLERY)", Colors::Cyan, 1);
 
     // Spiel 6: Darios Spiel (Elemental Brawl)
-    e.rectfill(28, 124, 264, 16, Colors::DarkGray);
-    e.rect(28, 124, 264, 16, Colors::Gold);
-    e.draw_text(38, 128, "DRUECKE 6 : DARIOS SPIEL (ELEMENTAL BRAWL)", Colors::Gold, 1);
+    e.rectfill(28, 113, 264, 15, Colors::DarkGray);
+    e.rect(28, 113, 264, 15, Colors::Gold);
+    e.draw_text(38, 117, "DRUECKE 6 : DARIOS SPIEL (ELEMENTAL BRAWL)", Colors::Gold, 1);
 
     // Spiel 7: Retro Grand Prix (Top-Down Racer)
-    e.rectfill(28, 143, 264, 16, Colors::DarkGray);
-    e.rect(28, 143, 264, 16, Colors::Red);
-    e.draw_text(38, 147, "DRUECKE 7 : RETRO GRAND PRIX (RACER)", Ramps::Fire[12], 1);
+    e.rectfill(28, 130, 264, 15, Colors::DarkGray);
+    e.rect(28, 130, 264, 15, Colors::Red);
+    e.draw_text(38, 134, "DRUECKE 7 : RETRO GRAND PRIX (RACER)", Ramps::Fire[12], 1);
+
+    // Spiel 8: Swarmfront (Nanite Wars RTS)
+    e.rectfill(28, 147, 264, 15, Colors::DarkGray);
+    e.rect(28, 147, 264, 15, Ramps::Cyan[12]);
+    e.draw_text(38, 151, "DRUECKE 8 : SWARMFRONT (NANITE WARS RTS)", Ramps::Cyan[14], 1);
 
     // Menü-Hinweis
     if (blink) {
-      e.draw_text(36, 168, "WAEHLE DEIN SPIEL (1, 2, 3, 4, 5, 6 ODER 7)", Colors::Yellow, 1);
+      e.draw_text(26, 172, "WAEHLE DEIN SPIEL (1, 2, 3, 4, 5, 6, 7 ODER 8)", Colors::Yellow, 1);
     }
-    e.draw_text(44, 186, "TIPP: MIT ESCAPE ZURUECK INS MENUE", Colors::LightGray, 1);
+    e.draw_text(44, 190, "TIPP: MIT ESCAPE ZURUECK INS MENUE", Colors::LightGray, 1);
 
     // Tasteneingabe zur Spielauswahl
     if (e.pressed(Key::Num1)) {
@@ -184,6 +197,10 @@ struct MenuGame : Game {
       e.play_tone(Notes::B6, 0.12f);
       racer = std::make_unique<RacerGame>(); // Frisch starten
       currentGame = CurrentGame::Racer;
+    } else if (e.pressed(Key::Num8)) {
+      e.play_tone(Notes::D6, 0.12f);
+      swarm = std::make_unique<SwarmGame>(); // Frisch starten
+      currentGame = CurrentGame::Swarm;
     }
   }
 
