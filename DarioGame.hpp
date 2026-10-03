@@ -13,7 +13,7 @@
 // =============================================================================
 // DARIOS SPIEL - ELEMENTAL PIXEL BRAWL (2-Player Local PvP Fighting Arena)
 // =============================================================================
-// 6 Einzigartige Elementar- & Cyber-Kämpfer nach Darios Vision:
+// 7 Einzigartige Elementar-, Cyber- & Geister-Kämpfer nach Darios Vision:
 // 1. 🎸 Musik-Kämpfer (Dario): E-Gitarre, Drachen-Klangwelle, rote Haare,
 // schwarze Augenringe
 // 2. ❄️ Eis-Kämpfer: Blau-Weiß, Eisstücke & Kristalle am Körper und Arm
@@ -22,6 +22,8 @@
 // 5. 💧 Wasser-Kämpfer: Blaue Haare & Augen, Ninja-Mundmaske, Hydro-Tsunami
 // 6. 💻 Hacker-Kämpfer (Byte): Cyber-Laptop, Cyber-Visor, schießt fliegende
 // Buchstaben & Matrix-Code!
+// 7. 👻 Geister-Kämpfer (Spooky): Netter Geist, Kulleraugen & rosa Bäckchen,
+// schießt fliegende Mini-Geister & gleitet im Wind!
 //
 // Steuerung (Genau 4 Tasten pro Spieler!):
 // - Spieler 1: W (Sprung), A / D (Laufen), Weg+Runter (Block), Hin+Runter
