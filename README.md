@@ -34,13 +34,14 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
    * *Controls*: Angle (`Left`/`Right`), Power (`Up`/`Down`), Fire (`Space`/`Enter`), New Terrain (`R`).
 
 6. **⚡ Darios Spiel: Elemental Pixel Brawl (`DarioGame.hpp`)**:
-   * Dedicated 2-player local PvP arena fighting game with 6 unique champions:
+   * Dedicated 2-player local PvP arena fighting game with 7 unique champions:
      * 🎸 **Musik-Kämpfer (Dario)**: E-Gitarre, Drachen-Klangwelle, rote Haare, schwarze Augenringe.
      * ❄️ **Eis-Kämpfer (Frost)**: Blau-Weiß, Eiskristalle am Körper und Arm.
      * 🔥 **Feuer-Kämpfer (Ignis)**: Lodernde Feuerfrisur, Feuer am Arm, Inferno-Feuerbälle & brennender Boden.
      * ⚡ **Blitz-Kämpfer (Volt)**: Strahlende Blitz-Augen, elektrisierende Funken, Donnerkeil.
      * 💧 **Wasser-Kämpfer (Aqua)**: Blaue Haare/Augen, Ninja-Maske, Tsunami-Hydro-Welle & Wasserpfützen.
      * 💻 **Hacker-Kämpfer (Byte)**: Cyber-Hoodie, Visor, tippt auf dem Laptop und feuert fliegende ASCII-Code Buchstaben & Matrix-Salven mit extrem hohem Schaden!
+     * 👻 **Geister-Kämpfer (Spooky)**: Ein netter Geist mit leuchtendem Ektoplasma, Kulleraugen, rosa Bäckchen, Schwebekraft und schießt fliegende kleine Geister!
    * Rolling 2D heightmap terrain with one-way floating battle platforms.
    * Best of 3 rounds format.
    * *Controls (4 keys per player)*:

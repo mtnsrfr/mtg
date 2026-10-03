@@ -38,7 +38,8 @@ public:
     Fire = 2,      // Feuer-Kämpfer
     Lightning = 3, // Blitz-Kämpfer
     Water = 4,     // Wasser-Kämpfer
-    Hacker = 5     // Hacker-Kämpfer (Byte)
+    Hacker = 5,    // Hacker-Kämpfer (Byte)
+    Ghost = 6      // Geister-Kämpfer (Spooky)
   };
 
   enum class State {
@@ -213,8 +214,8 @@ public:
     case FighterType::Music:
       return {FighterType::Music,
               "DARIO",
-              "DRACHEN-REITER",
-              "DRACHEN-FLUG & RIFF",
+              "DRACHE",
+              "DRACHEN-FLUG",
               Ramps::Gold[11],
               Ramps::Red[10],
               0.60f,
@@ -223,8 +224,8 @@ public:
     case FighterType::Ice:
       return {FighterType::Ice,
               "FROST",
-              "EIS-KRIEGER",
-              "EISKRISTALLE",
+              "EIS",
+              "EISKRISTALL",
               Ramps::SkyBlue[10],
               Colors::White,
               0.70f,
@@ -233,7 +234,7 @@ public:
     case FighterType::Fire:
       return {FighterType::Fire,
               "IGNIS",
-              "FEUER-KRIEGER",
+              "FEUER",
               "INFERNO-BALL",
               Ramps::Fire[8],
               Ramps::Fire[12],
@@ -243,7 +244,7 @@ public:
     case FighterType::Lightning:
       return {FighterType::Lightning,
               "VOLT",
-              "BLITZ-FALKE",
+              "BLITZ",
               "DONNER-SCHOCK",
               Ramps::Gold[11],
               Ramps::Yellow[14],
@@ -253,7 +254,7 @@ public:
     case FighterType::Water:
       return {FighterType::Water,
               "AQUA",
-              "WASSER-NINJA",
+              "WASSER",
               "TSUNAMI-WELLE",
               Ramps::Cyan[10],
               Ramps::Blue[12],
@@ -263,15 +264,25 @@ public:
     case FighterType::Hacker:
       return {FighterType::Hacker,
               "BYTE",
-              "CYBER-HACKER",
+              "HACKER",
               "ASCII-SALVE",
               Ramps::Green[13],
               Ramps::Cyan[13],
               0.60f,
               20,
               128.0f};
+    case FighterType::Ghost:
+      return {FighterType::Ghost,
+              "SPOOKY",
+              "GEIST",
+              "MINI-GEISTER",
+              Colors::White,
+              Ramps::Cyan[12],
+              0.65f,
+              24,
+              125.0f};
     }
-    return {FighterType::Music, "DARIO", "MUSIK", "KLANG", Ramps::Red[9],
+    return {FighterType::Music, "DARIO", "DRACHE", "DRACHEN-FLUG", Ramps::Red[9],
             Ramps::Gold[11],    0.8f,    20,      110.0f};
   }
 
@@ -428,11 +439,11 @@ public:
     // Spieler 1 Steuerung: A / D zum Wählen, W zum Einloggen
     if (!p1Locked) {
       if (e.pressed(Key::A)) {
-        p1Cursor = (p1Cursor + 5) % 6;
+        p1Cursor = (p1Cursor + 6) % 7;
         playMenuBeep(e);
       }
       if (e.pressed(Key::D)) {
-        p1Cursor = (p1Cursor + 1) % 6;
+        p1Cursor = (p1Cursor + 1) % 7;
         playMenuBeep(e);
       }
       if (e.pressed(Key::W) || e.pressed(Key::Space)) {
@@ -448,11 +459,11 @@ public:
     // Spieler 2 Steuerung: Left / Right zum Wählen, Up zum Einloggen
     if (!p2Locked) {
       if (e.pressed(Key::Left)) {
-        p2Cursor = (p2Cursor + 5) % 6;
+        p2Cursor = (p2Cursor + 6) % 7;
         playMenuBeep(e);
       }
       if (e.pressed(Key::Right)) {
-        p2Cursor = (p2Cursor + 1) % 6;
+        p2Cursor = (p2Cursor + 1) % 7;
         playMenuBeep(e);
       }
       if (e.pressed(Key::Up) || e.pressed(Key::Enter)) {
@@ -709,19 +720,20 @@ public:
       return;
     }
 
-    // --- D. SPRINGEN & DRACHEN-FLUG (W bei P1 / Up bei P2) ---
+    // --- D. SPRINGEN & DRACHEN-/GEISTER-FLUG (W bei P1 / Up bei P2) ---
     bool isMusicFighter = (p.fighter == FighterType::Music);
+    bool isGhostFighter = (p.fighter == FighterType::Ghost);
     p.isFlying = false;
 
-    // DARIO KANN FLIEGEN: Wenn man in der Luft W / Up hält, gleitet & schwebt
-    // der Drache!
-    if (isMusicFighter && !p.isGrounded && !p.onPlatform && up) {
+    // DARIO & GHOST KÖNNEN SCHWEBEN: Wenn man in der Luft W / Up hält, gleitet & schwebt er!
+    if ((isMusicFighter || isGhostFighter) && !p.isGrounded && !p.onPlatform && up) {
       p.isFlying = true;
-      if (p.vy > 35.0f)
-        p.vy = 35.0f; // Sanftes Schweben/Gleiten im Wind
+      float maxGlideVy = isGhostFighter ? 25.0f : 35.0f;
+      if (p.vy > maxGlideVy)
+        p.vy = maxGlideVy; // Sanftes Schweben/Gleiten im Wind
       if (e.rnd(3) == 0) {
         spawnDoubleJumpSparkle(p.x - p.facing * 4.0f, p.y - 6.0f,
-                               Ramps::Gold[12]);
+                               isGhostFighter ? Ramps::Cyan[12] : Ramps::Gold[12]);
       }
     }
 
@@ -733,17 +745,20 @@ public:
         p.onPlatform = false;
         p.canDoubleJump = true;
         playJumpSound(e);
-        spawnJumpDust(p.x, p.y);
         // Abwind-Impuls in die Fluid-Simulation
         fluidSolver.addVelocity(p.x, p.y - 4.0f, 0.0f, 160.0f, 12.0f);
         spawnWindParticles(p.x, p.y - 2.0f, 0.0f, 50.0f, pid, 6);
-      } else if (isMusicFighter) {
-        // DARIO KANN ENDLOS WEITERFLATTERN & DURCH FLÜGELSCHLÄGE AUFSTEIGEN!
-        p.vy = -185.0f;
+      } else if (isMusicFighter || isGhostFighter) {
+        // DARIO & GHOST KÖNNEN IN DER LUFT WEITER SCHWEBEN & AUFSTEIGEN!
+        p.vy = isGhostFighter ? -175.0f : -185.0f;
         p.isFlying = true;
-        playJumpSound(e);
+        if (isGhostFighter) {
+          playGhostSound(e);
+        } else {
+          playJumpSound(e);
+        }
         spawnDoubleJumpSparkle(p.x - p.facing * 5.0f, p.y - 8.0f,
-                               Ramps::Gold[14]);
+                               isGhostFighter ? Ramps::Cyan[14] : Ramps::Gold[14]);
         fluidSolver.addVelocity(p.x, p.y - 6.0f, p.facing * 90.0f, 160.0f, 14.0f);
         spawnWindParticles(p.x, p.y - 4.0f, p.facing * 70.0f, 90.0f, pid, 8);
       } else if (p.canDoubleJump) {
@@ -776,9 +791,15 @@ public:
   // 7. PHYSIK & 3-PUNKT BODEN-KOLLISION
   // ===========================================================================
   void updatePlayerPhysics(Player &p, float dt) {
-    // Schwerkraft (für Dario im Drachenflug sanft gedämpft)
-    float grav =
-        (p.fighter == FighterType::Music && p.isFlying) ? 140.0f : 480.0f;
+    // Schwerkraft (für Dario im Drachenflug und den Geist sanft gedämpft)
+    float grav = 480.0f;
+    if (p.fighter == FighterType::Music && p.isFlying) {
+      grav = 140.0f;
+    } else if (p.fighter == FighterType::Ghost && p.isFlying) {
+      grav = 120.0f;
+    } else if (p.fighter == FighterType::Ghost) {
+      grav = 400.0f; // Sanftere Geister-Schwerkraft
+    }
     p.vy += grav * dt;
     if (p.vy > 350.0f)
       p.vy = 350.0f;
@@ -903,6 +924,13 @@ public:
         proj.damage = 22; // Ausbalancierter Cyber-Schuss (22 HP)
         playHackerCastSound(e);
         break;
+      case FighterType::Ghost:
+        proj.vx = p.facing * (baseSpd + 30.0f) * 0.707f;
+        proj.vy = -(baseSpd + 30.0f) * 0.707f;
+        proj.radius = 7.0f;
+        proj.damage = 24;
+        playGhostSound(e);
+        break;
       }
     } else if (mode == ShotMode::DownGround) {
       // --- 45 GRAD SCHUSS NACH UNTEN (BODEN-SCHOCKWELLE) ---
@@ -946,6 +974,13 @@ public:
         proj.radius = 8.0f;
         proj.damage = 24; // Matrix-Virus Boden-Welle (24 HP)
         playHackerCastSound(e);
+        break;
+      case FighterType::Ghost:
+        proj.vx = p.facing * (baseSpd + 30.0f) * 0.707f;
+        proj.vy = (baseSpd + 30.0f) * 0.707f;
+        proj.radius = 7.0f;
+        proj.damage = 24;
+        playGhostSound(e);
         break;
       }
     } else {
@@ -992,6 +1027,12 @@ public:
         proj.radius = 7.5f;
         proj.damage = 20; // Ausbalancierte Code-Salve (20 HP)
         playHackerCastSound(e);
+        break;
+      case FighterType::Ghost: // Fliegende kleine Geister
+        proj.vx = p.facing * (baseSpd + 35.0f);
+        proj.radius = 6.5f;
+        proj.damage = 24;
+        playGhostSound(e);
         break;
       }
     }
@@ -1101,6 +1142,11 @@ public:
           // 💻 HACKER-TREFFER: Cyber-Glitch Sound & Bildschirm-Wackeln!
           playCyberGlitchSound(e);
           screenShake = 0.40f;
+        } else if (proj.type == FighterType::Ghost) {
+          // 👻 GEISTER-TREFFER: Ätherischer Ektoplasma-Glanz & Scheppern
+          e.play_tone(Notes::G5, 0.06f);
+          e.play_tone(Notes::C6, 0.08f);
+          screenShake = 0.35f;
         }
 
         if (target.isBlocking) {
@@ -1769,6 +1815,84 @@ public:
       }
       break;
     }
+
+    case FighterType::Ghost: {
+      // 👻 GEISTER-KÄMPFER (SPOOKY): Ein netter Geist mit leuchtendem Ektoplasma,
+      // freundlichem Lächeln, rosa Bäckchen, schwebendem Schweif und wehenden Geisterhänden!
+
+      // Sanftes Schweben/Bobbing in der Luft
+      float hoverOffset = std::sin(globalTimer * 6.0f) * 2.5f;
+      int gy = py - 4 + static_cast<int>(hoverOffset);
+
+      // 1. Schwebender Geisterschweif (wellig / flatternd animiert)
+      int tailWave1 = static_cast<int>(std::sin(globalTimer * 10.0f) * 2.0f);
+      int tailWave2 = static_cast<int>(std::cos(globalTimer * 12.0f) * 2.0f);
+
+      // Weicher Ektoplasma-Schweif unten
+      e.line(px - 5, gy - 2, px - 6 + tailWave1, gy + 3, Ramps::Cyan[9]);
+      e.line(px - 2, gy - 1, px - 2 + tailWave2, gy + 4, Colors::White);
+      e.line(px + 1, gy - 1, px + 2 - tailWave1, gy + 4, Colors::White);
+      e.line(px + 4, gy - 2, px + 5 - tailWave2, gy + 3, Ramps::Cyan[9]);
+
+      // Schweif-Glanzlicht
+      e.pset(px - 2 + tailWave2, gy + 4, Ramps::Cyan[13]);
+      e.pset(px + 2 - tailWave1, gy + 4, Ramps::Cyan[13]);
+
+      // 2. Geister-Körper (weicher, rundlicher weißer Geist)
+      e.rectfill(px - 6, gy - 12, 12, 10, Colors::White);
+      e.rect(px - 6, gy - 12, 12, 10, Ramps::Cyan[11]); // Sanfter Glow-Rand
+
+      // 3. Runder Kopf oben
+      e.rectfill(px - 5, gy - 17, 10, 5, Colors::White);
+      e.line(px - 4, gy - 18, px + 3, gy - 18, Colors::White); // Kopfwölbung
+      e.line(px - 5, gy - 17, px - 5, gy - 13, Ramps::Cyan[11]);
+      e.line(px + 4, gy - 17, px + 4, gy - 13, Ramps::Cyan[11]);
+      e.line(px - 4, gy - 18, px + 3, gy - 18, Ramps::Cyan[11]);
+
+      // 4. Gesicht: Netter, fröhlicher Geist mit Kulleraugen, Glanzpunkten, rosa Bäckchen und süßem Lächeln!
+      int eyeX1 = px + f * 0;
+      int eyeX2 = px + f * 3;
+      int eyeY = gy - 14;
+
+      // Große freundliche Kulleraugen
+      e.rectfill(eyeX1 - 1, eyeY - 1, 2, 3, Colors::Black);
+      e.rectfill(eyeX2 - 1, eyeY - 1, 2, 3, Colors::Black);
+      // Weiße Glanzlichter im Auge
+      e.pset(eyeX1 - 1, eyeY - 1, Colors::White);
+      e.pset(eyeX2 - 1, eyeY - 1, Colors::White);
+
+      // Rosa Bäckchen (Blush)
+      e.pset(eyeX1 - f * 2, eyeY + 2, Ramps::Red[8]);
+      e.pset(eyeX2 + f * 2, eyeY + 2, Ramps::Red[8]);
+
+      // Süßes, offenes Lächeln :D
+      e.pset(px + f * 1, eyeY + 2, Colors::Black);
+      e.pset(px + f * 2, eyeY + 2, Colors::Black);
+      e.pset(px + f * 1, eyeY + 1, Ramps::Red[9]); // kleine Zunge/Mundöffnung
+
+      // 5. Schwebende Geister-Hände / Ärmchen
+      int handWave = static_cast<int>(std::sin(globalTimer * 8.0f) * 2.0f);
+      int hxBack = px - f * 8;
+      int hyBack = gy - 9 + handWave;
+      int hxFront = px + f * 7;
+      int hyFront = gy - 8 - handWave;
+
+      // Hintere schwebende Hand
+      e.circlefill(hxBack, hyBack, 2.0f, Colors::White);
+      e.circle(hxBack, hyBack, 2.0f, Ramps::Cyan[10]);
+
+      // Vordere winkende/zaubernde Hand
+      e.circlefill(hxFront, hyFront, 2.5f, Colors::White);
+      e.circle(hxFront, hyFront, 2.5f, Ramps::Cyan[12]);
+      e.pset(hxFront + f * 1, hyFront - 1, Colors::White); // Zauber-Funke an Fingerspitze
+
+      // 6. Ektoplasma-Glitzerpartikel um den Geist herum
+      if (rand() % 4 == 0) {
+        e.pset(px + (rand() % 16 - 8), gy - 10 + (rand() % 14 - 7),
+               Ramps::Cyan[14]);
+      }
+      break;
+    }
     }
 
     // Verlangsamungs-Anzeige (Wasserspritzer um die Füße bei Slowdown)
@@ -1843,6 +1967,23 @@ public:
           // Digitaler Funkenschweif
           e.line(px - dir * 10, py, px + dir * 8, py, Ramps::Cyan[14]);
           e.pset(px + (rand() % 16 - 8), py - (rand() % 8), Colors::White);
+          break;
+        }
+        case FighterType::Ghost: {
+          // 👻 Geister-Bodenwelle: Niedliche kleine Geister hüpfen/gleiten über den Boden mit Ektoplasma-Nebel
+          float hop = std::abs(std::sin(globalTimer * 12.0f + px * 0.1f)) * 5.0f;
+          int gy = py - static_cast<int>(hop);
+
+          e.circlefill(px, gy - 4, 5.0f, Colors::White);
+          e.circle(px, gy - 4, 5.5f, Ramps::Cyan[12]);
+          e.line(px - dir * 4, gy, px, gy - 4, Ramps::Cyan[10]);
+          e.pset(px + dir * 1, gy - 5, Colors::Black);
+          e.pset(px + dir * 3, gy - 5, Colors::Black);
+          e.pset(px + dir * 4, gy - 3, Ramps::Red[8]); // Rosa Wange
+          if (rand() % 2 == 0) {
+            e.pset(px - dir * 5 + (rand() % 4 - 2), gy - 2 + (rand() % 4 - 2),
+                   Ramps::Cyan[14]);
+          }
           break;
         }
         }
@@ -1929,6 +2070,43 @@ public:
           e.line(px - 10, py + (rand() % 8 - 4), px + 10, py + (rand() % 8 - 4),
                  Colors::White);
         }
+        break;
+      }
+      case FighterType::Ghost: {
+        // 👻 Fliegender kleiner Geist ("schießt kleine Geister")
+        float wave = std::sin(globalTimer * 18.0f + px * 0.15f) * 2.0f;
+
+        // Ektoplasma-Aura
+        e.circle(px, py, 6.5f, Ramps::Cyan[11]);
+
+        // Weißer Geisterkopf & Körper
+        e.circlefill(px + dir * 1, py, 4.5f, Colors::White);
+
+        // Waving Ghost-Tail hinten
+        int tx = px - dir * 5;
+        int ty = py + static_cast<int>(wave);
+        e.line(px, py - 2, tx, ty - 2, Colors::White);
+        e.line(px, py + 2, tx, ty + 2, Colors::White);
+        e.line(tx, ty - 2, tx - dir * 2, ty, Ramps::Cyan[13]);
+        e.line(tx, ty + 2, tx - dir * 2, ty, Ramps::Cyan[13]);
+
+        // Winzige Geister-Ärmchen
+        e.line(px + dir * 1, py - 3, px + dir * 3, py - 5, Colors::White);
+        e.line(px + dir * 1, py + 3, px + dir * 3, py + 5, Colors::White);
+
+        // Expressive Kulleraugen & Lächeln
+        int ex1 = px + dir * 2;
+        int ex2 = px + dir * 4;
+        e.pset(ex1, py - 1, Colors::Black);
+        e.pset(ex2, py - 1, Colors::Black);
+        e.pset(ex1, py - 2, Colors::White); // Lichtreflex
+
+        // Süße rosa Bäckchen
+        e.pset(ex1 - dir * 1, py + 1, Ramps::Red[8]);
+        e.pset(ex2 + dir * 1, py + 1, Ramps::Red[8]);
+
+        // Feines fröhliches Lächeln
+        e.pset(px + dir * 3, py + 1, Ramps::Grays[3]);
         break;
       }
       }
@@ -2145,12 +2323,12 @@ public:
     e.draw_text(55, 12, "DARIOS SPIEL: ELEMENTAL BRAWL", Colors::Gold, 2);
     e.draw_text(72, 32, "WAEHLE DEINEN ELEMENTAR-KAEMPFER!", Colors::White, 1);
 
-    // 6 Kämpfer-Karten
-    for (int i = 0; i < 6; ++i) {
+    // 7 Kämpfer-Karten
+    for (int i = 0; i < 7; ++i) {
       FighterDef def = getFighterDef(static_cast<FighterType>(i));
-      int cardX = 6 + i * 52;
+      int cardX = 6 + i * 44;
       int cardY = 50;
-      int cardW = 48;
+      int cardW = 42;
       int cardH = 138;
 
       // Rahmen & Hintergrund der Karte
@@ -2169,29 +2347,29 @@ public:
       e.rect(cardX, cardY, cardW, cardH, def.mainColor);
 
       // Name & Titel
-      e.draw_text(cardX + 3, cardY + 5, def.name, Colors::White, 1);
-      e.draw_text(cardX + 3, cardY + 16, def.title, def.accentColor, 1);
+      e.draw_text(cardX + 2, cardY + 5, def.name, Colors::White, 1);
+      e.draw_text(cardX + 2, cardY + 16, def.title, def.accentColor, 1);
 
       // Vorschau-Sprite in der Karte
       Player dummy;
-      dummy.x = cardX + 24.0f;
+      dummy.x = cardX + 21.0f;
       dummy.y = cardY + 70.0f;
       dummy.fighter = static_cast<FighterType>(i);
       dummy.facing = 1;
       renderFighter(e, dummy);
 
       // Superkraft-Name
-      e.draw_text(cardX + 3, cardY + 86, "KRAFT:", Colors::Gold, 1);
-      e.draw_text(cardX + 3, cardY + 97, def.powerName, Colors::White, 1);
+      e.draw_text(cardX + 2, cardY + 86, "KRAFT:", Colors::Gold, 1);
+      e.draw_text(cardX + 2, cardY + 97, def.powerName, Colors::White, 1);
 
       // Cursor-Markierungen
       if (p1Here) {
         std::string tag = p1Locked ? "[P1 OK]" : "> P1 <";
-        e.draw_text(cardX + 3, cardY + 112, tag, Ramps::Blue[12], 1);
+        e.draw_text(cardX + 1, cardY + 112, tag, Ramps::Blue[12], 1);
       }
       if (p2Here) {
         std::string tag = p2Locked ? "[P2 OK]" : "> P2 <";
-        e.draw_text(cardX + 3, cardY + (p1Here ? 123 : 112), tag,
+        e.draw_text(cardX + 1, cardY + (p1Here ? 123 : 112), tag,
                     Ramps::Red[12], 1);
       }
     }
@@ -2237,6 +2415,9 @@ public:
     case FighterType::Hacker:
       p.color = (rand() % 2 == 0) ? Ramps::Green[14] : Ramps::Cyan[14];
       break;
+    case FighterType::Ghost:
+      p.color = (rand() % 2 == 0) ? Colors::White : Ramps::Cyan[13];
+      break;
     }
     particles.push_back(p);
   }
@@ -2269,6 +2450,9 @@ public:
       break;
     case FighterType::Hacker:
       p.color = (rand() % 2 == 0) ? Ramps::Green[13] : Colors::White;
+      break;
+    case FighterType::Ghost:
+      p.color = (rand() % 2 == 0) ? Colors::White : Ramps::Cyan[12];
       break;
     }
     particles.push_back(p);
@@ -2305,6 +2489,9 @@ public:
         break;
       case FighterType::Hacker:
         p.color = (i % 2 == 0) ? Ramps::Green[14] : Ramps::Cyan[13];
+        break;
+      case FighterType::Ghost:
+        p.color = (i % 2 == 0) ? Colors::White : Ramps::Cyan[13];
         break;
       }
       particles.push_back(p);
@@ -2382,6 +2569,11 @@ public:
       sn.coreColor = Colors::White;
       sn.ringColor = Ramps::Green[14];
       sn.rayColor = Ramps::Cyan[13];
+      break;
+    case FighterType::Ghost:
+      sn.coreColor = Colors::White;
+      sn.ringColor = Ramps::Cyan[14];
+      sn.rayColor = Ramps::Cyan[11];
       break;
     }
     supernovas.push_back(sn);
@@ -2542,6 +2734,13 @@ public:
     e.play_tone(Notes::As4, 0.05f);
     e.play_tone(Notes::F5, 0.07f);
     e.play_tone(Notes::D6, 0.10f);
+  }
+
+  void playGhostSound(Engine &e) {
+    // Verspielter, ätherischer Geister-Ton
+    e.play_tone(Notes::E5, 0.07f);
+    e.play_tone(Notes::B5, 0.07f);
+    e.play_tone(Notes::G5, 0.11f);
   }
 
   void playBlockSound(Engine &e) { e.play_tone(Notes::A5, 0.08f); }
