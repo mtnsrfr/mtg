@@ -1145,33 +1145,43 @@ public:
           playCyberGlitchSound(e);
           screenShake = 0.40f;
         } else if (proj.type == FighterType::Ghost) {
-          // 👻 GEISTER-TREFFER: Ätherischer Ektoplasma-Glanz & Scheppern
+          // 👻 GEISTER-TREFFER: Ätherischer Ektoplasma-Glanz, Druckwelle & starker Pushback!
           e.play_tone(Notes::G5, 0.06f);
           e.play_tone(Notes::C6, 0.08f);
-          screenShake = 0.35f;
+          screenShake = 0.60f;
+          fluidSolver.addRadialImpulse(proj.x, proj.y, 240.0f, 28.0f);
+          fluidSolver.addVelocity(target.x, target.y - 8.0f,
+                                  (proj.vx > 0 ? 300.0f : -300.0f), -90.0f,
+                                  24.0f);
         }
 
         if (target.isBlocking) {
           // Blockiert! 80% Schadensreduktion & Funkenbarriere
           int blockedDamage = std::max(1, proj.damage / 5);
           target.hp = std::max(0, target.hp - blockedDamage);
-          target.vx += (proj.vx > 0 ? 40.0f : -40.0f);
+          float pushVx = (proj.type == FighterType::Ghost) ? 120.0f : 40.0f;
+          target.vx += (proj.vx > 0 ? pushVx : -pushVx);
           spawnBlockSparks(proj.x, proj.y);
           playBlockSound(e);
         } else {
           // Volltreffer!
           target.hp = std::max(0, target.hp - proj.damage);
           target.hurtTimer = 0.28f;
-          target.vx += (proj.vx > 0 ? 85.0f : -85.0f);
+          // Starker Pushback bei Treffern von Spookys Geisterschüssen!
+          float pushVx = (proj.type == FighterType::Ghost) ? 260.0f : 85.0f;
+          target.vx += (proj.vx > 0 ? pushVx : -pushVx);
           target.vy = proj.isGroundWave
                           ? -175.0f
-                          : (proj.type == FighterType::Fire ? -130.0f : -45.0f);
+                          : (proj.type == FighterType::Ghost
+                                 ? -130.0f
+                                 : (proj.type == FighterType::Fire ? -130.0f
+                                                                   : -45.0f));
           spawnSupernova(target.x, target.y - 10.0f, proj.type,
                          /*isMega=*/false);
           if (proj.type != FighterType::Fire) {
             spawnHitExplosion(proj.x, proj.y, proj.type);
             playHitSound(e);
-            screenShake = 0.45f;
+            screenShake = (proj.type == FighterType::Ghost) ? 0.60f : 0.45f;
           }
         }
       } else if (!proj.isGroundWave && proj.y >= getGroundHeight(proj.x) - 2.0f) {
