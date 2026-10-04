@@ -89,6 +89,7 @@ public:
     bool active;
     bool isAirToGround = false;
     bool isGroundWave = false;
+    bool isGhostEmbrace = false;
   };
 
   struct FloatingPlatform {
@@ -172,6 +173,7 @@ public:
     bool prevMoveTowards = false;
     bool prevUp = false;
     float slowTimer = 0.0f; // Verlangsamung im Wasser (Wasser-Schockwelle)
+    float embraceDashTimer = 0.0f; // Geisterhafte Umarmung Nahkampf-Dash
   };
 
   // ===========================================================================
@@ -276,13 +278,13 @@ public:
     case FighterType::Ghost:
       return {FighterType::Ghost,
               "SPOOKY",
-              "GEIST",
-              "MINI-GEISTER",
+              "NAHKAMPF",
+              "UMARMUNG",
               Colors::White,
               Ramps::Cyan[12],
-              0.65f,
-              24,
-              125.0f};
+              0.55f,
+              32,
+              130.0f};
     }
     return {FighterType::Music, "DARIO", "DRACHE", "DRACHEN-FLUG", Ramps::Red[9],
             Ramps::Gold[11],    0.8f,    20,      110.0f};
@@ -780,7 +782,9 @@ public:
     if (p.slowTimer > 0.0f) {
       moveSpd *= 0.45f; // Stark verlangsamt im Wasser!
     }
-    if (left && !right) {
+    if (p.embraceDashTimer > 0.0f) {
+      p.vx = p.facing * 235.0f; // Vollgas-Sturm nach vorne bei Geisterhafter Umarmung!
+    } else if (left && !right) {
       p.vx = -moveSpd;
     } else if (right && !left) {
       p.vx = moveSpd;
@@ -862,6 +866,17 @@ public:
       p.animFrame += dt * 10.0f;
     } else {
       p.animFrame = 0.0f;
+    }
+
+    // Geisterhafte Umarmung Dash-Timer & Herzchen-Spur
+    if (p.embraceDashTimer > 0.0f) {
+      p.embraceDashTimer -= dt;
+      if (p.embraceDashTimer < 0.0f) {
+        p.embraceDashTimer = 0.0f;
+      }
+      if (rand() % 2 == 0) {
+        spawnHeartParticles(p.x - p.facing * 6.0f, p.y - 8.0f, 1);
+      }
     }
   }
 
@@ -1030,11 +1045,20 @@ public:
         proj.damage = 20; // Ausbalancierte Code-Salve (20 HP)
         playHackerCastSound(e);
         break;
-      case FighterType::Ghost: // Fliegende kleine Geister
-        proj.vx = p.facing * (baseSpd + 35.0f);
-        proj.radius = 6.5f;
-        proj.damage = 24;
-        playGhostSound(e);
+      case FighterType::Ghost: // 👻 "Geisterhafte Umarmung" (Nahkampf-Sturm & Hug)
+        p.vx = p.facing * 235.0f;
+        p.embraceDashTimer = 0.35f;
+        proj.isGhostEmbrace = true;
+        proj.x = p.x + p.facing * 14.0f;
+        proj.y = p.y - 10.0f;
+        proj.vx = p.facing * 235.0f;
+        proj.vy = 0.0f;
+        proj.radius = 16.0f;
+        proj.damage = 32; // Gewaltiger Liebes- & Umarmungs-Schaden (32 HP)
+        proj.life = 0.35f;
+        playGhostEmbraceSound(e);
+        spawnHeartParticles(p.x + p.facing * 12.0f, p.y - 10.0f, 8);
+        fluidSolver.addVelocity(p.x, p.y - 8.0f, p.facing * 180.0f, -30.0f, 16.0f);
         break;
       }
     }
@@ -1068,7 +1092,11 @@ public:
       } else {
         proj.x += proj.vx * dt;
         proj.y += proj.vy * dt;
-        spawnProjectileTrail(proj);
+        if (proj.isGhostEmbrace) {
+          spawnHeartParticles(proj.x, proj.y, 1);
+        } else {
+          spawnProjectileTrail(proj);
+        }
 
         // Prüfung: Wenn der Abwärtsschuss den Boden berührt -> Verwandelt sich
         // in Boden-Schockwelle!
@@ -1146,42 +1174,64 @@ public:
           screenShake = 0.40f;
         } else if (proj.type == FighterType::Ghost) {
           // 👻 GEISTER-TREFFER: Ätherischer Ektoplasma-Glanz, Druckwelle & starker Pushback!
-          e.play_tone(Notes::G5, 0.06f);
-          e.play_tone(Notes::C6, 0.08f);
-          screenShake = 0.60f;
-          fluidSolver.addRadialImpulse(proj.x, proj.y, 240.0f, 28.0f);
-          fluidSolver.addVelocity(target.x, target.y - 8.0f,
-                                  (proj.vx > 0 ? 300.0f : -300.0f), -90.0f,
-                                  24.0f);
+          if (proj.isGhostEmbrace) {
+            playGhostEmbraceSound(e);
+            screenShake = 0.70f;
+            spawnHeartParticles(target.x, target.y - 10.0f, 24);
+            fluidSolver.addRadialImpulse(proj.x, proj.y, 280.0f, 32.0f);
+            fluidSolver.addVelocity(target.x, target.y - 8.0f,
+                                    (proj.vx > 0 ? 340.0f : -340.0f), -160.0f,
+                                    28.0f);
+          } else {
+            e.play_tone(Notes::G5, 0.06f);
+            e.play_tone(Notes::C6, 0.08f);
+            screenShake = 0.60f;
+            fluidSolver.addRadialImpulse(proj.x, proj.y, 240.0f, 28.0f);
+            fluidSolver.addVelocity(target.x, target.y - 8.0f,
+                                    (proj.vx > 0 ? 300.0f : -300.0f), -90.0f,
+                                    24.0f);
+          }
         }
 
         if (target.isBlocking) {
           // Blockiert! 80% Schadensreduktion & Funkenbarriere
           int blockedDamage = std::max(1, proj.damage / 5);
           target.hp = std::max(0, target.hp - blockedDamage);
-          float pushVx = (proj.type == FighterType::Ghost) ? 120.0f : 40.0f;
+          float pushVx = proj.isGhostEmbrace ? 160.0f
+                                             : ((proj.type == FighterType::Ghost)
+                                                    ? 120.0f
+                                                    : 40.0f);
           target.vx += (proj.vx > 0 ? pushVx : -pushVx);
           spawnBlockSparks(proj.x, proj.y);
           playBlockSound(e);
         } else {
           // Volltreffer!
           target.hp = std::max(0, target.hp - proj.damage);
-          target.hurtTimer = 0.28f;
-          // Starker Pushback bei Treffern von Spookys Geisterschüssen!
-          float pushVx = (proj.type == FighterType::Ghost) ? 260.0f : 85.0f;
+          target.hurtTimer = 0.32f;
+          // Starker Pushback bei Treffern von Spookys Geisterschüssen / Umarmung!
+          float pushVx = proj.isGhostEmbrace ? 320.0f
+                                             : ((proj.type == FighterType::Ghost)
+                                                    ? 260.0f
+                                                    : 85.0f);
           target.vx += (proj.vx > 0 ? pushVx : -pushVx);
           target.vy = proj.isGroundWave
                           ? -175.0f
-                          : (proj.type == FighterType::Ghost
-                                 ? -130.0f
-                                 : (proj.type == FighterType::Fire ? -130.0f
-                                                                   : -45.0f));
+                          : (proj.isGhostEmbrace
+                                 ? -180.0f
+                                 : (proj.type == FighterType::Ghost
+                                        ? -130.0f
+                                        : (proj.type == FighterType::Fire
+                                               ? -130.0f
+                                               : -45.0f)));
           spawnSupernova(target.x, target.y - 10.0f, proj.type,
-                         /*isMega=*/false);
+                         /*isMega=*/proj.isGhostEmbrace);
           if (proj.type != FighterType::Fire) {
             spawnHitExplosion(proj.x, proj.y, proj.type);
             playHitSound(e);
-            screenShake = (proj.type == FighterType::Ghost) ? 0.60f : 0.45f;
+            screenShake = proj.isGhostEmbrace
+                              ? 0.70f
+                              : ((proj.type == FighterType::Ghost) ? 0.60f
+                                                                   : 0.45f);
           }
         }
       } else if (!proj.isGroundWave && proj.y >= getGroundHeight(proj.x) - 2.0f) {
@@ -1861,47 +1911,95 @@ public:
       e.line(px + 4, gy - 17, px + 4, gy - 13, Ramps::Cyan[11]);
       e.line(px - 4, gy - 18, px + 3, gy - 18, Ramps::Cyan[11]);
 
-      // 4. Gesicht: Netter, fröhlicher Geist mit Kulleraugen, Glanzpunkten, rosa Bäckchen und süßem Lächeln!
-      int eyeX1 = px + f * 0;
-      int eyeX2 = px + f * 3;
-      int eyeY = gy - 14;
+      if (p.embraceDashTimer > 0.0f) {
+        // --- 💖 GEISTERHAFTE UMARMUNG (HUG-STANCE) ---
+        // Übergroßes, glückliches Gesicht mit Herzchen-Wangen & weit geöffneten Armen zum Umarmen!
+        int eyeX1 = px + f * 1;
+        int eyeX2 = px + f * 4;
+        int eyeY = gy - 14;
 
-      // Große freundliche Kulleraugen
-      e.rectfill(eyeX1 - 1, eyeY - 1, 2, 3, Colors::Black);
-      e.rectfill(eyeX2 - 1, eyeY - 1, 2, 3, Colors::Black);
-      // Weiße Glanzlichter im Auge
-      e.pset(eyeX1 - 1, eyeY - 1, Colors::White);
-      e.pset(eyeX2 - 1, eyeY - 1, Colors::White);
+        // Fröhlich geschlossene Glücks-Augen (Bogen ^_^)
+        e.line(eyeX1 - 1, eyeY, eyeX1 + 1, eyeY - 2, Colors::Black);
+        e.line(eyeX1 + 1, eyeY - 2, eyeX1 + 2, eyeY, Colors::Black);
+        e.line(eyeX2 - 1, eyeY, eyeX2 + 1, eyeY - 2, Colors::Black);
+        e.line(eyeX2 + 1, eyeY - 2, eyeX2 + 2, eyeY, Colors::Black);
 
-      // Rosa Bäckchen (Blush)
-      e.pset(eyeX1 - f * 2, eyeY + 2, Ramps::Red[8]);
-      e.pset(eyeX2 + f * 2, eyeY + 2, Ramps::Red[8]);
+        // Kräftig leuchtende Rosa Herzchen-Bäckchen
+        e.rectfill(eyeX1 - f * 2, eyeY + 2, 2, 2, Colors::Pink);
+        e.rectfill(eyeX2 + f * 2, eyeY + 2, 2, 2, Colors::Pink);
 
-      // Süßes, offenes Lächeln :D
-      e.pset(px + f * 1, eyeY + 2, Colors::Black);
-      e.pset(px + f * 2, eyeY + 2, Colors::Black);
-      e.pset(px + f * 1, eyeY + 1, Ramps::Red[9]); // kleine Zunge/Mundöffnung
+        // Riesiges herzliches Lächeln (offener Mund mit Zunge :D)
+        e.rectfill(px + f * 2 - 1, eyeY + 2, 3, 2, Colors::Black);
+        e.pset(px + f * 2, eyeY + 3, Colors::Pink);
 
-      // 5. Schwebende Geister-Hände / Ärmchen
-      int handWave = static_cast<int>(std::sin(globalTimer * 8.0f) * 2.0f);
-      int hxBack = px - f * 8;
-      int hyBack = gy - 9 + handWave;
-      int hxFront = px + f * 7;
-      int hyFront = gy - 8 - handWave;
+        // Weit ausgestreckte, liebevolle Geister-Arme nach vorne für die Umarmung
+        int hTopX = px + f * 11;
+        int hTopY = gy - 13;
+        int hBotX = px + f * 11;
+        int hBotY = gy - 4;
 
-      // Hintere schwebende Hand
-      e.circlefill(hxBack, hyBack, 2.0f, Colors::White);
-      e.circle(hxBack, hyBack, 2.0f, Ramps::Cyan[10]);
+        // Oberer Arm
+        e.line(px + f * 3, gy - 11, hTopX, hTopY, Colors::White);
+        e.line(px + f * 3, gy - 10, hTopX, hTopY + 1, Colors::White);
+        e.circlefill(hTopX, hTopY, 2.5f, Colors::White);
+        e.circle(hTopX, hTopY, 2.5f, Colors::Pink);
 
-      // Vordere winkende/zaubernde Hand
-      e.circlefill(hxFront, hyFront, 2.5f, Colors::White);
-      e.circle(hxFront, hyFront, 2.5f, Ramps::Cyan[12]);
-      e.pset(hxFront + f * 1, hyFront - 1, Colors::White); // Zauber-Funke an Fingerspitze
+        // Unterer Arm
+        e.line(px + f * 3, gy - 6, hBotX, hBotY, Colors::White);
+        e.line(px + f * 3, gy - 5, hBotX, hBotY - 1, Colors::White);
+        e.circlefill(hBotX, hBotY, 2.5f, Colors::White);
+        e.circle(hBotX, hBotY, 2.5f, Colors::Pink);
+
+        // Schwebendes Herz über dem Kopf während der Umarmung
+        int heartX = px + f * 2;
+        int heartY = gy - 23;
+        e.pset(heartX - 1, heartY - 1, Colors::Pink);
+        e.pset(heartX + 1, heartY - 1, Colors::Pink);
+        e.rectfill(heartX - 1, heartY, 3, 1, Colors::Pink);
+        e.pset(heartX, heartY + 1, Colors::Pink);
+      } else {
+        // --- NORMALES GESICHT & ARME ---
+        int eyeX1 = px + f * 0;
+        int eyeX2 = px + f * 3;
+        int eyeY = gy - 14;
+
+        // Große freundliche Kulleraugen
+        e.rectfill(eyeX1 - 1, eyeY - 1, 2, 3, Colors::Black);
+        e.rectfill(eyeX2 - 1, eyeY - 1, 2, 3, Colors::Black);
+        // Weiße Glanzlichter im Auge
+        e.pset(eyeX1 - 1, eyeY - 1, Colors::White);
+        e.pset(eyeX2 - 1, eyeY - 1, Colors::White);
+
+        // Rosa Bäckchen (Blush)
+        e.pset(eyeX1 - f * 2, eyeY + 2, Ramps::Red[8]);
+        e.pset(eyeX2 + f * 2, eyeY + 2, Ramps::Red[8]);
+
+        // Süßes, offenes Lächeln :D
+        e.pset(px + f * 1, eyeY + 2, Colors::Black);
+        e.pset(px + f * 2, eyeY + 2, Colors::Black);
+        e.pset(px + f * 1, eyeY + 1, Ramps::Red[9]); // kleine Zunge/Mundöffnung
+
+        // 5. Schwebende Geister-Hände / Ärmchen
+        int handWave = static_cast<int>(std::sin(globalTimer * 8.0f) * 2.0f);
+        int hxBack = px - f * 8;
+        int hyBack = gy - 9 + handWave;
+        int hxFront = px + f * 7;
+        int hyFront = gy - 8 - handWave;
+
+        // Hintere schwebende Hand
+        e.circlefill(hxBack, hyBack, 2.0f, Colors::White);
+        e.circle(hxBack, hyBack, 2.0f, Ramps::Cyan[10]);
+
+        // Vordere winkende/zaubernde Hand
+        e.circlefill(hxFront, hyFront, 2.5f, Colors::White);
+        e.circle(hxFront, hyFront, 2.5f, Ramps::Cyan[12]);
+        e.pset(hxFront + f * 1, hyFront - 1, Colors::White); // Zauber-Funke an Fingerspitze
+      }
 
       // 6. Ektoplasma-Glitzerpartikel um den Geist herum
-      if (rand() % 4 == 0) {
+      if (rand() % (p.embraceDashTimer > 0.0f ? 2 : 4) == 0) {
         e.pset(px + (rand() % 16 - 8), gy - 10 + (rand() % 14 - 7),
-               Ramps::Cyan[14]);
+               (p.embraceDashTimer > 0.0f && rand() % 2 == 0) ? Colors::Pink : Ramps::Cyan[14]);
       }
       break;
     }
@@ -2085,40 +2183,82 @@ public:
         break;
       }
       case FighterType::Ghost: {
-        // 👻 Fliegender kleiner Geist ("schießt kleine Geister")
-        float wave = std::sin(globalTimer * 18.0f + px * 0.15f) * 2.0f;
+        if (proj.isGhostEmbrace) {
+          // 💖 GEISTERHAFTE UMARMUNG (Spectral Hug Aura & Glowing Heart)
+          // Sanfte, pulsierende Ektoplasma-Arme & ein leuchtendes Herz in der Mitte
+          float pulse = std::sin(globalTimer * 20.0f) * 2.0f;
+          float rad = 12.0f + pulse;
 
-        // Ektoplasma-Aura
-        e.circle(px, py, 6.5f, Ramps::Cyan[11]);
+          // Äußere leuchtende Liebes-Aura
+          e.circle(px, py, rad + 2.0f, Ramps::Cyan[11]);
+          e.circle(px, py, rad, Colors::Pink);
 
-        // Weißer Geisterkopf & Körper
-        e.circlefill(px + dir * 1, py, 4.5f, Colors::White);
+          // Ektoplasma Umarmungs-Bögen (zwei riesige Geister-Arme greifen um)
+          int armX = px + dir * 6;
+          e.line(px - dir * 4, py - 9, armX, py - 12, Colors::White);
+          e.line(px - dir * 4, py + 9, armX, py + 12, Colors::White);
+          e.circlefill(armX, py - 12, 3.5f, Colors::White);
+          e.circle(armX, py - 12, 3.5f, Colors::Pink);
+          e.circlefill(armX, py + 12, 3.5f, Colors::White);
+          e.circle(armX, py + 12, 3.5f, Colors::Pink);
 
-        // Waving Ghost-Tail hinten
-        int tx = px - dir * 5;
-        int ty = py + static_cast<int>(wave);
-        e.line(px, py - 2, tx, ty - 2, Colors::White);
-        e.line(px, py + 2, tx, ty + 2, Colors::White);
-        e.line(tx, ty - 2, tx - dir * 2, ty, Ramps::Cyan[13]);
-        e.line(tx, ty + 2, tx - dir * 2, ty, Ramps::Cyan[13]);
+          // Leuchtendes pixelartiges 💖 Herz im Zentrum des Angriffs
+          int hx = px;
+          int hy = py - 1;
+          e.rectfill(hx - 3, hy - 2, 3, 2, Colors::Pink);
+          e.rectfill(hx + 1, hy - 2, 3, 2, Colors::Pink);
+          e.rectfill(hx - 4, hy, 9, 3, Colors::Pink);
+          e.rectfill(hx - 3, hy + 3, 7, 2, Colors::Pink);
+          e.rectfill(hx - 2, hy + 5, 5, 1, Colors::Pink);
+          e.rectfill(hx - 1, hy + 6, 3, 1, Colors::Pink);
+          e.pset(hx, hy + 7, Colors::Pink);
 
-        // Winzige Geister-Ärmchen
-        e.line(px + dir * 1, py - 3, px + dir * 3, py - 5, Colors::White);
-        e.line(px + dir * 1, py + 3, px + dir * 3, py + 5, Colors::White);
+          // Glanzlicht im Herz
+          e.pset(hx - 2, hy - 1, Colors::White);
+          e.pset(hx + 2, hy - 1, Colors::White);
+          e.pset(hx, hy + 1, Colors::White);
 
-        // Expressive Kulleraugen & Lächeln
-        int ex1 = px + dir * 2;
-        int ex2 = px + dir * 4;
-        e.pset(ex1, py - 1, Colors::Black);
-        e.pset(ex2, py - 1, Colors::Black);
-        e.pset(ex1, py - 2, Colors::White); // Lichtreflex
+          // Schwebende Glitzer-Funken
+          if (rand() % 2 == 0) {
+            e.pset(px + (rand() % 18 - 9), py + (rand() % 18 - 9),
+                   (rand() % 2 == 0) ? Colors::Pink : Colors::White);
+          }
+        } else {
+          // 👻 Fliegender kleiner Geist ("schießt kleine Geister")
+          float wave = std::sin(globalTimer * 18.0f + px * 0.15f) * 2.0f;
 
-        // Süße rosa Bäckchen
-        e.pset(ex1 - dir * 1, py + 1, Ramps::Red[8]);
-        e.pset(ex2 + dir * 1, py + 1, Ramps::Red[8]);
+          // Ektoplasma-Aura
+          e.circle(px, py, 6.5f, Ramps::Cyan[11]);
 
-        // Feines fröhliches Lächeln
-        e.pset(px + dir * 3, py + 1, Ramps::Grays[3]);
+          // Weißer Geisterkopf & Körper
+          e.circlefill(px + dir * 1, py, 4.5f, Colors::White);
+
+          // Waving Ghost-Tail hinten
+          int tx = px - dir * 5;
+          int ty = py + static_cast<int>(wave);
+          e.line(px, py - 2, tx, ty - 2, Colors::White);
+          e.line(px, py + 2, tx, ty + 2, Colors::White);
+          e.line(tx, ty - 2, tx - dir * 2, ty, Ramps::Cyan[13]);
+          e.line(tx, ty + 2, tx - dir * 2, ty, Ramps::Cyan[13]);
+
+          // Winzige Geister-Ärmchen
+          e.line(px + dir * 1, py - 3, px + dir * 3, py - 5, Colors::White);
+          e.line(px + dir * 1, py + 3, px + dir * 3, py + 5, Colors::White);
+
+          // Expressive Kulleraugen & Lächeln
+          int ex1 = px + dir * 2;
+          int ex2 = px + dir * 4;
+          e.pset(ex1, py - 1, Colors::Black);
+          e.pset(ex2, py - 1, Colors::Black);
+          e.pset(ex1, py - 2, Colors::White); // Lichtreflex
+
+          // Süße rosa Bäckchen
+          e.pset(ex1 - dir * 1, py + 1, Ramps::Red[8]);
+          e.pset(ex2 + dir * 1, py + 1, Ramps::Red[8]);
+
+          // Feines fröhliches Lächeln
+          e.pset(px + dir * 3, py + 1, Ramps::Grays[3]);
+        }
         break;
       }
       }
@@ -2753,6 +2893,39 @@ public:
     e.play_tone(Notes::E5, 0.07f);
     e.play_tone(Notes::B5, 0.07f);
     e.play_tone(Notes::G5, 0.11f);
+  }
+
+  void playGhostEmbraceSound(Engine &e) {
+    // Herzlicher, lieblicher Geister-Akkord / Arpeggio für die Umarmung
+    e.play_tone(Notes::C5, 0.05f);
+    e.play_tone(Notes::E5, 0.06f);
+    e.play_tone(Notes::G5, 0.08f);
+    e.play_tone(Notes::C6, 0.12f);
+  }
+
+  void spawnHeartParticles(float x, float y, int count) {
+    for (int i = 0; i < count; ++i) {
+      Particle p;
+      p.x = x + (rand() % 10 - 5);
+      p.y = y + (rand() % 10 - 5);
+      float ang = (rand() % 360) * (3.14159265f / 180.0f);
+      float spd = 15.0f + (rand() % 50);
+      p.vx = std::cos(ang) * spd;
+      p.vy = std::sin(ang) * spd - 15.0f; // Schweben sanft nach oben
+      p.maxLife = 0.35f + (rand() % 25) / 100.0f;
+      p.life = p.maxLife;
+      p.size = (rand() % 3 == 0) ? 2.0f : 1.2f;
+      uint8_t cChoice = rand() % 4;
+      if (cChoice == 0)
+        p.color = Colors::Pink;
+      else if (cChoice == 1)
+        p.color = Ramps::Red[8];
+      else if (cChoice == 2)
+        p.color = Colors::White;
+      else
+        p.color = Ramps::Cyan[13];
+      particles.push_back(p);
+    }
   }
 
   void playBlockSound(Engine &e) { e.play_tone(Notes::A5, 0.08f); }

@@ -41,7 +41,7 @@ A retro 2D game engine built in modern C++ (SFML 3) designed for kids and beginn
      * ⚡ **Blitz-Kämpfer (Volt)**: Strahlende Blitz-Augen, elektrisierende Funken, Donnerkeil.
      * 💧 **Wasser-Kämpfer (Aqua)**: Blaue Haare/Augen, Ninja-Maske, Tsunami-Hydro-Welle & Wasserpfützen.
      * 💻 **Hacker-Kämpfer (Byte)**: Cyber-Hoodie, Visor, tippt auf dem Laptop und feuert fliegende ASCII-Code Buchstaben & Matrix-Salven mit extrem hohem Schaden!
-     * 👻 **Geister-Kämpfer (Spooky)**: Ein netter Geist mit leuchtendem Ektoplasma, Kulleraugen, rosa Bäckchen, Schwebekraft und schießt fliegende kleine Geister mit gewaltigem Pushback / Rückstoß!
+     * 👻 **Geister-Kämpfer (Spooky)**: Ein netter Geist mit leuchtendem Ektoplasma, Kulleraugen, rosa Bäckchen & Schwebekraft. Seine Signature-Nahkampfattacke ist die **Geisterhafte Umarmung** (ausgelöst durch 2x Vorwärts / Doppel-Tipp) mit stürmischem Dash nach vorne, rosa Herzchen-Partikeln, Umarmungs-Aura, hohem Schaden (32 HP) und starkem Knockback!
    * Rolling 2D heightmap terrain with one-way floating battle platforms.
    * Best of 3 rounds format.
    * *Controls (4 keys per player)*:
